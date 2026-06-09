@@ -1,0 +1,55 @@
+# Caddy reverse-proxy для Billing-сервиса (ТЗ-06 §5).
+#
+# Завершает TLS, проксирует на billing:3000.
+# Webhook CloudPayments (POST /webhooks/cloudpayments) должен быть доступен из
+# интернета — Caddy раздаёт всё на одном домене api.paragraf.ru.
+
+{
+	email {$ACME_EMAIL}
+}
+
+{$BILLING_DOMAIN} {
+	# CloudPayments webhook — внешний (приходит от api.cloudpayments.ru).
+	# HMAC-валидация делается в Hono, тут не закрываем.
+	handle /webhooks/* {
+		reverse_proxy billing:3000 {
+			# Webhook имеет короткий таймаут.
+			transport http {
+				dial_timeout 5s
+				response_header_timeout 10s
+			}
+		}
+	}
+
+	# Healthcheck — публично для uptime-мониторинга.
+	handle /health/* {
+		reverse_proxy billing:3000
+	}
+
+	# Все остальные API — auth и /me, /limits, /credits, /subscriptions, /payments.
+	handle {
+		reverse_proxy billing:3000 {
+			transport http {
+				dial_timeout 5s
+				response_header_timeout 30s
+				read_timeout 60s
+			}
+		}
+	}
+
+	log {
+		output stdout
+		format json
+	}
+
+	encode gzip
+
+	# Доп. безопасность для API. CORS делает Hono сам — не дублируем.
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "no-referrer"
+		X-Frame-Options "DENY"
+		-Server
+	}
+}

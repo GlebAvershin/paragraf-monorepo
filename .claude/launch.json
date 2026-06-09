@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "desktop-renderer",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "echo already-running"],
+      "port": 5173
+    }
+  ]
+}

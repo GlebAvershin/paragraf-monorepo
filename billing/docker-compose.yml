@@ -1,0 +1,19 @@
+# Local development: Postgres only.
+# In production, use managed Postgres (Selectel/Yandex Cloud) in RU.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: billing_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: billing
+      POSTGRES_USER: billing
+      POSTGRES_PASSWORD: billing
+    ports:
+      - "5433:5432"   # 5433 to not clash with system postgres if any
+    volumes:
+      - billing_pg_data:/var/lib/postgresql/data
+
+volumes:
+  billing_pg_data:

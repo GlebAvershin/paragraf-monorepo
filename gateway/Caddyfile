@@ -1,0 +1,57 @@
+# Caddy reverse-proxy для LiteLLM Gateway (ТЗ-06 §4).
+#
+# Завершает TLS, проксирует на litellm:4000 (внутри docker network).
+# Поддерживает основной + резервный домен (на случай блокировки основного — план §9.2).
+#
+# Переменные:
+#   GATEWAY_DOMAIN          основной домен, напр. gateway.paragraf-llm.com
+#   GATEWAY_DOMAIN_FALLBACK резервный, напр. llm-backup.paragraf.app (опционально)
+#   ACME_EMAIL              для Let's Encrypt уведомлений
+
+{
+	email {$ACME_EMAIL}
+}
+
+{$GATEWAY_DOMAIN}{$GATEWAY_DOMAIN_FALLBACK_BLOCK} {
+	# Только healthcheck публично — для uptime-мониторинга.
+	@health path /health/liveliness /health/readiness
+	handle @health {
+		reverse_proxy litellm:4000
+	}
+
+	# LLM endpoints. Авторизация через virtual_key передаётся как Authorization header
+	# (или x-api-key) и валидируется LiteLLM сам.
+	handle /v1/* {
+		reverse_proxy litellm:4000 {
+			# Долгие SSE-стримы (генерация ответа модели). Запас по таймаутам.
+			transport http {
+				dial_timeout 5s
+				response_header_timeout 60s
+				read_timeout 600s
+			}
+		}
+	}
+
+	# Management API (key/generate, key/info, ...) — должны вызываться ТОЛЬКО
+	# с master key из billing-сервиса. Не закрываем тут — LiteLLM сам проверит.
+	handle /key/* {
+		reverse_proxy litellm:4000
+	}
+
+	# Всё остальное — 404. (LiteLLM Admin UI отключён в проде.)
+	handle {
+		respond 404
+	}
+
+	# Структурированные логи в stdout (docker logs).
+	log {
+		output stdout
+		format json
+	}
+
+	encode gzip
+}
+
+# Резервный домен — отдельный блок (если задан).
+# Включается через GATEWAY_DOMAIN_FALLBACK_BLOCK = "\n\n<fallback_domain> { ... }".
+# Простой вариант: дублировать конфиг для второго домена руками.

@@ -1,0 +1,517 @@
+---
+/**
+ * Главная страница лендинга «Параграф».
+ * Структура: шапка → hero с двумя дверями → как работает → выгоды по вертикалям
+ * → скачивание → waitlist менеджеров → footer.
+ */
+import "../styles/global.css"
+
+const lawyerScenarios = [
+  "Проверка договора на риски",
+  "Составление договора по параметрам",
+  "Подготовка претензии и искового",
+  "Сравнение двух редакций",
+]
+const accountantScenarios = [
+  "Проверка первичного документа",
+  "Ответ на требование ФНС",
+  "Объяснение нормы НК на пальцах",
+  "Пояснительная записка к отчёту",
+]
+---
+
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Параграф — ИИ-агент для юристов и бухгалтеров</title>
+    <meta
+      name="description"
+      content="Прочитает договор, найдёт риски, ответит на требование ФНС, подготовит претензию. Готовые сценарии под профессию — не пустой чат. Работа с документами на современных ИИ-моделях."
+    />
+    <meta property="og:title" content="Параграф — ИИ для юристов и бухгалтеров" />
+    <meta property="og:description" content="Готовые сценарии под профессию. Работа с документами на ИИ." />
+    <meta property="og:type" content="website" />
+  </head>
+  <body>
+    <!-- ===== Header ===== -->
+    <header class="hdr">
+      <div class="container hdr__inner">
+        <a href="/" class="hdr__brand serif">Параграф</a>
+        <nav class="hdr__nav">
+          <a href="#how">Как работает</a>
+          <a href="#pricing">Тарифы</a>
+          <a href="#download" class="btn btn--primary btn--sm">Скачать</a>
+        </nav>
+      </div>
+    </header>
+
+    <!-- ===== Hero ===== -->
+    <section class="hero">
+      <div class="container">
+        <span class="eyebrow">ИИ для документоёмких профессий</span>
+        <h1 class="hero__title serif">
+          Серьёзный инструмент<br /><em>с тёплой подачей.</em>
+        </h1>
+        <p class="hero__lede">
+          Прочитает договор, найдёт риски, ответит на требование ФНС, подготовит претензию.
+          Не пустой чат — пошаговые сценарии под вашу профессию.
+        </p>
+
+        <div class="doors">
+          <a href="#lawyer" class="door card">
+            <div class="door__role serif">Я юрист</div>
+            <div class="door__lede">Договоры, претензии, иски, проверка рисков, сравнение редакций.</div>
+            <div class="door__cta">Смотреть сценарии →</div>
+          </a>
+          <a href="#accountant" class="door card">
+            <div class="door__role serif">Я бухгалтер</div>
+            <div class="door__lede">Первичка, требования ФНС, нормы НК, пояснительные записки.</div>
+            <div class="door__cta">Смотреть сценарии →</div>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== How it works ===== -->
+    <section id="how" class="how">
+      <div class="container">
+        <h2 class="section-title">Как это работает</h2>
+        <p class="section-lede">Три шага до готового документа — без знания промптов и ИИ.</p>
+        <div class="steps">
+          <div class="step card">
+            <div class="step__n">01</div>
+            <div class="step__t serif">Выберите сценарий</div>
+            <p class="step__d">Готовый мастер под задачу: «проверка договора», «ответ ФНС». Не пустой чат.</p>
+          </div>
+          <div class="step card">
+            <div class="step__n">02</div>
+            <div class="step__t serif">Загрузите документ</div>
+            <p class="step__d">PDF, Word, Excel. Агент прочитает и пройдёт с вами по шагам.</p>
+          </div>
+          <div class="step card">
+            <div class="step__n">03</div>
+            <div class="step__t serif">Получите результат</div>
+            <p class="step__d">Готовый документ в Word или структурированный отчёт. Скачайте и используйте.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== Vertical: lawyer ===== -->
+    <section id="lawyer" class="vert">
+      <div class="container vert__inner">
+        <div>
+          <span class="eyebrow">Для юристов и адвокатов</span>
+          <h2 class="section-title">Рутина с документами — за минуты</h2>
+          <p class="section-lede">
+            Анализ договоров, подготовка процессуальных документов, сравнение редакций.
+            Со ссылками на статьи ГК и кодексов.
+          </p>
+        </div>
+        <ul class="scen-list">
+          {lawyerScenarios.map((s) => <li class="scen card">{s}</li>)}
+        </ul>
+      </div>
+    </section>
+
+    <!-- ===== Vertical: accountant ===== -->
+    <section id="accountant" class="vert vert--alt">
+      <div class="container vert__inner">
+        <div>
+          <span class="eyebrow">Для бухгалтеров</span>
+          <h2 class="section-title">Меньше переписки с ФНС и ошибок в первичке</h2>
+          <p class="section-lede">
+            Проверка документов, ответы на требования, разбор норм НК простым языком,
+            пояснительные записки.
+          </p>
+        </div>
+        <ul class="scen-list">
+          {accountantScenarios.map((s) => <li class="scen card">{s}</li>)}
+        </ul>
+      </div>
+    </section>
+
+    <!-- ===== Privacy ===== -->
+    <section class="privacy">
+      <div class="container">
+        <div class="card privacy__card">
+          <div class="privacy__mark serif">§</div>
+          <div>
+            <h3 class="privacy__t serif">Ваши данные под защитой</h3>
+            <p class="privacy__d">
+              Персональные данные (ФИО, паспорта, ИНН) маскируются перед отправкой в облачные
+              модели — 152-ФЗ. Для чувствительных документов — российские модели, данные не
+              покидают РФ.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== Download ===== -->
+    <section id="download" class="download">
+      <div class="container download__inner">
+        <h2 class="section-title">Попробуйте бесплатно</h2>
+        <p class="section-lede">
+          Десктоп-приложение для Windows и macOS. Триал без привязки карты.
+        </p>
+        <div class="download__btns">
+          <a href="#" class="btn btn--primary">Скачать для Windows</a>
+          <a href="#" class="btn btn--ghost">Скачать для macOS</a>
+        </div>
+        <p class="download__note">Бесплатный период · 30 кредитов на старте · отмена в любой момент</p>
+      </div>
+    </section>
+
+    <!-- ===== Waitlist (managers) ===== -->
+    <section id="waitlist" class="waitlist">
+      <div class="container">
+        <div class="card waitlist__card">
+          <div>
+            <span class="eyebrow">Скоро — третья профессия</span>
+            <h3 class="waitlist__t serif">Вы менеджер?</h3>
+            <p class="waitlist__d">
+              Саммари совещаний, e-mail-ассистент, презентации. Оставьте email — позовём
+              первыми, когда откроем.
+            </p>
+          </div>
+          <form class="waitlist__form" id="waitlist-form">
+            <input
+              type="email"
+              name="email"
+              class="waitlist__input"
+              placeholder="вы@компания.ру"
+              required
+            />
+            <button type="submit" class="btn btn--primary">Записаться</button>
+          </form>
+          <div class="waitlist__msg" id="waitlist-msg" hidden></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== Footer ===== -->
+    <footer class="ftr">
+      <div class="container ftr__inner">
+        <div class="ftr__brand serif">Параграф</div>
+        <div class="ftr__links">
+          <a href="/offer">Оферта</a>
+          <a href="/privacy">Политика конфиденциальности</a>
+          <a href="mailto:support@paragraf.app">support@paragraf.app</a>
+        </div>
+        <div class="ftr__copy">© 2026 «Параграф»</div>
+      </div>
+    </footer>
+
+    <script>
+      // Waitlist: отправка email. На MVP — заглушка с подтверждением; позже
+      // подключим к billing-эндпоинту /waitlist.
+      const form = document.getElementById("waitlist-form")
+      const msg = document.getElementById("waitlist-msg")
+      // Billing API: dev → localhost:3000, prod → api.paragraf.app.
+      const BILLING_URL =
+        location.hostname === "localhost" || location.hostname === "127.0.0.1"
+          ? "http://localhost:3000"
+          : "https://api.paragraf.app"
+      form?.addEventListener("submit", async (e) => {
+        e.preventDefault()
+        const email = new FormData(form as HTMLFormElement).get("email") as string
+        const btn = (form as HTMLFormElement).querySelector("button")
+        if (btn) btn.disabled = true
+        try {
+          const res = await fetch(`${BILLING_URL}/waitlist`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, interest: "manager", source: "landing" }),
+          })
+          if (!res.ok) throw new Error(String(res.status))
+          if (msg) {
+            msg.textContent = `Готово! Напишем на ${email}, когда откроем для менеджеров.`
+            msg.hidden = false
+          }
+          ;(form as HTMLFormElement).reset()
+        } catch {
+          if (msg) {
+            msg.textContent = "Не удалось записать. Попробуйте позже или напишите на support@paragraf.app"
+            msg.hidden = false
+          }
+        } finally {
+          if (btn) btn.disabled = false
+        }
+      })
+    </script>
+
+    <style>
+      /* ===== Header ===== */
+      .hdr {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        background: rgba(251, 249, 244, 0.85);
+        backdrop-filter: blur(8px);
+        border-bottom: 1px solid var(--hairline);
+      }
+      .hdr__inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 64px;
+      }
+      .hdr__brand {
+        font-size: 22px;
+        font-weight: 500;
+      }
+      .hdr__brand::first-letter {
+        color: var(--accent);
+      }
+      .hdr__nav {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        font-size: 15px;
+        color: var(--text-secondary);
+      }
+      .btn--sm {
+        padding: 8px 16px;
+        font-size: 14px;
+      }
+
+      /* ===== Hero ===== */
+      .hero {
+        padding: 72px 0 56px;
+      }
+      .hero__title {
+        font-size: clamp(40px, 7vw, 76px);
+        font-weight: 500;
+        letter-spacing: -0.03em;
+        line-height: 1.04;
+        margin: 20px 0 24px;
+      }
+      .hero__title em {
+        color: var(--accent);
+        font-style: italic;
+      }
+      .hero__lede {
+        font-size: 19px;
+        color: var(--text-secondary);
+        max-width: 620px;
+        margin-bottom: 44px;
+      }
+      .doors {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        max-width: 760px;
+      }
+      .door {
+        display: block;
+        transition: all 160ms ease;
+        cursor: pointer;
+      }
+      .door:hover {
+        border-color: var(--accent);
+        transform: translateY(-2px);
+      }
+      .door__role {
+        font-size: 26px;
+        font-weight: 500;
+        margin-bottom: 8px;
+      }
+      .door__lede {
+        font-size: 15px;
+        color: var(--text-secondary);
+        margin-bottom: 16px;
+      }
+      .door__cta {
+        font-size: 14px;
+        color: var(--accent);
+        font-weight: 500;
+      }
+
+      /* ===== Steps ===== */
+      .steps {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+      }
+      .step__n {
+        font-family: var(--font-mono);
+        font-size: 13px;
+        color: var(--gold);
+        margin-bottom: 12px;
+      }
+      .step__t {
+        font-size: 20px;
+        font-weight: 500;
+        margin-bottom: 8px;
+      }
+      .step__d {
+        font-size: 15px;
+        color: var(--text-secondary);
+      }
+
+      /* ===== Verticals ===== */
+      .vert--alt {
+        background: var(--bg-surface-alt);
+      }
+      .vert__inner {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 48px;
+        align-items: start;
+      }
+      .scen-list {
+        list-style: none;
+        display: grid;
+        gap: 12px;
+      }
+      .scen {
+        padding: 18px 22px;
+        font-size: 16px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .scen::before {
+        content: "";
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--accent);
+        flex-shrink: 0;
+      }
+
+      /* ===== Privacy ===== */
+      .privacy__card {
+        display: flex;
+        gap: 24px;
+        align-items: center;
+      }
+      .privacy__mark {
+        font-size: 56px;
+        color: var(--accent);
+        line-height: 1;
+        flex-shrink: 0;
+      }
+      .privacy__t {
+        font-size: 22px;
+        font-weight: 500;
+        margin-bottom: 8px;
+      }
+      .privacy__d {
+        font-size: 16px;
+        color: var(--text-secondary);
+      }
+
+      /* ===== Download ===== */
+      .download {
+        text-align: center;
+      }
+      .download__inner .section-lede {
+        margin-left: auto;
+        margin-right: auto;
+      }
+      .download__btns {
+        display: flex;
+        gap: 14px;
+        justify-content: center;
+        margin-bottom: 16px;
+      }
+      .download__note {
+        font-size: 14px;
+        color: var(--text-tertiary);
+      }
+
+      /* ===== Waitlist ===== */
+      .waitlist__card {
+        display: grid;
+        grid-template-columns: 1.2fr 1fr;
+        gap: 32px;
+        align-items: center;
+      }
+      .waitlist__t {
+        font-size: 26px;
+        font-weight: 500;
+        margin: 10px 0 8px;
+      }
+      .waitlist__d {
+        font-size: 16px;
+        color: var(--text-secondary);
+      }
+      .waitlist__form {
+        display: flex;
+        gap: 10px;
+      }
+      .waitlist__input {
+        flex: 1;
+        font-family: var(--font-sans);
+        font-size: 15px;
+        padding: 12px 16px;
+        border: 1px solid var(--hairline-strong);
+        border-radius: var(--radius);
+        background: var(--bg-base);
+      }
+      .waitlist__input:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+      .waitlist__msg {
+        grid-column: 1 / -1;
+        font-size: 15px;
+        color: var(--accent);
+        padding-top: 8px;
+      }
+
+      /* ===== Footer ===== */
+      .ftr {
+        border-top: 1px solid var(--hairline);
+        padding: 40px 0;
+      }
+      .ftr__inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 16px;
+      }
+      .ftr__brand {
+        font-size: 18px;
+        font-weight: 500;
+      }
+      .ftr__links {
+        display: flex;
+        gap: 24px;
+        font-size: 14px;
+        color: var(--text-secondary);
+      }
+      .ftr__copy {
+        font-size: 14px;
+        color: var(--text-tertiary);
+      }
+
+      /* ===== Responsive ===== */
+      @media (max-width: 760px) {
+        .doors,
+        .steps,
+        .vert__inner,
+        .waitlist__card {
+          grid-template-columns: 1fr;
+        }
+        .hdr__nav a:not(.btn) {
+          display: none;
+        }
+        .download__btns,
+        .waitlist__form {
+          flex-direction: column;
+        }
+        .privacy__card {
+          flex-direction: column;
+          text-align: center;
+        }
+      }
+    </style>
+  </body>
+</html>

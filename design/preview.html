@@ -1,0 +1,1792 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Параграф — Restrained Editorial / design preview</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:ital,wght@0,400;0,500;0,600;1,400&family=Onest:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+  rel="stylesheet"
+/>
+
+<style>
+  /* ============ TOKENS — LIGHT (default) ============ */
+  :root {
+    --bg-page: #FBF9F4;
+    --bg-surface: #FFFFFF;
+    --bg-surface-alt: #F6F2EB;
+    --bg-inset: #F1EDE3;
+
+    --text-primary: #1A1614;
+    --text-secondary: #5C5852;
+    --text-tertiary: #8B8680;
+    --text-on-accent: #FBF9F4;
+
+    --hairline: #E8E3DB;
+    --hairline-strong: #D8D2C5;
+
+    --accent: #0B5345;
+    --accent-hover: #0D6B58;
+    --accent-muted: #0B53450F;
+    --accent-ink: #053026;
+
+    --highlight: #C8A85C;
+    --highlight-muted: #C8A85C1A;
+
+    --success: #0B5345;
+    --warning: #B45309;
+    --warning-muted: #B453091A;
+    --error: #991B1B;
+    --error-muted: #991B1B1A;
+    --info: #475569;
+
+    --shadow-sm: 0 1px 2px rgba(26, 22, 20, 0.04);
+    --shadow-md: 0 4px 12px rgba(26, 22, 20, 0.06), 0 1px 3px rgba(26, 22, 20, 0.04);
+    --shadow-lg: 0 12px 32px rgba(26, 22, 20, 0.08), 0 2px 6px rgba(26, 22, 20, 0.04);
+
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+    --radius-full: 9999px;
+
+    --font-display: 'IBM Plex Serif', 'Cambria', 'Times New Roman', serif;
+    --font-body: 'Onest', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-mono: 'JetBrains Mono', 'Consolas', monospace;
+
+    --ease: cubic-bezier(0.32, 0.72, 0.36, 1);
+  }
+
+  /* ============ TOKENS — DARK ============ */
+  [data-theme="dark"] {
+    --bg-page: #15120F;
+    --bg-surface: #1F1B17;
+    --bg-surface-alt: #25201B;
+    --bg-inset: #2B251F;
+
+    --text-primary: #EDE8DF;
+    --text-secondary: #B5AFA4;
+    --text-tertiary: #847E72;
+    --text-on-accent: #EDE8DF;
+
+    --hairline: #2E2924;
+    --hairline-strong: #3A342D;
+
+    --accent: #1A8A6B;
+    --accent-hover: #1FA17F;
+    --accent-muted: #1A8A6B1F;
+    --accent-ink: #B8E5D6;
+
+    --highlight: #D4B872;
+    --highlight-muted: #D4B8722A;
+
+    --success: #1A8A6B;
+    --warning: #D97706;
+    --warning-muted: #D9770624;
+    --error: #DC2626;
+    --error-muted: #DC262624;
+    --info: #94A3B8;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.45), 0 1px 3px rgba(0, 0, 0, 0.25);
+    --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.3);
+  }
+
+  /* ============ RESET / BASE ============ */
+  *, *::before, *::after { box-sizing: border-box; }
+  html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+  body {
+    margin: 0;
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--text-primary);
+    background: var(--bg-page);
+    background-image:
+      radial-gradient(rgba(26, 22, 20, 0.025) 1px, transparent 1px);
+    background-size: 4px 4px;
+    transition: background-color 0.3s var(--ease), color 0.3s var(--ease);
+  }
+  [data-theme="dark"] body {
+    background-image:
+      radial-gradient(rgba(255, 255, 255, 0.018) 1px, transparent 1px);
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    margin: 0;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+  }
+  p { margin: 0; }
+  code, pre { font-family: var(--font-mono); }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { color: var(--accent-hover); }
+  button { font-family: inherit; cursor: pointer; }
+
+  /* ============ LAYOUT ============ */
+  .page {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 48px 32px 96px;
+  }
+
+  /* ============ HEADER ============ */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--hairline);
+    margin-bottom: 48px;
+  }
+  .brand {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+  }
+  .brand__mark {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 500;
+    letter-spacing: -0.015em;
+    color: var(--text-primary);
+  }
+  .brand__mark::first-letter {
+    color: var(--accent);
+  }
+  .brand__tag {
+    font-family: var(--font-body);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-tertiary);
+    padding-left: 16px;
+    border-left: 1px solid var(--hairline);
+  }
+  .header__controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: var(--bg-surface);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-full);
+    color: var(--text-secondary);
+    font-size: 13px;
+    transition: all 0.15s var(--ease);
+  }
+  .theme-toggle:hover {
+    border-color: var(--hairline-strong);
+    color: var(--text-primary);
+  }
+
+  /* ============ HERO ============ */
+  .hero {
+    margin-bottom: 80px;
+    max-width: 760px;
+  }
+  .hero__eyebrow {
+    font-family: var(--font-body);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--accent);
+    font-weight: 500;
+    margin-bottom: 20px;
+  }
+  .hero__title {
+    font-size: 56px;
+    line-height: 1.05;
+    font-weight: 400;
+    margin-bottom: 24px;
+    letter-spacing: -0.02em;
+  }
+  .hero__title em {
+    font-style: italic;
+    color: var(--accent);
+  }
+  .hero__lede {
+    font-size: 18px;
+    line-height: 1.55;
+    color: var(--text-secondary);
+    font-weight: 400;
+    max-width: 620px;
+  }
+
+  /* ============ SECTION ============ */
+  .section {
+    margin-bottom: 80px;
+  }
+  .section__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 32px;
+    margin-bottom: 32px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--hairline);
+  }
+  .section__num {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-tertiary);
+    letter-spacing: 0.08em;
+  }
+  .section__title {
+    font-size: 28px;
+    line-height: 1.2;
+    margin: 4px 0;
+  }
+  .section__lede {
+    font-size: 14px;
+    color: var(--text-secondary);
+    max-width: 480px;
+    text-align: right;
+  }
+
+  /* ============ TYPOGRAPHY SPECIMENS ============ */
+  .specimens {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .specimen {
+    padding: 28px 0;
+    border-top: 1px solid var(--hairline);
+  }
+  .specimen:first-child { border-top: 0; padding-top: 0; }
+  .specimen__meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 16px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-tertiary);
+  }
+  .specimen__sample--display-xl {
+    font-family: var(--font-display);
+    font-size: 64px;
+    font-weight: 400;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+  }
+  .specimen__sample--display-lg {
+    font-family: var(--font-display);
+    font-size: 36px;
+    font-weight: 500;
+    line-height: 1.15;
+  }
+  .specimen__sample--display-italic {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-style: italic;
+    font-weight: 400;
+    line-height: 1.3;
+    color: var(--text-secondary);
+  }
+  .specimen__sample--body {
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.6;
+    max-width: 680px;
+  }
+  .specimen__sample--body-bold {
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.6;
+    font-weight: 600;
+  }
+  .specimen__sample--small {
+    font-family: var(--font-body);
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text-secondary);
+  }
+  .specimen__sample--mono {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.6;
+    background: var(--bg-inset);
+    padding: 14px 18px;
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    display: inline-block;
+  }
+  .specimen__sample--tabular {
+    font-family: var(--font-body);
+    font-variant-numeric: tabular-nums;
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+
+  /* ============ COLOR PALETTE ============ */
+  .palette {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 16px;
+  }
+  .swatch {
+    background: var(--bg-surface);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+  .swatch__chip {
+    height: 96px;
+    border-bottom: 1px solid var(--hairline);
+  }
+  .swatch__meta {
+    padding: 12px 14px;
+  }
+  .swatch__name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+  }
+  .swatch__hex {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+  }
+  .swatch__role {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+    line-height: 1.4;
+  }
+
+  /* ============ UI COMPONENTS GRID ============ */
+  .components {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  .comp-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+  }
+  .comp-card__label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-tertiary);
+    margin-bottom: 16px;
+  }
+  .btn-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 500;
+    border: 1px solid transparent;
+    transition: all 0.15s var(--ease);
+  }
+  .btn--primary {
+    background: var(--accent);
+    color: var(--text-on-accent);
+  }
+  .btn--primary:hover { background: var(--accent-hover); }
+  .btn--secondary {
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    border-color: var(--hairline-strong);
+  }
+  .btn--secondary:hover { border-color: var(--text-tertiary); }
+  .btn--ghost {
+    background: transparent;
+    color: var(--text-secondary);
+  }
+  .btn--ghost:hover { color: var(--text-primary); background: var(--bg-inset); }
+  .btn--danger {
+    background: transparent;
+    color: var(--error);
+    border-color: var(--error-muted);
+  }
+  .btn--danger:hover { background: var(--error-muted); }
+
+  .input-row { display: flex; flex-direction: column; gap: 12px; }
+  .input-group { display: flex; flex-direction: column; gap: 6px; }
+  .input-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+  }
+  .input {
+    background: var(--bg-page);
+    border: 1px solid var(--hairline-strong);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--text-primary);
+    transition: border-color 0.15s var(--ease), box-shadow 0.15s var(--ease);
+  }
+  .input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-muted);
+  }
+
+  .badges { display: flex; flex-wrap: wrap; gap: 8px; }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border-radius: var(--radius-full);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+  .badge--accent { background: var(--accent-muted); color: var(--accent-ink); }
+  [data-theme="dark"] .badge--accent { color: var(--accent-ink); }
+  .badge--warn { background: var(--warning-muted); color: var(--warning); }
+  .badge--err { background: var(--error-muted); color: var(--error); }
+  .badge--highlight { background: var(--highlight-muted); color: var(--highlight); }
+  .badge--mono { background: var(--bg-inset); color: var(--text-secondary); font-family: var(--font-mono); font-size: 10px; }
+
+  .alerts { display: flex; flex-direction: column; gap: 12px; }
+  .alert {
+    display: flex;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: var(--radius-md);
+    border-left: 3px solid;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .alert__title { font-weight: 600; margin-bottom: 2px; }
+  .alert--info { background: var(--bg-inset); border-color: var(--info); color: var(--text-primary); }
+  .alert--success { background: var(--accent-muted); border-color: var(--accent); color: var(--text-primary); }
+  .alert--warn { background: var(--warning-muted); border-color: var(--warning); color: var(--text-primary); }
+  .alert--err { background: var(--error-muted); border-color: var(--error); color: var(--text-primary); }
+
+  /* ============ MOCKUP — APP FRAME ============ */
+  .mockup {
+    background: var(--bg-page);
+    border: 1px solid var(--hairline-strong);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+    margin-bottom: 16px;
+  }
+  .mockup__chrome {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--hairline);
+    background: var(--bg-surface-alt);
+  }
+  .chrome-dot {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: var(--hairline-strong);
+  }
+  .chrome-title {
+    margin-left: auto;
+    margin-right: auto;
+    font-size: 12px;
+    color: var(--text-tertiary);
+    font-family: var(--font-mono);
+    padding-right: 32px;
+  }
+
+  /* ============ MOCKUP 1 — CHAT ============ */
+  .app-shell {
+    display: grid;
+    grid-template-columns: 264px 1fr;
+    min-height: 560px;
+  }
+  .sidebar {
+    border-right: 1px solid var(--hairline);
+    background: var(--bg-surface-alt);
+    display: flex;
+    flex-direction: column;
+  }
+  .sidebar__header {
+    padding: 16px 18px 12px;
+    border-bottom: 1px solid var(--hairline);
+  }
+  .sidebar__brand {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+  .sidebar__brand::first-letter { color: var(--accent); }
+  .sidebar__role {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-top: 2px;
+  }
+  .sidebar__section {
+    padding: 16px 12px 8px;
+  }
+  .sidebar__label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-tertiary);
+    padding: 0 8px 8px;
+    font-weight: 600;
+  }
+  .sidebar__item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    color: var(--text-secondary);
+    cursor: default;
+    transition: background 0.12s var(--ease), color 0.12s var(--ease);
+  }
+  .sidebar__item:hover { background: var(--bg-inset); color: var(--text-primary); }
+  .sidebar__item--active {
+    background: var(--accent-muted);
+    color: var(--accent-ink);
+  }
+  [data-theme="dark"] .sidebar__item--active { color: var(--accent-ink); }
+  .sidebar__dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.6;
+    flex-shrink: 0;
+  }
+  .sidebar__footer {
+    margin-top: auto;
+    padding: 12px;
+    border-top: 1px solid var(--hairline);
+  }
+  .usage {
+    background: var(--bg-surface);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-md);
+    padding: 12px 14px;
+  }
+  .usage__head {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    font-variant-numeric: tabular-nums;
+  }
+  .usage__bar {
+    height: 4px;
+    background: var(--bg-inset);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+  }
+  .usage__fill {
+    height: 100%;
+    background: var(--accent);
+    width: 69%;
+    border-radius: inherit;
+  }
+  .usage__meta {
+    font-size: 10px;
+    color: var(--text-tertiary);
+    margin-top: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .main {
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-page);
+  }
+  .main__top {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 24px;
+    border-bottom: 1px solid var(--hairline);
+    background: var(--bg-surface);
+  }
+  .model-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 12px 5px 8px;
+    background: var(--bg-inset);
+    border-radius: var(--radius-full);
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+  .model-pill__dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  .main__title {
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+  .main__actions { margin-left: auto; display: flex; gap: 8px; }
+  .icon-btn {
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    font-size: 14px;
+  }
+  .icon-btn:hover { color: var(--text-primary); border-color: var(--hairline-strong); }
+
+  .chat {
+    flex: 1;
+    overflow: hidden;
+    padding: 32px 48px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+  .chat-msg { max-width: 720px; }
+  .chat-msg--user { align-self: flex-end; }
+  .chat-msg--user .chat-bubble {
+    background: var(--bg-surface);
+    border: 1px solid var(--hairline);
+    color: var(--text-primary);
+  }
+  .chat-msg__role {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-tertiary);
+    margin-bottom: 6px;
+    font-weight: 600;
+  }
+  .chat-bubble {
+    padding: 16px 20px;
+    border-radius: var(--radius-lg);
+    line-height: 1.6;
+    font-size: 15px;
+  }
+  .chat-msg--ai .chat-bubble {
+    background: transparent;
+    padding-left: 0;
+    padding-right: 0;
+  }
+  .chat-attachment {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 12px;
+    padding: 10px 14px 10px 12px;
+    background: var(--bg-inset);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-md);
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+  .chat-attachment__icon {
+    width: 28px;
+    height: 28px;
+    background: var(--bg-surface);
+    border-radius: var(--radius-sm);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--error);
+  }
+  .chat-attachment__name { font-weight: 500; color: var(--text-primary); }
+  .chat-attachment__meta { color: var(--text-tertiary); }
+
+  .ai-finding {
+    margin: 12px 0;
+    padding: 14px 18px;
+    border-left: 3px solid var(--warning);
+    background: var(--warning-muted);
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  }
+  .ai-finding__head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+  .ai-finding__num {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--warning);
+    font-weight: 500;
+  }
+  .ai-finding__title {
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+  .ai-finding__text {
+    font-size: 14px;
+    color: var(--text-primary);
+    line-height: 1.55;
+  }
+  .ai-finding__cite {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-top: 8px;
+    padding-left: 12px;
+    border-left: 2px solid var(--hairline-strong);
+  }
+
+  .streaming-cursor {
+    display: inline-block;
+    width: 2px;
+    height: 1.1em;
+    background: var(--accent);
+    vertical-align: text-bottom;
+    margin-left: 2px;
+    animation: blink 1s step-end infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .chat-input-wrap {
+    padding: 20px 48px 32px;
+    border-top: 1px solid var(--hairline);
+    background: var(--bg-surface);
+  }
+  .chat-input {
+    background: var(--bg-page);
+    border: 1px solid var(--hairline-strong);
+    border-radius: var(--radius-lg);
+    padding: 14px 16px 12px;
+    box-shadow: var(--shadow-sm);
+  }
+  .chat-input__field {
+    font-size: 15px;
+    color: var(--text-primary);
+    min-height: 44px;
+  }
+  .chat-input__field--placeholder { color: var(--text-tertiary); }
+  .chat-input__bottom {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid var(--hairline);
+  }
+  .chat-input__hint {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-tertiary);
+    margin-right: auto;
+  }
+  .btn--send {
+    background: var(--accent);
+    color: var(--text-on-accent);
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    justify-content: center;
+    border-radius: var(--radius-md);
+  }
+
+  /* ============ MOCKUP 2 — SCENARIO LIBRARY ============ */
+  .lib {
+    padding: 40px 48px 48px;
+    background: var(--bg-page);
+    min-height: 560px;
+  }
+  .lib__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 28px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--hairline);
+  }
+  .lib__title {
+    font-size: 32px;
+    line-height: 1.15;
+    font-weight: 400;
+  }
+  .lib__title em { font-style: italic; color: var(--accent); }
+  .lib__lede {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-top: 6px;
+  }
+  .lib__filters { display: flex; gap: 8px; }
+  .filter-pill {
+    padding: 6px 14px;
+    border-radius: var(--radius-full);
+    border: 1px solid var(--hairline);
+    background: transparent;
+    font-size: 12px;
+    color: var(--text-secondary);
+    transition: all 0.15s var(--ease);
+  }
+  .filter-pill--active {
+    background: var(--text-primary);
+    color: var(--bg-page);
+    border-color: var(--text-primary);
+  }
+  .filter-pill:not(.filter-pill--active):hover { border-color: var(--hairline-strong); color: var(--text-primary); }
+
+  .lib__grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    grid-auto-rows: minmax(140px, auto);
+    gap: 16px;
+  }
+  .scenario {
+    background: var(--bg-surface);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-lg);
+    padding: 22px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: all 0.18s var(--ease);
+    cursor: default;
+  }
+  .scenario:hover {
+    border-color: var(--hairline-strong);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+  .scenario--feature {
+    grid-column: span 2;
+    grid-row: span 2;
+    background: linear-gradient(180deg, var(--bg-surface) 0%, var(--bg-surface-alt) 100%);
+    border-color: var(--hairline-strong);
+  }
+  .scenario--feature .scenario__title { font-size: 26px; line-height: 1.2; }
+  .scenario--feature .scenario__lede { font-size: 14px; -webkit-line-clamp: unset; }
+  .scenario__num {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-tertiary);
+    letter-spacing: 0.08em;
+  }
+  .scenario__title {
+    font-family: var(--font-display);
+    font-size: 18px;
+    line-height: 1.25;
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+  .scenario__lede {
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text-secondary);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .scenario__foot {
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 11px;
+    color: var(--text-tertiary);
+  }
+  .scenario__steps { font-variant-numeric: tabular-nums; }
+  .scenario__model {
+    font-family: var(--font-mono);
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+    background: var(--bg-inset);
+  }
+
+  /* ============ MOCKUP 3 — BILLING ============ */
+  .bill {
+    padding: 40px 48px 48px;
+    background: var(--bg-page);
+    min-height: 560px;
+  }
+  .bill__head { margin-bottom: 32px; padding-bottom: 20px; border-bottom: 1px solid var(--hairline); }
+  .bill__breadcrumb {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-tertiary);
+    letter-spacing: 0.06em;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+  }
+  .bill__title { font-size: 32px; font-weight: 400; }
+  .bill__title em { font-style: italic; color: var(--accent); }
+
+  .bill__grid {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 24px;
+    margin-bottom: 32px;
+  }
+  .bill-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-lg);
+    padding: 28px;
+  }
+  .bill-card__label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-tertiary);
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+  .bill-plan {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+  .bill-plan__price {
+    font-family: var(--font-body);
+    font-size: 14px;
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+  }
+  .bill-progress {
+    margin: 24px 0 12px;
+  }
+  .bill-progress__bar {
+    height: 8px;
+    background: var(--bg-inset);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    margin-bottom: 10px;
+  }
+  .bill-progress__fill {
+    height: 100%;
+    background: var(--accent);
+    width: 69.2%;
+    border-radius: inherit;
+  }
+  .bill-progress__meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+  }
+  .bill-progress__meta strong { color: var(--text-primary); font-weight: 600; }
+  .bill-card__actions { display: flex; gap: 12px; margin-top: 20px; }
+
+  .bill-meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 0;
+    border-top: 1px solid var(--hairline);
+    font-size: 13px;
+  }
+  .bill-meta-row:first-of-type { border-top: 0; padding-top: 0; }
+  .bill-meta-row__label { color: var(--text-secondary); }
+  .bill-meta-row__value { font-weight: 500; font-variant-numeric: tabular-nums; }
+
+  .rate-card {
+    margin-top: 24px;
+    padding: 16px 18px;
+    background: var(--bg-inset);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--hairline);
+  }
+  .rate-card__head {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-tertiary);
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+  .rate-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 0;
+    font-size: 13px;
+    color: var(--text-primary);
+  }
+  .rate-row__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .rate-row__name {
+    flex: 1;
+  }
+  .rate-row__mult {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+  }
+  .rate-card__foot {
+    margin-top: 8px;
+    padding-top: 10px;
+    border-top: 1px solid var(--hairline);
+    font-size: 11px;
+    color: var(--text-tertiary);
+    line-height: 1.5;
+  }
+
+  .bill-history {
+    background: var(--bg-surface);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-lg);
+    padding: 28px;
+  }
+  .bill-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 16px;
+  }
+  .bill-table th {
+    text-align: left;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-tertiary);
+    font-weight: 600;
+    padding: 10px 8px;
+    border-bottom: 1px solid var(--hairline);
+  }
+  .bill-table th:last-child, .bill-table td:last-child { text-align: right; }
+  .bill-table td {
+    padding: 14px 8px;
+    border-bottom: 1px solid var(--hairline);
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+  }
+  .bill-table tr:last-child td { border-bottom: 0; }
+  .bill-table__amount { font-weight: 600; color: var(--text-primary); }
+  .bill-table__date { color: var(--text-secondary); }
+
+  /* ============ FOOT ============ */
+  .foot {
+    margin-top: 64px;
+    padding-top: 32px;
+    border-top: 1px solid var(--hairline);
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--text-tertiary);
+    font-family: var(--font-mono);
+  }
+
+  /* ============ RESP ============ */
+  @media (max-width: 900px) {
+    .hero__title { font-size: 40px; }
+    .components { grid-template-columns: 1fr; }
+    .lib__grid, .bill__grid { grid-template-columns: 1fr; }
+    .scenario--feature { grid-column: auto; grid-row: auto; }
+    .app-shell { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+  }
+</style>
+</head>
+<body data-theme="light">
+
+<div class="page">
+
+  <!-- ============ HEADER ============ -->
+  <header class="header">
+    <div class="brand">
+      <span class="brand__mark">Параграф</span>
+      <span class="brand__tag">design preview · v0.1</span>
+    </div>
+    <div class="header__controls">
+      <button class="theme-toggle" onclick="toggleTheme()" id="theme-btn">
+        <span id="theme-icon">◐</span>
+        <span id="theme-label">Тёмная тема</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ============ HERO ============ -->
+  <section class="hero">
+    <div class="hero__eyebrow">Дизайн-система — restrained editorial</div>
+    <h1 class="hero__title">
+      Серьёзный инструмент с <em>тёплой</em> подачей
+      и премиальной&nbsp;типографикой.
+    </h1>
+    <p class="hero__lede">
+      ИИ-агент для юристов и&nbsp;бухгалтеров. Не&nbsp;IDE, не&nbsp;«пустой чат», не&nbsp;КонсультантПлюс
+      1998&nbsp;года. Уважает документ как объект, профессионала&nbsp;— как читателя.
+      Типографика делает основную работу.
+    </p>
+  </section>
+
+  <!-- ============ MOCKUP 1 — CHAT ============ -->
+  <section class="section">
+    <div class="section__head">
+      <div>
+        <div class="section__num">01 / mockup</div>
+        <h2 class="section__title">Главный экран — чат</h2>
+      </div>
+      <p class="section__lede">
+        Документо-центричный диалог. Сайдбар со&nbsp;сценариями. Модель переключается одним кликом.
+        Streaming-ответ оформляет находки как пронумерованные блоки риска.
+      </p>
+    </div>
+
+    <div class="mockup">
+      <div class="mockup__chrome">
+        <span class="chrome-dot"></span><span class="chrome-dot"></span><span class="chrome-dot"></span>
+        <span class="chrome-title">параграф · проверка договора поставки</span>
+      </div>
+      <div class="app-shell">
+
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+          <div class="sidebar__header">
+            <div class="sidebar__brand">Параграф</div>
+            <div class="sidebar__role">Юрист</div>
+          </div>
+
+          <div class="sidebar__section">
+            <div class="sidebar__label">Сценарии</div>
+            <div class="sidebar__item sidebar__item--active">
+              <span class="sidebar__dot"></span>
+              Проверка договора на риски
+            </div>
+            <div class="sidebar__item">
+              <span class="sidebar__dot"></span>
+              Составление договора
+            </div>
+            <div class="sidebar__item">
+              <span class="sidebar__dot"></span>
+              Подготовка претензии
+            </div>
+            <div class="sidebar__item">
+              <span class="sidebar__dot"></span>
+              Сравнение двух редакций
+            </div>
+            <div class="sidebar__item">
+              <span class="sidebar__dot"></span>
+              Краткое содержание
+            </div>
+          </div>
+
+          <div class="sidebar__section">
+            <div class="sidebar__label">История</div>
+            <div class="sidebar__item">Договор с&nbsp;ООО «Восток»</div>
+            <div class="sidebar__item">Претензия по&nbsp;поставке</div>
+            <div class="sidebar__item">Анализ ДДУ</div>
+          </div>
+
+          <div class="sidebar__footer">
+            <div class="usage">
+              <div class="usage__head">
+                <span>Кредиты в&nbsp;этом месяце</span>
+                <span><strong>1 173</strong>&nbsp;/&nbsp;1 700</span>
+              </div>
+              <div class="usage__bar"><div class="usage__fill"></div></div>
+              <div class="usage__meta">Сброс через 4&nbsp;дня · «Профи»</div>
+            </div>
+          </div>
+        </aside>
+
+        <!-- MAIN -->
+        <div class="main">
+          <div class="main__top">
+            <div class="main__title">Проверка договора поставки № 47</div>
+            <div class="model-pill">
+              <span class="model-pill__dot"></span>
+              Claude Sonnet 4.5
+            </div>
+            <div class="main__actions">
+              <button class="icon-btn" title="Экспорт">⤓</button>
+              <button class="icon-btn" title="Поделиться">↗</button>
+              <button class="icon-btn" title="Ещё">⋯</button>
+            </div>
+          </div>
+
+          <div class="chat">
+            <!-- USER MSG -->
+            <div class="chat-msg chat-msg--user">
+              <div class="chat-msg__role">Анна Петрова</div>
+              <div class="chat-bubble">
+                Проверь договор поставки на&nbsp;риски для&nbsp;нашей стороны (поставщик).
+                Особенно интересуют пени, форс-мажор и&nbsp;односторонний отказ.
+                <div class="chat-attachment">
+                  <span class="chat-attachment__icon">PDF</span>
+                  <div>
+                    <div class="chat-attachment__name">Договор-поставки-2026-восток.pdf</div>
+                    <div class="chat-attachment__meta">14&nbsp;стр · 312&nbsp;КБ</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- AI MSG -->
+            <div class="chat-msg chat-msg--ai">
+              <div class="chat-msg__role">Параграф</div>
+              <div class="chat-bubble">
+                Прочитал договор. Нашёл <strong>4&nbsp;существенных риска</strong>
+                для&nbsp;поставщика. Перечисляю в&nbsp;порядке серьёзности.
+
+                <div class="ai-finding">
+                  <div class="ai-finding__head">
+                    <span class="ai-finding__num">01 · ВЫСОКИЙ</span>
+                    <span class="ai-finding__title">Пеня без&nbsp;потолка</span>
+                  </div>
+                  <div class="ai-finding__text">
+                    П.&nbsp;5.2 устанавливает пеню 0,5%&nbsp;в&nbsp;день
+                    за&nbsp;просрочку поставки без&nbsp;ограничения суммы.
+                    При&nbsp;месячной задержке пеня превысит 15% от&nbsp;цены договора.
+                  </div>
+                  <div class="ai-finding__cite">
+                    «...в&nbsp;размере 0,5% от&nbsp;суммы непоставленной партии
+                    за&nbsp;каждый день просрочки...»
+                  </div>
+                </div>
+
+                <div class="ai-finding">
+                  <div class="ai-finding__head">
+                    <span class="ai-finding__num">02 · СРЕДНИЙ</span>
+                    <span class="ai-finding__title">Форс-мажор уже&shy;ще обычного</span>
+                  </div>
+                  <div class="ai-finding__text">
+                    П.&nbsp;9.1 исключает из&nbsp;форс-мажора&nbsp;«санкции
+                    и&nbsp;действия государственных органов». В&nbsp;текущей<span class="streaming-cursor"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="chat-input-wrap">
+            <div class="chat-input">
+              <div class="chat-input__field chat-input__field--placeholder">
+                Задайте уточняющий вопрос или&nbsp;запустите следующий сценарий…
+              </div>
+              <div class="chat-input__bottom">
+                <span class="chat-input__hint">Оценка: ~<strong style="color:var(--text-secondary)">12&nbsp;кредитов</strong> · Sonnet 1.5×</span>
+                <button class="btn btn--ghost" style="padding: 6px 10px; font-size: 12px;">＋ Документ</button>
+                <button class="btn btn--send">→</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ MOCKUP 2 — SCENARIO LIBRARY ============ -->
+  <section class="section">
+    <div class="section__head">
+      <div>
+        <div class="section__num">02 / mockup</div>
+        <h2 class="section__title">Библиотека сценариев</h2>
+      </div>
+      <p class="section__lede">
+        Editorial-композиция: ключевой сценарий — крупно. Карточки разного размера,
+        не&nbsp;три-колоночная сеть. Главная фича против пустого чата.
+      </p>
+    </div>
+
+    <div class="mockup">
+      <div class="mockup__chrome">
+        <span class="chrome-dot"></span><span class="chrome-dot"></span><span class="chrome-dot"></span>
+        <span class="chrome-title">параграф · библиотека сценариев</span>
+      </div>
+      <div class="lib">
+        <div class="lib__head">
+          <div>
+            <h3 class="lib__title">С&nbsp;чего <em>начать</em>?</h3>
+            <p class="lib__lede">
+              Сценарии собраны под&nbsp;вашу профессию. Каждый — пошаговый мастер,
+              а&nbsp;не&nbsp;пустой чат.
+            </p>
+          </div>
+          <div class="lib__filters">
+            <button class="filter-pill filter-pill--active">Юрист</button>
+            <button class="filter-pill">Бухгалтер</button>
+          </div>
+        </div>
+
+        <div class="lib__grid">
+          <article class="scenario scenario--feature">
+            <span class="scenario__num">01 · популярный</span>
+            <h4 class="scenario__title">Проверка договора на&nbsp;риски</h4>
+            <p class="scenario__lede">
+              Загрузите договор — получите пронумерованный список рисков
+              со&nbsp;ссылкой на&nbsp;конкретные пункты, оценкой
+              серьёзности и&nbsp;готовыми правками. Подходит для&nbsp;договоров
+              поставки, услуг, аренды, подряда.
+            </p>
+            <div class="scenario__foot">
+              <span class="scenario__steps">5 шагов · ~3 мин</span>
+              <span class="scenario__model">Claude Sonnet</span>
+            </div>
+          </article>
+
+          <article class="scenario">
+            <span class="scenario__num">02</span>
+            <h4 class="scenario__title">Составить договор</h4>
+            <p class="scenario__lede">
+              По&nbsp;параметрам, с&nbsp;учётом ваших стандартных условий.
+            </p>
+            <div class="scenario__foot">
+              <span class="scenario__steps">7 шагов</span>
+            </div>
+          </article>
+
+          <article class="scenario">
+            <span class="scenario__num">03</span>
+            <h4 class="scenario__title">Подготовить претензию</h4>
+            <p class="scenario__lede">
+              Досудебная или&nbsp;исковое — выбор шаблона по&nbsp;ситуации.
+            </p>
+            <div class="scenario__foot">
+              <span class="scenario__steps">6 шагов</span>
+            </div>
+          </article>
+
+          <article class="scenario">
+            <span class="scenario__num">04</span>
+            <h4 class="scenario__title">Сравнить две редакции</h4>
+            <p class="scenario__lede">
+              Что изменилось между версиями договора и&nbsp;что это значит.
+            </p>
+            <div class="scenario__foot">
+              <span class="scenario__steps">3 шага</span>
+            </div>
+          </article>
+
+          <article class="scenario">
+            <span class="scenario__num">05</span>
+            <h4 class="scenario__title">Краткое содержание документа</h4>
+            <p class="scenario__lede">
+              Длинный документ — на&nbsp;одну страницу. С&nbsp;цитированием
+              существенных пунктов.
+            </p>
+            <div class="scenario__foot">
+              <span class="scenario__steps">2 шага</span>
+              <span class="scenario__model">GigaChat</span>
+            </div>
+          </article>
+
+          <article class="scenario">
+            <span class="scenario__num">06</span>
+            <h4 class="scenario__title">Подготовить ответ в&nbsp;суд</h4>
+            <p class="scenario__lede">
+              Отзыв, возражения, ходатайство — структурированный черновик.
+            </p>
+            <div class="scenario__foot">
+              <span class="scenario__steps">8 шагов</span>
+            </div>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ MOCKUP 3 — BILLING ============ -->
+  <section class="section">
+    <div class="section__head">
+      <div>
+        <div class="section__num">03 / mockup</div>
+        <h2 class="section__title">Тариф и&nbsp;расход</h2>
+      </div>
+      <p class="section__lede">
+        Постоянно видимый бюджет — без&nbsp;тревоги. Tabular-числа,
+        история отдельной карточкой, главная цифра — задачи в&nbsp;месяц.
+      </p>
+    </div>
+
+    <div class="mockup">
+      <div class="mockup__chrome">
+        <span class="chrome-dot"></span><span class="chrome-dot"></span><span class="chrome-dot"></span>
+        <span class="chrome-title">параграф · профиль · тариф и расход</span>
+      </div>
+      <div class="bill">
+        <div class="bill__head">
+          <div class="bill__breadcrumb">Профиль · Кредиты и подписка</div>
+          <h3 class="bill__title">Подписка «<em>Профи</em>» — активна до&nbsp;28&nbsp;июня</h3>
+        </div>
+
+        <div class="bill__grid">
+          <div class="bill-card">
+            <div class="bill-card__label">Баланс кредитов</div>
+            <div class="bill-plan">1 173<span class="bill-plan__price">&nbsp;&nbsp;/&nbsp;1 700 в&nbsp;этом месяце</span></div>
+
+            <div class="bill-progress">
+              <div class="bill-progress__bar"><div class="bill-progress__fill"></div></div>
+              <div class="bill-progress__meta">
+                <span><strong>69%</strong> использовано</span>
+                <span>Сброс <strong>28 июня</strong></span>
+              </div>
+            </div>
+
+            <div class="rate-card">
+              <div class="rate-card__head">Цена модели</div>
+              <div class="rate-row">
+                <span class="rate-row__dot" style="background:#8B8680"></span>
+                <span class="rate-row__name">GigaChat Lite, GPT-mini</span>
+                <span class="rate-row__mult">1.0× кредит</span>
+              </div>
+              <div class="rate-row">
+                <span class="rate-row__dot" style="background:#0B5345"></span>
+                <span class="rate-row__name">Claude Sonnet, GPT-4o</span>
+                <span class="rate-row__mult">1.5× кредит</span>
+              </div>
+              <div class="rate-row">
+                <span class="rate-row__dot" style="background:#C8A85C"></span>
+                <span class="rate-row__name">Claude Opus, o1-pro</span>
+                <span class="rate-row__mult">2.2× кредит</span>
+              </div>
+              <div class="rate-card__foot">
+                1 кредит ≈ обработка ~1 500 токенов входа + 500 токенов ответа на&nbsp;Lite-модели
+              </div>
+            </div>
+
+            <div class="bill-card__actions">
+              <button class="btn btn--primary">Докупить +500 кредитов · 1&nbsp;290&nbsp;₽</button>
+              <button class="btn btn--secondary">Сменить тариф</button>
+            </div>
+          </div>
+
+          <div class="bill-card">
+            <div class="bill-card__label">Подписка</div>
+            <div class="bill-meta-row">
+              <span class="bill-meta-row__label">Тариф</span>
+              <span class="bill-meta-row__value">Профи — 1 700 кредитов / мес</span>
+            </div>
+            <div class="bill-meta-row">
+              <span class="bill-meta-row__label">Стоимость</span>
+              <span class="bill-meta-row__value">2 900&nbsp;₽ / мес</span>
+            </div>
+            <div class="bill-meta-row">
+              <span class="bill-meta-row__label">Следующее списание</span>
+              <span class="bill-meta-row__value">28&nbsp;июня</span>
+            </div>
+            <div class="bill-meta-row">
+              <span class="bill-meta-row__label">Карта</span>
+              <span class="bill-meta-row__value">Visa ···· 4218</span>
+            </div>
+            <div class="bill-meta-row">
+              <span class="bill-meta-row__label">Докупленные кредиты</span>
+              <span class="bill-meta-row__value">0 <span style="color:var(--text-tertiary);font-weight:400;font-size:11px;">(не&nbsp;сгорают до&nbsp;31&nbsp;июля)</span></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="bill-history">
+          <div class="bill-card__label">История платежей</div>
+          <table class="bill-table">
+            <thead>
+              <tr>
+                <th>Дата</th>
+                <th>Описание</th>
+                <th>Кредиты</th>
+                <th>Статус</th>
+                <th>Сумма</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="bill-table__date">28 мая 2026</td>
+                <td>Подписка «Профи», 1 мес</td>
+                <td>+1 700</td>
+                <td><span class="badge badge--accent">Оплачено</span></td>
+                <td class="bill-table__amount">2 900,00&nbsp;₽</td>
+              </tr>
+              <tr>
+                <td class="bill-table__date">15 мая 2026</td>
+                <td>Докупка кредитов</td>
+                <td>+500</td>
+                <td><span class="badge badge--accent">Оплачено</span></td>
+                <td class="bill-table__amount">1 290,00&nbsp;₽</td>
+              </tr>
+              <tr>
+                <td class="bill-table__date">28 апр 2026</td>
+                <td>Подписка «Профи», 1 мес</td>
+                <td>+1 700</td>
+                <td><span class="badge badge--accent">Оплачено</span></td>
+                <td class="bill-table__amount">2 900,00&nbsp;₽</td>
+              </tr>
+              <tr>
+                <td class="bill-table__date">28 мар 2026</td>
+                <td>Подписка «Старт», 1 мес</td>
+                <td>+500</td>
+                <td><span class="badge badge--accent">Оплачено</span></td>
+                <td class="bill-table__amount">990,00&nbsp;₽</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TYPOGRAPHY ============ -->
+  <section class="section">
+    <div class="section__head">
+      <div>
+        <div class="section__num">04 / specimens</div>
+        <h2 class="section__title">Типографика</h2>
+      </div>
+      <p class="section__lede">
+        Серифный акцент несёт «премиум» сигнал. Гротеск делает рабочую часть.
+        Кириллица проверена.
+      </p>
+    </div>
+
+    <div class="specimens">
+      <div class="specimen">
+        <div class="specimen__meta">
+          <span>IBM Plex Serif · 64 / 1.05 · 400</span>
+          <span>display · hero · scenario titles</span>
+        </div>
+        <div class="specimen__sample--display-xl">Согласно статье 421 ГК&nbsp;РФ…</div>
+      </div>
+
+      <div class="specimen">
+        <div class="specimen__meta">
+          <span>IBM Plex Serif · 36 / 1.15 · 500</span>
+          <span>section title</span>
+        </div>
+        <div class="specimen__sample--display-lg">Проверка договора на&nbsp;риски</div>
+      </div>
+
+      <div class="specimen">
+        <div class="specimen__meta">
+          <span>IBM Plex Serif · 28 / italic 400</span>
+          <span>blockquote · doc citation</span>
+        </div>
+        <div class="specimen__sample--display-italic">
+          «…в&nbsp;размере 0,5% от&nbsp;суммы непоставленной партии за&nbsp;каждый день
+          просрочки до&nbsp;момента фактического исполнения обязательства…»
+        </div>
+      </div>
+
+      <div class="specimen">
+        <div class="specimen__meta">
+          <span>Onest · 16 / 1.6 · 400</span>
+          <span>body</span>
+        </div>
+        <div class="specimen__sample--body">
+          Договор поставки № 47 содержит четыре существенных риска для&nbsp;поставщика.
+          Самый серьёзный — пеня без&nbsp;потолка по&nbsp;пункту 5.2: при&nbsp;месячной
+          задержке поставки сумма пени превысит 15% от&nbsp;цены договора.
+          Рекомендую установить предельный размер 10% и&nbsp;ограничить базу расчёта
+          стоимостью непоставленного товара, а&nbsp;не&nbsp;всей партии.
+        </div>
+      </div>
+
+      <div class="specimen">
+        <div class="specimen__meta">
+          <span>Onest · 16 / 1.6 · 600</span>
+          <span>body bold · button label</span>
+        </div>
+        <div class="specimen__sample--body-bold">
+          4 существенных риска · Подготовить претензию · Сменить тариф
+        </div>
+      </div>
+
+      <div class="specimen">
+        <div class="specimen__meta">
+          <span>Onest · 13 / 1.5 · 400</span>
+          <span>small · UI · captions</span>
+        </div>
+        <div class="specimen__sample--small">
+          Сценарий из&nbsp;5&nbsp;шагов, занимает около 3&nbsp;минут.
+          Можно прервать и&nbsp;продолжить позже.
+        </div>
+      </div>
+
+      <div class="specimen">
+        <div class="specimen__meta">
+          <span>Onest · 18 / tabular-nums · 500</span>
+          <span>data · numbers · tables</span>
+        </div>
+        <div class="specimen__sample--tabular">
+          173 / 250 задач&nbsp;&nbsp;·&nbsp;&nbsp;2 900,00 ₽&nbsp;&nbsp;·&nbsp;&nbsp;28 июня 2026
+        </div>
+      </div>
+
+      <div class="specimen">
+        <div class="specimen__meta">
+          <span>JetBrains Mono · 13 / 1.6 · 400</span>
+          <span>code · technical references</span>
+        </div>
+        <div class="specimen__sample--mono">// virtual_key: sk-•••pZj9Gyyisgw<br/>POST /v1/messages → 200&nbsp;OK · 1.2&nbsp;s</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ COLOR ============ -->
+  <section class="section">
+    <div class="section__head">
+      <div>
+        <div class="section__num">05 / palette</div>
+        <h2 class="section__title">Цвет</h2>
+      </div>
+      <p class="section__lede">
+        Тёплая бумажная база, deep emerald как единственный громкий цвет,
+        приглушённое золото — пара. Никаких градиентов и&nbsp;неона.
+      </p>
+    </div>
+
+    <div class="palette">
+      <div class="swatch"><div class="swatch__chip" style="background:#FBF9F4; border-bottom:1px solid #E8E3DB;"></div><div class="swatch__meta"><div class="swatch__name">Bg — page</div><div class="swatch__hex">#FBF9F4</div><div class="swatch__role">Кремовая бумага. Не&nbsp;#FFF.</div></div></div>
+      <div class="swatch"><div class="swatch__chip" style="background:#FFFFFF; border-bottom:1px solid #E8E3DB;"></div><div class="swatch__meta"><div class="swatch__name">Bg — surface</div><div class="swatch__hex">#FFFFFF</div><div class="swatch__role">Карточки «всплывают» над&nbsp;фоном.</div></div></div>
+      <div class="swatch"><div class="swatch__chip" style="background:#F1EDE3;"></div><div class="swatch__meta"><div class="swatch__name">Bg — inset</div><div class="swatch__hex">#F1EDE3</div><div class="swatch__role">Code-блоки, утопленные элементы.</div></div></div>
+      <div class="swatch"><div class="swatch__chip" style="background:#E8E3DB;"></div><div class="swatch__meta"><div class="swatch__name">Hairline</div><div class="swatch__hex">#E8E3DB</div><div class="swatch__role">1px-разделители как в&nbsp;журнале.</div></div></div>
+
+      <div class="swatch"><div class="swatch__chip" style="background:#1A1614;"></div><div class="swatch__meta"><div class="swatch__name">Text — primary</div><div class="swatch__hex">#1A1614</div><div class="swatch__role">Тёплый near-black, не&nbsp;#000.</div></div></div>
+      <div class="swatch"><div class="swatch__chip" style="background:#5C5852;"></div><div class="swatch__meta"><div class="swatch__name">Text — secondary</div><div class="swatch__hex">#5C5852</div><div class="swatch__role">Warm gray.</div></div></div>
+      <div class="swatch"><div class="swatch__chip" style="background:#8B8680;"></div><div class="swatch__meta"><div class="swatch__name">Text — tertiary</div><div class="swatch__hex">#8B8680</div><div class="swatch__role">Метаданные, плейсхолдеры.</div></div></div>
+
+      <div class="swatch"><div class="swatch__chip" style="background:#0B5345;"></div><div class="swatch__meta"><div class="swatch__name">Accent — emerald</div><div class="swatch__hex">#0B5345</div><div class="swatch__role">Закон + деньги + природа.</div></div></div>
+      <div class="swatch"><div class="swatch__chip" style="background:#0D6B58;"></div><div class="swatch__meta"><div class="swatch__name">Accent — hover</div><div class="swatch__hex">#0D6B58</div><div class="swatch__role">Шаг светлее для&nbsp;hover-состояний.</div></div></div>
+      <div class="swatch"><div class="swatch__chip" style="background:#C8A85C;"></div><div class="swatch__meta"><div class="swatch__name">Highlight — gold</div><div class="swatch__hex">#C8A85C</div><div class="swatch__role">Бэйджи, премиальные акценты.</div></div></div>
+
+      <div class="swatch"><div class="swatch__chip" style="background:#B45309;"></div><div class="swatch__meta"><div class="swatch__name">Warning</div><div class="swatch__hex">#B45309</div><div class="swatch__role">Warm amber, не&nbsp;неон.</div></div></div>
+      <div class="swatch"><div class="swatch__chip" style="background:#991B1B;"></div><div class="swatch__meta"><div class="swatch__name">Error</div><div class="swatch__hex">#991B1B</div><div class="swatch__role">Oxblood, не&nbsp;Bootstrap red.</div></div></div>
+      <div class="swatch"><div class="swatch__chip" style="background:#475569;"></div><div class="swatch__meta"><div class="swatch__name">Info</div><div class="swatch__hex">#475569</div><div class="swatch__role">Slate blue.</div></div></div>
+    </div>
+  </section>
+
+  <!-- ============ COMPONENTS ============ -->
+  <section class="section">
+    <div class="section__head">
+      <div>
+        <div class="section__num">06 / components</div>
+        <h2 class="section__title">UI-элементы</h2>
+      </div>
+      <p class="section__lede">
+        Кнопки, инпуты, бэйджи, алёрты — в&nbsp;системе. Кобальт/Радикс-совместимо, ляжет
+        на&nbsp;SolidJS&nbsp;+&nbsp;Tailwind без&nbsp;вывертов.
+      </p>
+    </div>
+
+    <div class="components">
+      <div class="comp-card">
+        <div class="comp-card__label">Buttons</div>
+        <div class="btn-row" style="margin-bottom: 16px;">
+          <button class="btn btn--primary">Запустить сценарий</button>
+          <button class="btn btn--secondary">Отмена</button>
+          <button class="btn btn--ghost">Подробнее</button>
+          <button class="btn btn--danger">Удалить</button>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn--primary" style="padding: 6px 12px; font-size: 12px;">Small</button>
+          <button class="btn btn--primary">Default</button>
+          <button class="btn btn--primary" style="padding: 14px 24px; font-size: 16px;">Large</button>
+        </div>
+      </div>
+
+      <div class="comp-card">
+        <div class="comp-card__label">Inputs</div>
+        <div class="input-row">
+          <div class="input-group">
+            <label class="input-label">Email</label>
+            <input class="input" type="email" value="anna.petrova@yur-firma.ru" />
+          </div>
+          <div class="input-group">
+            <label class="input-label">Промокод</label>
+            <input class="input" type="text" placeholder="Введите код…" />
+          </div>
+        </div>
+      </div>
+
+      <div class="comp-card">
+        <div class="comp-card__label">Badges</div>
+        <div class="badges">
+          <span class="badge badge--accent">Оплачено</span>
+          <span class="badge badge--warn">Внимание</span>
+          <span class="badge badge--err">Просрочен</span>
+          <span class="badge badge--highlight">Премиум</span>
+          <span class="badge badge--mono">v1.2.3</span>
+        </div>
+      </div>
+
+      <div class="comp-card">
+        <div class="comp-card__label">Alerts</div>
+        <div class="alerts">
+          <div class="alert alert--success">
+            <div>
+              <div class="alert__title">Документ обработан</div>
+              Найдено 4&nbsp;риска. Отчёт ниже.
+            </div>
+          </div>
+          <div class="alert alert--warn">
+            <div>
+              <div class="alert__title">Лимит на&nbsp;исходе</div>
+              Осталось 5&nbsp;задач из&nbsp;250. Сброс через 4&nbsp;дня.
+            </div>
+          </div>
+          <div class="alert alert--err">
+            <div>
+              <div class="alert__title">Карта не&nbsp;сработала</div>
+              Обновите способ оплаты, чтобы избежать остановки подписки.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FOOT ============ -->
+  <footer class="foot">
+    <span>parag.design.preview · v0.1 · 2026-05-24</span>
+    <span>typography: IBM Plex Serif · Onest · JetBrains Mono</span>
+  </footer>
+
+</div>
+
+<script>
+  function toggleTheme() {
+    const body = document.body;
+    const isDark = body.getAttribute('data-theme') === 'dark';
+    body.setAttribute('data-theme', isDark ? 'light' : 'dark');
+    document.getElementById('theme-icon').textContent = isDark ? '◐' : '◑';
+    document.getElementById('theme-label').textContent = isDark ? 'Тёмная тема' : 'Светлая тема';
+  }
+</script>
+
+</body>
+</html>

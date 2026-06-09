@@ -1,0 +1,51 @@
+# Deploy gateway prod на push в prod (ТЗ-06 §6).
+# Зарубежный VPS (Hetzner/etc) — НЕ хранит ПДн.
+
+name: Deploy Gateway
+
+on:
+  push:
+    branches: [prod]
+    paths:
+      - "gateway/**"
+      - ".github/workflows/deploy-gateway.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-gateway
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04
+    environment: production-gateway
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "${{ secrets.GATEWAY_DEPLOY_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H "${{ secrets.GATEWAY_DEPLOY_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Deploy
+        env:
+          HOST: ${{ secrets.GATEWAY_DEPLOY_HOST }}
+          USER: ${{ secrets.GATEWAY_DEPLOY_USER }}
+        run: |
+          ssh "$USER@$HOST" "cd /opt/gateway && ./scripts/deploy.sh"
+
+      - name: Smoke test
+        run: |
+          DOMAIN="${{ secrets.GATEWAY_DOMAIN }}"
+          for i in 1 2 3 4 5; do
+            if curl -fsSL --max-time 10 "https://$DOMAIN/health/liveliness" | grep -qi 'alive'; then
+              echo "gateway prod healthy"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "::error::gateway prod NOT healthy"
+          exit 1

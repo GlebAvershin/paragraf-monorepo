@@ -1,0 +1,90 @@
+# CI — typecheck + tests на каждом PR (ТЗ-06 §6).
+name: CI
+
+on:
+  pull_request:
+    branches: [dev, prod, main, master, "ourapp/main"]
+  push:
+    branches: [dev, prod, main, master, "ourapp/main"]
+
+jobs:
+  billing:
+    name: Billing — typecheck + tests
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: billing
+          POSTGRES_USER: billing
+          POSTGRES_PASSWORD: billing
+        ports: ["5433:5432"]
+        options: >-
+          --health-cmd "pg_isready -U billing"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    defaults:
+      run:
+        working-directory: billing
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+      - name: Install deps
+        run: bun install --frozen-lockfile
+      - name: Typecheck
+        run: bunx tsc --noEmit
+      - name: Apply schema + seed (fresh CI DB)
+        env:
+          DATABASE_URL: postgres://billing:billing@localhost:5433/billing
+          JWT_SECRET: test-secret-${{ github.run_id }}-padding-to-32-chars
+          LITELLM_BASE_URL: http://localhost:4000
+          LITELLM_MASTER_KEY: sk-test-master
+        run: |
+          bun run db:push
+          bun run db:seed
+      - name: Tests
+        env:
+          DATABASE_URL: postgres://billing:billing@localhost:5433/billing
+          JWT_SECRET: test-secret-${{ github.run_id }}
+          LITELLM_BASE_URL: http://localhost:4000
+          LITELLM_MASTER_KEY: sk-test-master
+        run: bun test
+
+  doc-tools:
+    name: doc-tools — tests
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: desktop/packages/doc-tools
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+      - name: Install workspace deps
+        working-directory: desktop
+        run: bun install --frozen-lockfile
+      - name: Tests
+        run: bun test
+
+  app-tests:
+    name: desktop/app — scenarios + pii tests
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: desktop/packages/app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+      - name: Install workspace deps
+        working-directory: desktop
+        run: bun install --frozen-lockfile
+      - name: Scenario tests
+        run: bun test src/ourapp/scenarios/scenarios.test.ts
+      - name: PII tests
+        run: bun test src/ourapp/pii/pii.test.ts

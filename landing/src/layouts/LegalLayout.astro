@@ -1,0 +1,101 @@
+---
+/**
+ * Layout для юридических страниц (оферта, политика конфиденциальности).
+ * Простая текстовая вёрстка в стиле DESIGN.md. Тексты — заглушки, помечены
+ * LEGAL: review — финальные формулировки согласовать с юристом по 152-ФЗ.
+ */
+import "../styles/global.css"
+const { title } = Astro.props
+---
+
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title} — Параграф</title>
+    <meta name="robots" content="noindex" />
+  </head>
+  <body>
+    <header class="lhdr">
+      <div class="container lhdr__inner">
+        <a href="/" class="lhdr__brand serif">Параграф</a>
+        <a href="/" class="lhdr__back">← На главную</a>
+      </div>
+    </header>
+    <main class="container legal">
+      <h1 class="legal__title serif">{title}</h1>
+      <div class="legal__body">
+        <slot />
+      </div>
+    </main>
+    <footer class="lftr">
+      <div class="container">© 2026 «Параграф» · <a href="mailto:support@paragraf.app">support@paragraf.app</a></div>
+    </footer>
+
+    <style>
+      .lhdr {
+        border-bottom: 1px solid var(--hairline);
+        padding: 18px 0;
+      }
+      .lhdr__inner {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .lhdr__brand {
+        font-size: 20px;
+        font-weight: 500;
+      }
+      .lhdr__brand::first-letter {
+        color: var(--accent);
+      }
+      .lhdr__back {
+        font-size: 14px;
+        color: var(--text-secondary);
+      }
+      .legal {
+        padding: 56px 24px 80px;
+        max-width: 760px;
+      }
+      .legal__title {
+        font-size: 36px;
+        font-weight: 500;
+        letter-spacing: -0.02em;
+        margin-bottom: 32px;
+      }
+      .legal__body :global(h2) {
+        font-family: var(--font-serif);
+        font-size: 22px;
+        font-weight: 500;
+        margin: 28px 0 12px;
+      }
+      .legal__body :global(p),
+      .legal__body :global(li) {
+        font-size: 16px;
+        color: var(--text-secondary);
+        line-height: 1.7;
+        margin-bottom: 12px;
+      }
+      .legal__body :global(ul) {
+        padding-left: 22px;
+        margin-bottom: 12px;
+      }
+      .legal__note {
+        margin-top: 32px;
+        padding: 16px 20px;
+        background: var(--bg-surface-alt);
+        border: 1px solid var(--hairline);
+        border-radius: var(--radius);
+        font-size: 14px;
+        color: var(--text-tertiary);
+      }
+      .lftr {
+        border-top: 1px solid var(--hairline);
+        padding: 28px 0;
+        font-size: 14px;
+        color: var(--text-tertiary);
+      }
+    </style>
+  </body>
+</html>

@@ -1,0 +1,47 @@
+# Workspace-level gitignore.
+# Individual sub-projects (billing/, gateway/, desktop/, doc-tools/) each have
+# their own .gitignore; this catches only workspace-shared artifacts.
+
+# gstack dev tooling — large (~1.3 GB), regenerable via:
+#   bash .claude/skills/gstack/setup --local
+.claude/skills/
+.claude/state/
+.claude/gstack.json
+.gstack/
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# Logs
+*.log
+
+# Environment files (each subproject has its own .env.example template)
+.env
+.env.local
+
+# === Монорепо: дополнения ===
+# Зависимости (все уровни)
+node_modules/
+
+# Отдельно версионируемые репозитории (свои git-remote, не часть монорепо)
+desktop/
+opencode/
+
+# Build / cache артефакты
+dist/
+out/
+.astro/
+.output/
+*.tsbuildinfo
+.artifacts/
+*.bun-build
+*.tgz
+
+# Прочие .env-варианты (кроме *.example — шаблоны коммитим)
+.env.*
+!.env.example
+!.env.*.example
