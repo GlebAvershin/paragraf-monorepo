@@ -130,7 +130,7 @@ const seedRates: (typeof schema.modelRates.$inferInsert)[] = [
     provider: "anthropic",
     tier: "mid",
     multiplier: "1.50",
-    displayNameRu: "Claude Sonnet 4.5",
+    displayNameRu: "Claude Sonnet 4.6",
     providerPricePer1kInputUsdMicroCenti: 3000, // $3/1M → 3000 micro-cents/1K
     providerPricePer1kOutputUsdMicroCenti: 15000,
   },
@@ -158,7 +158,7 @@ const seedRates: (typeof schema.modelRates.$inferInsert)[] = [
     provider: "anthropic",
     tier: "top",
     multiplier: "2.20",
-    displayNameRu: "Claude Opus 4.7",
+    displayNameRu: "Claude Opus 4.8",
     providerPricePer1kInputUsdMicroCenti: 15000, // $15/1M
     providerPricePer1kOutputUsdMicroCenti: 75000,
   },

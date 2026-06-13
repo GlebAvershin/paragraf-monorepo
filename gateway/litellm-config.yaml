@@ -25,7 +25,12 @@ model_list:
       api_key: os.environ/ANTHROPIC_API_KEY
     model_info: { mode: chat }
 
-  # Opus — latest is 4.7
+  # Opus — latest is 4.8 (generic alias claude-opus → 4.8). 4.7 оставлен пинованным.
+  - model_name: claude-opus-4-8
+    litellm_params:
+      model: anthropic/claude-opus-4-8
+      api_key: os.environ/ANTHROPIC_API_KEY
+    model_info: { mode: chat }
   - model_name: claude-opus-4-7
     litellm_params:
       model: anthropic/claude-opus-4-7
@@ -33,7 +38,7 @@ model_list:
     model_info: { mode: chat }
   - model_name: claude-opus
     litellm_params:
-      model: anthropic/claude-opus-4-7
+      model: anthropic/claude-opus-4-8
       api_key: os.environ/ANTHROPIC_API_KEY
     model_info: { mode: chat }
 

@@ -160,6 +160,18 @@ Always read `DESIGN.md` before making any visual or UI decisions. All font choic
 - **Docker env reload:** `docker compose restart litellm` does NOT re-read `.env`.
   After editing `gateway/.env`, use `docker compose up -d --force-recreate litellm`
   to recreate the container with new env vars.
+- **Claude через шлюз ↔ tpm/rpm-лимиты ключа (КРИТИЧНО, 2026-06-13).** LiteLLM 1.85.1
+  (`main-stable`) v3 rate-лимитер при наличии `tpm_limit`/`rpm_limit` на virtual-key
+  **протекает внутренними полями** (`_litellm_rate_limit_descriptors`,
+  `_litellm_{tpm,rpm}_reserved_{tokens,model,scopes,…}`) прямо в тело запроса к Anthropic
+  → Claude отвечает `400 "… Extra inputs are not permitted"` (GigaChat/Yandex не задеты —
+  у них свой transform). `drop_params`/`additional_drop_params` НЕ спасают (полей много,
+  whack-a-mole), env `LITELLM_DISABLE_V3_RATE_LIMITER` не помог. **Фикс:** не ставить
+  tpm/rpm на ключи — `billing/routes/subscriptions.ts` `createKey` больше их не передаёт
+  (лимитируем через `maxBudgetUsd` + кредиты). Существующим ключам сбросить:
+  `POST /key/update {key, tpm_limit:null, rpm_limit:null}` + рестарт litellm (сброс кэша).
+  Вернуть rpm/tpm можно после пина/фикса версии LiteLLM. NB: `main-stable` — подвижный
+  тег, для прода стоит запинить конкретную версию.
 - **GigaChat model names:** Sber's API expects `GigaChat`, `GigaChat-Pro`, `GigaChat-Max`
   (no `-2` suffix). LiteLLM docs mentioning `GigaChat-2-Pro` are outdated as of 2026-05.
 - **GigaChat spend tracking:** LiteLLM has no built-in cost table for GigaChat. Add
@@ -377,6 +389,28 @@ LiteLLM-ключа**, а не только по конфигу. После пе�
 ключа/смена тарифа), иначе `/v1/models` и пикер показывают старое + вызов даёт 403.
 Master-key — в `gateway/.env`. Кэш ключа в памяти LiteLLM — сбрасывается рестартом
 контейнера.
+
+## Claude API + «Углублённое размышление» + Opus 4.8 (2026-06-13)
+
+- **Claude API подключён** — реальный `ANTHROPIC_API_KEY` в `gateway/.env`. Работают
+  `claude-sonnet`→Sonnet 4.6, `claude-opus`→**Opus 4.8** (обновлён с 4.7; 4.8 помечена
+  `reasoning:true` в models.dev), `claude-haiku`→Haiku 4.5. Подписи ставок в `seed.ts`
+  выровнены (Sonnet 4.6 / Opus 4.8 / Haiku 4.5). См. tpm/rpm-грабли выше (Operational notes).
+- **«Углублённое размышление» (extended thinking)** — `app/src/ourapp/deep-thinking/`.
+  Бинарный тумблер «Углублённо» (иконка glasses) в композере: ВКЛ → для Claude
+  (sonnet/opus) submit выставляет `variant="high"` → opencode переводит его в нативный
+  thinking-бюджет Anthropic (~16000 ток.). Дефолт (ВЫКЛ) = БЕЗ thinking (проверено:
+  ответ без `/v1/messages` thinking-блока). Шкала: `off(дефолт)→low→medium→high→max`.
+  Для РФ-моделей no-op (`isReasoningModel` гейтит по `/^claude-(sonnet|opus)/`). Уровень
+  `high` (политика) — меняется в `DEEP_THINKING_VARIANT` (store.ts) на `max`. **Грабли:**
+  opencode шлёт thinking на нативный `/v1/messages` (НЕ `/chat/completions`, там нужен
+  `reasoning_effort`). Селектор вариантов opencode прячется при ≤2 тирах (Opus 4.8 даёт
+  high/max=2), поэтому свой тумблер выставляет variant программно.
+- **Фантомные модели скрыты** — `HIDDEN_MODEL_ID_PATTERN = /fable/i` (`context/models.tsx`
+  + `validModel` в local.tsx). opencode показывает Anthropic-модели из каталога models.dev
+  (шире, чем наш шлюз). Claude Fable 5 там есть, но у Anthropic недоступна (прямой вызов:
+  `404 "Claude Fable 5 is not available. Please use Opus 4.8"`) → выбор давал ошибку.
+  Когда Fable выйдет и будет заведена в litellm-config.yaml — убрать из паттерна.
 
 ## Заголовки сессий + «Продолжить работу» (2026-06-09)
 

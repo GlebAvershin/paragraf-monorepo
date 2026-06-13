@@ -57,8 +57,12 @@ export async function initSubscription(userId: string): Promise<void> {
       maxBudgetUsd: plan.monthlyBudgetUsdCenti / 100,
       models: plan.allowedModels,
       durationDays: 30,
-      rpmLimit: 30,
-      tpmLimit: 200_000,
+      // НЕ ставим tpm/rpm-лимиты: в LiteLLM 1.85.x (main-stable) v3 rate-лимитер
+      // при наличии tpm/rpm на ключе протекает внутренними полями
+      // (_litellm_*_reserved_*) в запрос к Anthropic → Claude падает с 400
+      // "Extra inputs are not permitted". Лимитируем расход через maxBudgetUsd
+      // (жёсткий cap LiteLLM) + кредитную систему billing. Вернуть rpm/tpm можно
+      // после фикса/пина версии LiteLLM.
       alias: `user-${userId.slice(0, 8)}-${plan.code}`,
       metadata: { plan: plan.code, sub: sub.id },
     })
