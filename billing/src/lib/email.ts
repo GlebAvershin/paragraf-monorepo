@@ -8,6 +8,7 @@ import { config } from "../config.ts"
 import { logger } from "./logger.ts"
 
 let transporter: nodemailer.Transporter | null = null
+let verifyStarted = false
 
 function getTransporter(): nodemailer.Transporter | null {
   if (!config.SMTP_HOST) return null
@@ -15,12 +16,30 @@ function getTransporter(): nodemailer.Transporter | null {
   transporter = nodemailer.createTransport({
     host: config.SMTP_HOST,
     port: config.SMTP_PORT,
+    // 465 — implicit TLS; 587/прочие — STARTTLS (nodemailer апгрейдит сам).
     secure: config.SMTP_PORT === 465,
+    // Реальный провайдер (есть SMTP_USER) на не-465 порту: ТРЕБУЕМ STARTTLS —
+    // OTP-коды/уведомления не должны уходить открытым текстом (152-ФЗ). Локальный
+    // Mailpit (dev, без auth) не трогаем — иначе незашифрованная отправка упадёт.
+    requireTLS: config.SMTP_PORT !== 465 && Boolean(config.SMTP_USER),
     auth:
       config.SMTP_USER && config.SMTP_PASSWORD
         ? { user: config.SMTP_USER, pass: config.SMTP_PASSWORD }
         : undefined,
   })
+  // Разовая проверка соединения: в логах сразу видно, корректно ли настроен
+  // SMTP (особенно в проде) — иначе сбой всплывёт только при первом письме.
+  if (!verifyStarted) {
+    verifyStarted = true
+    transporter.verify().then(
+      () => logger.info({ host: config.SMTP_HOST, port: config.SMTP_PORT }, "SMTP transporter verified"),
+      (err) =>
+        logger.error(
+          { err, host: config.SMTP_HOST, port: config.SMTP_PORT },
+          "SMTP verify failed — emails may not be delivered",
+        ),
+    )
+  }
   return transporter
 }
 
@@ -40,14 +59,14 @@ export async function sendEmail(msg: EmailMessage): Promise<void> {
     )
     return
   }
-  await t.sendMail({
+  const info = await t.sendMail({
     from: config.SMTP_FROM,
     to: msg.to,
     subject: msg.subject,
     text: msg.text,
     html: msg.html,
   })
-  logger.info({ to: msg.to, subject: msg.subject }, "Email sent")
+  logger.info({ to: msg.to, subject: msg.subject, messageId: info.messageId }, "Email sent")
 }
 
 export function magicLinkEmail(email: string, otp: string): EmailMessage {

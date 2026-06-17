@@ -33,31 +33,49 @@
    bun run src/db/seed.ts         # засеять тарифы
    bun run dev
 
-3. End-to-end проверка (curl или Postman):
-   # запросить magic-link (увидеть в логах billing'а)
+3. End-to-end проверка (curl или Postman). Вход — passwordless OTP (6-значный код):
+   # запросить код (всегда отвечает 204, чтобы не палить, какие email существуют)
    curl -X POST http://localhost:3000/auth/magic-link \
         -H 'Content-Type: application/json' \
         -d '{"email": "test@example.com"}'
 
-   # из лога взять token, обменять на JWT
-   curl 'http://localhost:3000/auth/verify?token=<TOKEN>'
+   # SMTP в dev не настроен → код печатается в КОНСОЛЬ billing'а строкой
+   #   "Код для входа: NNN NNN" (см. лог процесса billing).
+   # Обменять email + код (без пробела) на JWT:
+   curl -X POST http://localhost:3000/auth/verify-otp \
+        -H 'Content-Type: application/json' \
+        -d '{"email": "test@example.com", "code": "123456"}'
    # → { token: <JWT>, user: {...} }
 
-   # /me — получить litellm_key
+   # /me — профиль; litellm-ключ лежит в subscription.litellmKey
    curl http://localhost:3000/me -H "Authorization: Bearer <JWT>"
 
-   # /limits — увидеть расход 0 / 15 задач
+   # /limits — баланс кредитов (credits.remaining / credits.monthlyTotal),
+   #           тариф, статус подписки. Это НЕ «задачи» — биллинг кредитный.
    curl http://localhost:3000/limits -H "Authorization: Bearer <JWT>"
 
    # реальный запрос к Claude через Gateway с этим ключом
-   curl -X POST http://localhost:4000/v1/messages \
-        -H "x-api-key: <litellm_key>" \
-        -H "anthropic-version: 2023-06-01" \
+   #   (claude-sonnet → Sonnet 4.6, claude-opus → Opus 4.8).
+   #   ВАЖНО: на Windows Git Bash инлайновый -d '{...}' с КИРИЛЛИЦЕЙ бьёт UTF-8
+   #   → LiteLLM видит model=None / 400. Шлите тело из файла:
+   printf '%s' '{"model":"claude-sonnet","max_tokens":50,"messages":[{"role":"user","content":"Привет"}]}' > payload.json
+   curl -X POST http://localhost:4000/v1/chat/completions \
+        -H "Authorization: Bearer <litellmKey>" \
         -H "Content-Type: application/json" \
-        -d '{"model": "claude-sonnet", "max_tokens": 50, "messages": [{"role":"user","content":"Привет"}]}'
+        --data-binary @payload.json
+   # (для нативного Anthropic-пути замените URL на /v1/messages и добавьте
+   #  -H "anthropic-version: 2023-06-01" + x-api-key вместо Bearer)
 
-   # снова /limits — увидеть, что расход обновился
+   # запустить ETL-воркер (списывает кредиты из spend-логов LiteLLM) —
+   #   без него баланс не уменьшится:
+   #   cd billing && NODE_ENV=production bun run src/worker/etl.ts
+   # снова /limits — credits.remaining уменьшился
 ```
+
+> **Совет:** вместо ручного подъёма всех четырёх компонентов используйте
+> `D:\TEMKA\up.ps1` — он поднимает оба Postgres, применяет миграции, стартует
+> billing (коды OTP видны в его окне) и ETL-воркер. См. `CLAUDE.md`.
+> Тестовый юзер уже есть в БД: `test@example.com` (Free, $2 budget).
 
 Это и есть приёмочный сценарий Фазы 1 — нет десктопа, но вся серверная цепочка проверена.
 

@@ -85,10 +85,22 @@ curl -s -o /dev/null -w "bill:%{http_code}\n" http://localhost:3000/health/readi
 ```
 
 ### Auth in dev (OTP login)
-No SMTP configured → OTP code is **logged to the billing console**, not emailed.
-To log in: trigger the code in-app, then grep the billing output for
-`Код для входа: NNN NNN`. Login is OTP-only now (magic-link URL + /auth/verify
-+ /auth/web-callback were removed — see PATCHES / git log).
+По умолчанию SMTP не настроен (`SMTP_HOST` пуст) → OTP-код **печатается в консоль
+billing**, не шлётся письмом. Чтобы войти: запросить код в приложении, затем grep
+по выводу billing: `Код для входа: NNN NNN`. Login is OTP-only now (magic-link URL +
+/auth/verify + /auth/web-callback were removed — see PATCHES / git log).
+
+**SMTP (ТЗ — 2026-06-14).** Код отправки (`lib/email.ts`, nodemailer) рабочий и
+**проверен вживую** через локальный перехватчик **Mailpit** (`billing/docker-compose.yml`,
+SMTP :1025, web-UI http://localhost:8025). Три режима в `.env` (см. `.env.example`):
+(1) пусто → консоль; (2) `SMTP_HOST=127.0.0.1 SMTP_PORT=1025` → Mailpit;
+(3) прод-провайдер. **РЕКОМЕНДАЦИЯ — Yandex Cloud Postbox** (транзакционный сервис,
+2000 писем/мес бесплатно, РФ-инфра/152-ФЗ; эндпоинт+креды из консоли Postbox). НЕ
+личная Яндекс.Почта (с 29.06.2026 бесплатный SMTP Почты отключают) и не Yandex 360
+(платный). Альтернативы: Mailopost / SMTP.bz / Unisender Go. Примеры в `.env.example`. **Грабли:** в dev именно `127.0.0.1`, НЕ `localhost` — Bun на Windows
+не резолвит localhost для SMTP (`DNSException ETIMEOUT`). `email.ts` при старте делает
+`transporter.verify()` и логирует успех/ошибку. `465`→implicit TLS, `587`/прочее→STARTTLS.
+OTP-письмо и платёжные уведомления рендерятся (кириллица, HTML) — поймано Mailpit 2/2.
 
 ### CloudPayments billing (ТЗ-02)
 Payment endpoints (`/payments/*`, `/webhooks/cloudpayments`) return **503** unless
@@ -100,6 +112,27 @@ cd /d/TEMKA/billing && bun run test:payments   # 7 tests: card-bind, topup, decl
 ```
 
 Test user already exists in DB: `test@example.com` with virtual_key `sk-nk7YaSwLZijpZj9Gyyisgw` ($2 budget, 4 models, Free plan).
+
+## Commands (build / lint / test / typecheck)
+
+`bun` is NOT on PATH in fresh shells — prefix every command:
+`$env:PATH = "C:\Users\Home\.bun\bin;$env:PATH"` (PowerShell) or
+`PATH="C:/Users/Home/.bun/bin:$PATH"` (bash).
+
+**Keep all three of our packages green on `typecheck` — a new error means your change introduced it.**
+
+| Package | Dir | Typecheck | Test (all) | Single test |
+|---|---|---|---|---|
+| app (desktop fork) | `desktop/packages/app` | `bun run typecheck` (`tsgo -b`) | `bun run test:unit` | `bun test --preload ./happydom.ts ./src/ourapp/<x>.test.ts` |
+| billing | `billing` | `bun run typecheck` (`tsc --noEmit`) | `bun test` | `bun test test/payments-flow.test.ts` |
+| doc-tools | `doc-tools` | `bun run typecheck` | `bun test` | `bun test test/<x>.test.ts` |
+
+- **App tests need the happy-dom preload** (`--preload ./happydom.ts`) — bare `bun test <file>` in `packages/app` fails on DOM globals. Watch: `bun run test:unit:watch`. E2E: `bun run test:e2e` (Playwright).
+- **Filter by test name:** append `-t "<substring>"` to any `bun test` command.
+- **Billing has dedicated suites:** `bun run test:payments` (CloudPayments mock, hits real Postgres) and `bun run test:e2e` (golden §13 path). Both set `CLOUDPAYMENTS_*` env internally; under a combined `bun test` run the env-singleton must match across files (see ТЗ-05/06 lesson).
+- **Lint** (whole fork, from `desktop/`): `bun run lint` (oxlint). **Whole-fork typecheck:** `bun turbo typecheck`. **Don't** run `bun test` from `desktop/` root — it intentionally errors (`"do not run tests from root"`); cd into the package.
+- **DB (billing):** `bun run db:push` (schema from `schema.ts`, `--force`), `bun run db:seed` (plans + model_rates), `bun run db:studio`. Manual migrations are applied separately — see the ТЗ-01/02 lesson on applying, not just writing, them.
+- **Dev servers** (full stack: see "Phase 1 — running services"): billing `bun run dev` (`:3000`, hot); app `bun run --cwd desktop dev:desktop` (Electron) or `dev:web` (renderer only, `:5173`); ETL worker `NODE_ENV=production bun run src/worker/etl.ts` (one-shot — credits don't decrement without it).
 
 ## Conventions
 
@@ -171,7 +204,19 @@ Always read `DESIGN.md` before making any visual or UI decisions. All font choic
   (лимитируем через `maxBudgetUsd` + кредиты). Существующим ключам сбросить:
   `POST /key/update {key, tpm_limit:null, rpm_limit:null}` + рестарт litellm (сброс кэша).
   Вернуть rpm/tpm можно после пина/фикса версии LiteLLM. NB: `main-stable` — подвижный
-  тег, для прода стоит запинить конкретную версию.
+  тег. **ЗАПИННУТО (2026-06-14):** `gateway/docker-compose.yml` теперь ссылается на
+  иммутабельный digest `ghcr.io/berriai/litellm-database@sha256:fb757549de0da017a597ee4b9be0bfb55c49cde77898abe789fa3ad37d770c69`
+  (= 1.85.1), а не на `:main-stable` — случайный re-pull больше не подменит версию.
+  Бамп версии: вернуть `:main-stable`, `docker compose pull litellm`, перепроверить
+  tpm/rpm-баг (тест выше), снять новый digest. Возврат rpm/tpm на ключи — только после
+  такой проверки на конкретном digest.
+- **Фолбэки шлюза ОТКЛЮЧЕНЫ (2026-06-14).** В `litellm-config.yaml` был мёртвый фолбэк
+  `claude-sonnet/opus → gpt-4o`, но `OPENAI_API_KEY=sk-placeholder` → при сбое Anthropic
+  клиент получал не ответ, а 401 gpt-4o (ложная отказоустойчивость). Закомментирован.
+  Сознательно НЕ включён тихий фолбэк на РФ-модель: для юр/бух-документов незаметная
+  подмена Claude→GigaChat = скрытая просадка качества (хуже явной ошибки). GigaChat-pro
+  проверен рабочим — готовый опт-ин лежит в комментарии рядом с `fallbacks:`. Вернуть при
+  появлении реального OpenAI-ключа ИЛИ продуктового решения разрешить degradation на РФ.
 - **GigaChat model names:** Sber's API expects `GigaChat`, `GigaChat-Pro`, `GigaChat-Max`
   (no `-2` suffix). LiteLLM docs mentioning `GigaChat-2-Pro` are outdated as of 2026-05.
 - **GigaChat spend tracking:** LiteLLM has no built-in cost table for GigaChat. Add
@@ -281,12 +326,31 @@ Electron renderer — НЕ требует доп. настройки worker/wasm
 иначе отсекались. (3) На грязном OCR маскирование может пропустить искажённые ПДн —
 известный предел, лечится препроцессингом (контраст/выпрямление) — Этап 2.
 (4) PDF идёт НЕ через OCR, а через unpdf (текстовый слой); OCR — только для image/*.
+(5) OCR работает в ДВУХ путях загрузки (2026-06-14): композер (`attachments.ts`) И
+мастер сценариев (`scenarios/run-scenario.ts` — image-файлы → `ocrImageToText`, mime
+`ourapp/scanned-doc`; раньше мастер гнал всё через office-парсер и молча выбрасывал
+картинки). Сканы-типы (.jpg/.jpeg/.png/.webp) добавлены в `accept` сценариев с
+загрузкой документа (проверка договора/первички, сравнение редакций, краткое
+содержание, приложение к претензии). Найдено QA-проходом п.4.
 
 **OFFLINE OCR (prod):** языковые данные (rus/eng `.traineddata.gz`), `worker.min.js`
 и core wasm скопированы в `desktop/packages/app/public/{tessdata,tesseract}`;
 `ocr.ts` указывает `langPath:/tessdata`, `workerPath`/`corePath:/tesseract` — без CDN.
-Vite отдаёт их с корня (проверено: все 200). Regen при обновлении tesseract.js:
-пересоздать public/tesseract из node_modules + перекачать traineddata.
+Vite отдаёт их с корня. Regen при обновлении tesseract.js:
+пересоздать public/tesseract из node_modules (`tesseract.js-core@<ver>`) + перекачать traineddata.
+- **КРИТИЧНО — MIME для `*.wasm.js` (2026-06-14, нашёл QA-проходом п.4).** Vite dev-сервер
+  отдаёт core-файлы `tesseract-core-*.wasm.js` с `Content-Type: text/html` (из-за `.wasm`
+  в имени они идут не в статику, а в SPA-fallback). `importScripts()` в web-worker'е строго
+  требует JS-MIME → `NetworkError: failed to load` → OCR падает ПОЛНОСТЬЮ (и композер, и
+  мастер сценариев). 200 в curl НЕ достаточно — проверять именно `Content-Type`. Фикс:
+  middleware-плагин `opencode-desktop:tesseract-wasm-js-mime` в `packages/app/vite.js`
+  отдаёт `/tesseract/*.wasm.js` с `text/javascript`. Применяется и к electron-vite-рендереру
+  (он импортит этот же `appPlugin`). **Правка vite.js требует ПОЛНОГО рестарта dev:desktop**
+  (конфиг/плагины не подхватываются HMR). В prod не воспроизводится (статику отдаёт electron,
+  MIME по расширению корректен).
+- **tesseract.js 7.x выбирает core-вариант `relaxedsimd` первым** — в public/tesseract должны
+  лежать ВСЕ варианты (`relaxedsimd`/`simd`/обычный, `-lstm` и без), иначе worker падает на
+  отсутствующем файле. `cp tesseract-core*.{js,wasm}` из tesseract.js-core целиком.
 
 ## Лендинг и waitlist (2026-06-07)
 
@@ -442,6 +506,14 @@ Master-key — в `gateway/.env`. Кэш ключа в памяти LiteLLM — 
   публичный IP РФ-пользователя за рубежом. IP по 152-ФЗ = потенциальные ПДн.
   Варианты до прода: (а) отключить запись IP в LiteLLM; (б) прокси на РФ-стороне
   перед шлюзом; (в) маршрут к шлюзу через billing (РФ). Решить при настройке прод-инфры.
+  **ИССЛЕДОВАНО 2026-06-14:** вариант (а) НЕ решается конфигом — в LiteLLM 1.85.1 нет
+  гранулярного флага «не писать только `requester_ip_address`» (трекинг IP — enterprise-
+  фича; `general_settings.disable_spend_logs:true` рубит spend-логи ЦЕЛИКОМ, а они нужны
+  ETL для списания кредитов). Значит это **ИНФРА-задача, не код:** прод-шлюз за Cloudflare
+  Tunnel / reverse-proxy — настроить так, чтобы прокси НЕ пробрасывал реальный клиентский
+  IP в LiteLLM (не форвардить `X-Forwarded-For`/`CF-Connecting-IP`, или поставить РФ-прокси
+  перед шлюзом, тогда LiteLLM видит IP прокси, а не РФ-юзера). Решается при поднятии
+  прод-gateway, в коде репо менять нечего. Источник: docs.litellm.ai/docs/proxy/db_info.
 
 ## Typecheck status
 

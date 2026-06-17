@@ -169,11 +169,18 @@ litellm_settings:
   num_retries: 2
   request_timeout: 600
 
-  # Fallbacks: if Anthropic is down, try OpenAI silently.
-  # The client gets a response, just possibly from a different model.
-  fallbacks:
-    - claude-sonnet: ["gpt-4o"]
-    - claude-opus: ["gpt-4o"]
+  # Fallbacks — DISABLED. Прежний фолбэк Claude→gpt-4o был МЁРТВЫМ:
+  # OPENAI_API_KEY=sk-placeholder, поэтому при сбое Anthropic клиент получал не
+  # ответ, а 401-ошибку gpt-4o (ложное ощущение отказоустойчивости).
+  # Сознательно не включаем тихий фолбэк на РФ-модель: для юр/бух-документов
+  # незаметная подмена Claude → GigaChat = скрытая просадка качества на
+  # ответственном тексте (исковое/претензия), что хуже явной ошибки и retry.
+  # Вернуть, когда появится: (а) реальный OPENAI_API_KEY (равнокачественный
+  # фолбэк), ЛИБО (б) продуктовое решение разрешить graceful-degradation на
+  # gigachat-pro (проверено рабочим 2026-06-14) — тогда раскомментировать:
+  #   fallbacks:
+  #     - claude-sonnet: ["gigachat-pro"]
+  #     - claude-opus: ["gigachat-pro"]
 
 # ---------- Router settings ----------
 router_settings:

@@ -45,3 +45,6 @@ out/
 .env.*
 !.env.example
 !.env.*.example
+
+# QA: временный тестовый скан
+tmp-scan-contract.png

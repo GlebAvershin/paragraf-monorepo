@@ -206,8 +206,8 @@ const accountantScenarios = [
     </footer>
 
     <script>
-      // Waitlist: отправка email. На MVP — заглушка с подтверждением; позже
-      // подключим к billing-эндпоинту /waitlist.
+      // Waitlist: отправка email на billing POST /waitlist (публичный роут,
+      // идемпотентно по email, таблица waitlist_signups). Проверено рабочим.
       const form = document.getElementById("waitlist-form")
       const msg = document.getElementById("waitlist-msg")
       // Billing API: dev → localhost:3000, prod → api.paragraf.app.

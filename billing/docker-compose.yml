@@ -1,5 +1,6 @@
-# Local development: Postgres only.
-# In production, use managed Postgres (Selectel/Yandex Cloud) in RU.
+# Local development: Postgres + Mailpit (SMTP catcher).
+# In production, use managed Postgres (Selectel/Yandex Cloud) in RU and a real
+# SMTP provider (RU: Yandex 360 / Mailopost; см. .env.example).
 
 services:
   postgres:
@@ -14,6 +15,22 @@ services:
       - "5433:5432"   # 5433 to not clash with system postgres if any
     volumes:
       - billing_pg_data:/var/lib/postgresql/data
+
+  # Локальный перехватчик SMTP для разработки: ловит ВСЕ исходящие письма
+  # (OTP-коды, платёжные уведомления), ничего наружу не шлёт. Веб-UI :8025.
+  # Чтобы письма шли сюда, в .env: SMTP_HOST=127.0.0.1, SMTP_PORT=1025 (без auth;
+  # именно 127.0.0.1, не localhost — Bun на Windows не резолвит localhost для SMTP).
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: billing_mailpit
+    restart: unless-stopped
+    ports:
+      - "1025:1025"   # SMTP
+      - "8025:8025"   # Web UI / API (http://localhost:8025)
+    environment:
+      MP_MAX_MESSAGES: "500"
+      MP_SMTP_AUTH_ACCEPT_ANY: "1"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "1"
 
 volumes:
   billing_pg_data:

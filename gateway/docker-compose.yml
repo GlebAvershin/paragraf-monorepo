@@ -21,7 +21,12 @@ services:
     # Postgres is internal only — no exposed ports.
 
   litellm:
-    image: ghcr.io/berriai/litellm-database:main-stable
+    # Пин на иммутабельный digest (= LiteLLM 1.85.1, снят с main-stable 2026-06-14).
+    # main-stable — подвижный тег: на нём v3 rate-limiter протекал внутренние поля
+    # в тело запроса к Anthropic (см. CLAUDE.md «tpm/rpm-баг»). Фиксируем версию,
+    # чтобы случайный re-pull не подменил её. Бамп: вернуть :main-stable, дёрнуть
+    # `docker compose pull litellm`, проверить tpm/rpm-баг, снять новый digest.
+    image: ghcr.io/berriai/litellm-database@sha256:fb757549de0da017a597ee4b9be0bfb55c49cde77898abe789fa3ad37d770c69
     container_name: gateway_litellm
     restart: unless-stopped
     depends_on:
