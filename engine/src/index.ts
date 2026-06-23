@@ -29,7 +29,7 @@ app.route("/", meta)
 
 app.use("/session", requireSession)
 app.use("/session/*", requireSession)
-app.use("/event", requireSession)
+app.use("/global/*", requireSession)
 
 // === session.* ===
 app.get("/session", async (c) => c.json(await listSessions(c.var.session.userId)))
@@ -75,14 +75,24 @@ app.post("/session/:id/message", async (c) => {
   return c.json(result)
 })
 
-// === SSE-поток событий: дренит шину для userId ===
-app.get("/event", (c) =>
+// Глобальные эндпоинты (рендерер ходит с префиксом /global).
+app.get("/global/config", (c) => c.json({}))
+app.post("/global/dispose", (c) => c.json({ ok: true }))
+
+// === SSE-поток событий: рендерер слушает /global/event ===
+// Контракт кадра — {directory, payload:{type,properties}} (types.gen.ts). Connection-
+// события → directory "global"; chat/session-события → "/" (директория наших сессий).
+const frame = (e: { type: string; properties?: Record<string, unknown> }) => {
+  const directory = e.type.startsWith("server.") || e.type === "global.disposed" ? "global" : "/"
+  return JSON.stringify({ directory, payload: { type: e.type, properties: e.properties ?? {} } })
+}
+app.get("/global/event", (c) =>
   streamSSE(c, async (stream) => {
     const sub = subscribe(c.var.session.userId)
     stream.onAbort(() => sub.close())
-    await stream.writeSSE({ data: JSON.stringify({ type: "server.connected", properties: {} }) })
+    await stream.writeSSE({ data: frame({ type: "server.connected", properties: {} }) })
     for await (const event of sub.events) {
-      await stream.writeSSE({ data: JSON.stringify(event) })
+      await stream.writeSSE({ data: frame(event) })
     }
   }),
 )
@@ -90,4 +100,6 @@ app.get("/event", (c) =>
 await initSchema()
 console.log(`[engine] listening on :${config.PORT} (gateway=${config.GATEWAY_URL})`)
 
-export default { port: config.PORT, fetch: app.fetch }
+// idleTimeout: 0 — НЕ убивать долгоживущие SSE-соединения (/global/event) по простою.
+// Дефолтные 10с Bun.serve рвали стрим → клиент видел обрыв → ретрай-шторм onSseError.
+export default { port: config.PORT, idleTimeout: 0, fetch: app.fetch }

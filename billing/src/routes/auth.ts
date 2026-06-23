@@ -40,12 +40,11 @@ authRoutes.post("/magic-link", zValidator("json", magicLinkInput), async (c) => 
 
   await db.insert(schema.magicLinkTokens).values({ email, tokenHash, otpHash, expiresAt })
 
-  try {
-    await sendEmail(magicLinkEmail(email, otp))
-  } catch (err) {
-    logger.error({ err, email }, "Failed to send OTP email")
-    // Don't reveal failure to caller; user should retry.
-  }
+  // Email отправляем fire-and-forget: ответ НЕ должен блокироваться на SMTP
+  // (медленная доставка/verify раньше держала запрос ~16с → таймаут клиента).
+  void sendEmail(magicLinkEmail(email, otp)).catch((err) =>
+    logger.error({ err, email }, "Failed to send OTP email"),
+  )
   return c.body(null, 204)
 })
 
