@@ -24,6 +24,9 @@ export interface PromptInput {
   userId: string
   token: string
   sessionID: string
+  /** id сообщения юзера, сгенерённый рендерером (optimistic) — переиспользуем, чтобы
+   *  SSE-реконсиляция совпала по id; иначе свой. */
+  messageID?: string
   model: { providerID: string; modelID: string }
   agent?: string
   parts: Array<{ type: string; text?: string }>
@@ -38,7 +41,7 @@ export async function runPrompt(input: PromptInput): Promise<{ info: StoredMessa
 
   // 1. Сообщение юзера + его текстовые части.
   const userMsg: StoredMessage = {
-    id: newId("msg"),
+    id: input.messageID ?? newId("msg"),
     sessionID,
     role: "user",
     time: { created: now },
@@ -113,7 +116,10 @@ export async function runPrompt(input: PromptInput): Promise<{ info: StoredMessa
   asstMsg.time = { created: (asstMsg.time as { created: number }).created, completed: Date.now() }
   await updateMessage(userId, asstMsg)
   publish(userId, { type: "message.updated", properties: { info: asstMsg } })
-  publish(userId, { type: "session.idle", properties: { sessionID } })
+  // Снять статус «занята»: контракт — session.status со status:{type:"idle"}
+  // (event-reducer пишет session_status[id]; отдельного "session.idle" он НЕ знает,
+  // иначе индикатор «Размышление» не гаснет после ответа).
+  publish(userId, { type: "session.status", properties: { sessionID, status: { type: "idle" } } })
   await updateSession(userId, sessionID, {}) // bump time.updated
 
   return { info: asstMsg, parts: [asstPart] }

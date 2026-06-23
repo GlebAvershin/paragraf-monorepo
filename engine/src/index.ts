@@ -57,22 +57,48 @@ app.delete("/session/:id", async (c) => {
 
 app.get("/session/:id/message", async (c) => c.json(await listMessages(c.var.session.userId, c.req.param("id"))))
 
-// prompt: POST /session/:id/message — запускает цикл, шлёт SSE-события, возвращает {info, parts}.
+// Список todo сессии — фича кодинг-агента, у нас не используется. Пустой массив,
+// чтобы рендерер (поллинг todo активной сессии) не получал 404.
+app.get("/session/:id/todo", (c) => c.json([]))
+
+// Тело prompt-запроса (подмножество контракта SessionPromptAsyncData.body, types.gen.ts).
+type PromptBody = {
+  messageID?: string
+  model?: { providerID: string; modelID: string }
+  agent?: string
+  parts?: Array<{ type: string; text?: string }>
+}
+const promptArgs = (userId: string, token: string, sessionID: string, body: PromptBody) => ({
+  userId,
+  token,
+  sessionID,
+  messageID: body.messageID,
+  model: body.model ?? { providerID: "anthropic", modelID: "claude-sonnet" },
+  agent: body.agent,
+  parts: Array.isArray(body.parts) ? body.parts : [],
+})
+
+// prompt_async: рендерер шлёт сюда (sdk.session.promptAsync). По контракту — 204
+// сразу, результат идёт по SSE (message.updated / message.part.updated / session.idle).
+// Юзер-сообщение рендерер рисует оптимистично сам → выполняем fire-and-forget.
+app.post("/session/:id/prompt_async", async (c) => {
+  const sessionID = c.req.param("id")
+  const session = await getSession(c.var.session.userId, sessionID)
+  if (!session) return c.json({ error: "not_found" }, 404)
+  const body = (await c.req.json().catch(() => ({}))) as PromptBody
+  void runPrompt(promptArgs(c.var.session.userId, c.var.token, sessionID, body)).catch((err) =>
+    console.error("[engine] runPrompt failed", err),
+  )
+  return c.body(null, 204)
+})
+
+// Синхронный вариант (curl/отладка): тот же цикл, но ждёт и возвращает {info, parts}.
 app.post("/session/:id/message", async (c) => {
   const sessionID = c.req.param("id")
   const session = await getSession(c.var.session.userId, sessionID)
   if (!session) return c.json({ error: "not_found" }, 404)
-  const body = await c.req.json().catch(() => ({}))
-  const model = body?.model ?? { providerID: "anthropic", modelID: "claude-sonnet" }
-  const result = await runPrompt({
-    userId: c.var.session.userId,
-    token: c.var.token,
-    sessionID,
-    model,
-    agent: body?.agent,
-    parts: Array.isArray(body?.parts) ? body.parts : [],
-  })
-  return c.json(result)
+  const body = (await c.req.json().catch(() => ({}))) as PromptBody
+  return c.json(await runPrompt(promptArgs(c.var.session.userId, c.var.token, sessionID, body)))
 })
 
 // Глобальные эндпоинты (рендерер ходит с префиксом /global).
