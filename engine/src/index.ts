@@ -109,16 +109,34 @@ app.post("/global/dispose", (c) => c.json({ ok: true }))
 // Контракт кадра — {directory, payload:{type,properties}} (types.gen.ts). Connection-
 // события → directory "global"; chat/session-события → "/" (директория наших сессий).
 const frame = (e: { type: string; properties?: Record<string, unknown> }) => {
-  const directory = e.type.startsWith("server.") || e.type === "global.disposed" ? "global" : "/"
+  const directory = e.type.startsWith("server.") || e.type === "global.disposed" || e.type === "sync" ? "global" : "/"
   return JSON.stringify({ directory, payload: { type: e.type, properties: e.properties ?? {} } })
 }
+// Рендерер (global-sdk) рвёт SSE, если событий нет дольше HEARTBEAT_TIMEOUT_MS=15с,
+// и реконнектится → шторм. Шлём sync-кадр каждые 10с: reducer его игнорирует
+// (payload.type === "sync" → continue), но resetHeartbeat() в рендерере срабатывает
+// на ЛЮБОМ событии до этой проверки → соединение живёт.
+const HEARTBEAT_MS = 10_000
 app.get("/global/event", (c) =>
   streamSSE(c, async (stream) => {
     const sub = subscribe(c.var.session.userId)
-    stream.onAbort(() => sub.close())
-    await stream.writeSSE({ data: frame({ type: "server.connected", properties: {} }) })
-    for await (const event of sub.events) {
-      await stream.writeSSE({ data: frame(event) })
+    let alive = true
+    const heartbeat = setInterval(() => {
+      if (alive) void stream.writeSSE({ data: frame({ type: "sync", properties: {} }) })
+    }, HEARTBEAT_MS)
+    const cleanup = () => {
+      alive = false
+      clearInterval(heartbeat)
+      sub.close()
+    }
+    stream.onAbort(cleanup)
+    try {
+      await stream.writeSSE({ data: frame({ type: "server.connected", properties: {} }) })
+      for await (const event of sub.events) {
+        await stream.writeSSE({ data: frame(event) })
+      }
+    } finally {
+      cleanup()
     }
   }),
 )
