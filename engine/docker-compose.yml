@@ -1,0 +1,18 @@
+# Локальная разработка движка: Postgres (хранит сессии/сообщения = контент юзера).
+# Прод — РФ-хостинг (152-ФЗ). Порт 5434, чтобы не конфликтовать с billing (5433).
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: engine_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: engine
+      POSTGRES_USER: engine
+      POSTGRES_PASSWORD: engine
+    ports:
+      - "5434:5432"
+    volumes:
+      - engine_pg_data:/var/lib/postgresql/data
+
+volumes:
+  engine_pg_data:
