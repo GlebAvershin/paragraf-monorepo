@@ -8,7 +8,7 @@
 import { config } from "./config.ts"
 import { publish } from "./bus.ts"
 import { getLitellmKey } from "./billing.ts"
-import { updateSession } from "./sessions.ts"
+import { getSession, updateSession } from "./sessions.ts"
 import {
   historyForGateway,
   insertMessage,
@@ -47,6 +47,58 @@ function thinkingEffort(variant: string | undefined, modelID: string): "low" | "
   if (variant === "medium") return "medium"
   if (variant === "high" || variant === "max") return "high"
   return undefined
+}
+
+// Заголовок сессии. У движка нет серверного title-агента opencode (он жил в sidecar),
+// поэтому после первого обмена генерируем краткий заголовок дешёвой моделью сами.
+// claude-haiku — дёшево и доступно; в проде разумно переключить на РФ-модель (gigachat-pro).
+const TITLE_MODEL = "claude-haiku"
+const DEFAULT_TITLE = "Новая сессия"
+
+async function generateTitle(key: string, userText: string, assistantText: string): Promise<string | undefined> {
+  try {
+    const res = await fetch(`${config.GATEWAY_URL}/v1/chat/completions`, {
+      method: "POST",
+      headers: { authorization: `Bearer ${key}`, "content-type": "application/json" },
+      body: JSON.stringify({
+        model: TITLE_MODEL,
+        max_tokens: 30,
+        messages: [
+          {
+            role: "system",
+            content:
+              "Сгенерируй короткий заголовок диалога на русском: 3–6 слов, по сути запроса. Без кавычек, без точки в конце, без префиксов вроде «Заголовок:».",
+          },
+          { role: "user", content: `Запрос: ${userText.slice(0, 600)}\n\nОтвет: ${assistantText.slice(0, 300)}` },
+        ],
+      }),
+    })
+    if (!res.ok) return undefined
+    const json = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> }
+    const raw = json.choices?.[0]?.message?.content?.trim()
+    if (!raw) return undefined
+    const title = raw.replace(/^["'«»\s]+|["'«».\s]+$/g, "").slice(0, 80)
+    return title || undefined
+  } catch {
+    return undefined
+  }
+}
+
+// Генерируем заголовок только для первого обмена (пока он дефолтный). Fire-and-forget:
+// session.updated прилетит чуть позже, не задерживая ответ/idle.
+async function maybeGenerateTitle(
+  userId: string,
+  sessionID: string,
+  key: string,
+  userText: string,
+  assistantText: string,
+): Promise<void> {
+  const session = await getSession(userId, sessionID)
+  if (!session || session.title !== DEFAULT_TITLE) return
+  const title = await generateTitle(key, userText, assistantText)
+  if (!title) return
+  const updated = await updateSession(userId, sessionID, { title })
+  if (updated) publish(userId, { type: "session.updated", properties: { info: updated } })
 }
 
 export async function runPrompt(input: PromptInput): Promise<{ info: StoredMessage; parts: StoredPart[] }> {
@@ -159,6 +211,13 @@ export async function runPrompt(input: PromptInput): Promise<{ info: StoredMessa
       await updatePart(userId, reasoningPart)
       publish(userId, { type: "message.part.updated", properties: { part: reasoningPart } })
     }
+
+    // Заголовок сессии (только первый обмен) — fire-and-forget, чтобы не задерживать idle.
+    const userText = input.parts
+      .filter((p) => p.type === "text" && p.text)
+      .map((p) => p.text)
+      .join(" ")
+    void maybeGenerateTitle(userId, sessionID, key, userText, asstPart.text as string).catch(() => {})
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     asstPart.text = (asstPart.text as string) + (asstPart.text ? "\n\n" : "") + `⚠️ ${msg}`
