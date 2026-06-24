@@ -4,7 +4,35 @@
  */
 import { sql, jsonb } from "./db.ts"
 
-export const newId = (prefix: string) => `${prefix}_${crypto.randomUUID().replace(/-/g, "")}`
+// ID в формате opencode (app/src/utils/id.ts): prefix_ + 12 hex (время) + 14 base62.
+// КРИТИЧНО: рендерер сортирует И сообщения, И части ЛЕКСИЧЕСКИ по id (cmp(a.id,b.id)
+// в directory-sync.ts), полагая, что лексический порядок = хронологический. Случайные
+// UUID ломали порядок (reasoning после text, перемешанные сообщения). Время кодируется
+// как (timestamp*0x1000 + counter) в 6 байт → монотонно возрастает; counter различает
+// id в пределах одной мс (важно: за один runPrompt создаём msg+part'ы подряд).
+const ID_BASE62 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+let idLastTs = 0
+let idCounter = 0
+export const newId = (prefix: string): string => {
+  const ts = Date.now()
+  if (ts !== idLastTs) {
+    idLastTs = ts
+    idCounter = 0
+  }
+  idCounter += 1
+  const now = BigInt(ts) * 0x1000n + BigInt(idCounter)
+  let hex = ""
+  for (let i = 0; i < 6; i++) {
+    hex += Number((now >> BigInt(40 - 8 * i)) & 0xffn)
+      .toString(16)
+      .padStart(2, "0")
+  }
+  const rnd = new Uint8Array(14)
+  crypto.getRandomValues(rnd)
+  let rand = ""
+  for (let i = 0; i < 14; i++) rand += ID_BASE62[rnd[i]! % 62]
+  return `${prefix}_${hex}${rand}`
+}
 
 export interface StoredMessage {
   id: string

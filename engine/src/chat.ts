@@ -29,10 +29,25 @@ export interface PromptInput {
   messageID?: string
   model: { providerID: string; modelID: string }
   agent?: string
+  /** opencode-вариант (deep-thinking тумблер шлёт "high") — транслируем в reasoning_effort. */
+  variant?: string
   parts: Array<{ type: string; text?: string }>
 }
 
 const ZERO_TOKENS = { input: 0, output: 0, reasoning: 0, cache: { read: 0, write: 0 } }
+
+/**
+ * «Углублённо»: вариант opencode → reasoning_effort для шлюза. Только для Claude
+ * (RU-модели thinking не поддерживают). LiteLLM мапит reasoning_effort на нативный
+ * thinking-бюджет Anthropic в /chat/completions. max → high (выше у LiteLLM нет).
+ */
+function thinkingEffort(variant: string | undefined, modelID: string): "low" | "medium" | "high" | undefined {
+  if (!variant || !/^claude-(sonnet|opus)/.test(modelID)) return undefined
+  if (variant === "low") return "low"
+  if (variant === "medium") return "medium"
+  if (variant === "high" || variant === "max") return "high"
+  return undefined
+}
 
 export async function runPrompt(input: PromptInput): Promise<{ info: StoredMessage; parts: StoredPart[] }> {
   const { userId, sessionID } = input
@@ -79,8 +94,17 @@ export async function runPrompt(input: PromptInput): Promise<{ info: StoredMessa
   await insertMessage(userId, asstMsg)
   publish(userId, { type: "message.updated", properties: { info: asstMsg } })
 
+  // «Углублённо»: reasoning_effort транслируем в шлюз. id reasoning-части резервируем
+  // ВСЕГДА и ДО id text-части (рендерер сортирует части лексически по id → reasoning
+  // пойдёт первой; text держим на idx 1, оставляя idx 0 под reasoning). Саму reasoning-
+  // часть создаём ЛЕНИВО на первом reasoning-дельте — модель может вернуть thinking и
+  // без явного effort, поэтому id нужен всегда, иначе onReasoning создаст часть без id.
+  const effort = thinkingEffort(input.variant, input.model.modelID)
+  const reasoningPartId = newId("prt")
+  let reasoningPart: StoredPart | undefined
+
   const asstPart: StoredPart = { id: newId("prt"), sessionID, messageID: asstMsg.id, type: "text", text: "" }
-  await insertPart(userId, 0, asstPart)
+  await insertPart(userId, 1, asstPart)
   publish(userId, { type: "message.part.updated", properties: { part: asstPart } })
 
   // 4. Стрим от шлюза.
@@ -92,18 +116,49 @@ export async function runPrompt(input: PromptInput): Promise<{ info: StoredMessa
     const res = await fetch(`${config.GATEWAY_URL}/v1/chat/completions`, {
       method: "POST",
       headers: { authorization: `Bearer ${key}`, "content-type": "application/json" },
-      body: JSON.stringify({ model: input.model.modelID, messages, stream: true }),
+      body: JSON.stringify({
+        model: input.model.modelID,
+        messages,
+        stream: true,
+        // LiteLLM мапит reasoning_effort на нативный thinking Anthropic.
+        ...(effort ? { reasoning_effort: effort } : {}),
+      }),
     })
     if (!res.ok || !res.body) {
       const detail = await res.text().catch(() => "")
       throw new Error(`Шлюз вернул ${res.status}: ${detail.slice(0, 200)}`)
     }
 
-    await consumeOpenAIStream(res.body, async (delta) => {
-      asstPart.text = (asstPart.text as string) + delta
-      await updatePart(userId, asstPart)
-      publish(userId, { type: "message.part.updated", properties: { part: asstPart, delta } })
+    await consumeOpenAIStream(res.body, {
+      onText: async (delta) => {
+        asstPart.text = (asstPart.text as string) + delta
+        await updatePart(userId, asstPart)
+        publish(userId, { type: "message.part.updated", properties: { part: asstPart, delta } })
+      },
+      onReasoning: async (delta) => {
+        if (!reasoningPart) {
+          reasoningPart = {
+            id: reasoningPartId,
+            sessionID,
+            messageID: asstMsg.id,
+            type: "reasoning",
+            text: "",
+            time: { start: Date.now() },
+          }
+          await insertPart(userId, 0, reasoningPart)
+        }
+        reasoningPart.text = (reasoningPart.text as string) + delta
+        await updatePart(userId, reasoningPart)
+        publish(userId, { type: "message.part.updated", properties: { part: reasoningPart, delta } })
+      },
     })
+
+    // Закрываем reasoning-часть (time.end) — рендерер перестаёт считать её «в процессе».
+    if (reasoningPart) {
+      reasoningPart.time = { start: (reasoningPart.time as { start: number }).start, end: Date.now() }
+      await updatePart(userId, reasoningPart)
+      publish(userId, { type: "message.part.updated", properties: { part: reasoningPart } })
+    }
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     asstPart.text = (asstPart.text as string) + (asstPart.text ? "\n\n" : "") + `⚠️ ${msg}`
@@ -125,10 +180,11 @@ export async function runPrompt(input: PromptInput): Promise<{ info: StoredMessa
   return { info: asstMsg, parts: [asstPart] }
 }
 
-/** Разобрать OpenAI-совместимый SSE-стрим (data: {...delta...}\n\n, конец — data: [DONE]). */
+/** Разобрать OpenAI-совместимый SSE-стрим (data: {...delta...}\n\n, конец — data: [DONE]).
+ *  content → onText; reasoning_content/reasoning (thinking Claude через LiteLLM) → onReasoning. */
 async function consumeOpenAIStream(
   body: ReadableStream<Uint8Array>,
-  onDelta: (delta: string) => Promise<void>,
+  handlers: { onText: (delta: string) => Promise<void>; onReasoning: (delta: string) => Promise<void> },
 ): Promise<void> {
   const reader = body.getReader()
   const decoder = new TextDecoder()
@@ -145,9 +201,13 @@ async function consumeOpenAIStream(
       const payload = trimmed.slice(5).trim()
       if (payload === "[DONE]") return
       try {
-        const json = JSON.parse(payload) as { choices?: Array<{ delta?: { content?: string } }> }
-        const delta = json.choices?.[0]?.delta?.content
-        if (delta) await onDelta(delta)
+        const json = JSON.parse(payload) as {
+          choices?: Array<{ delta?: { content?: string; reasoning_content?: string; reasoning?: string } }>
+        }
+        const delta = json.choices?.[0]?.delta
+        const reasoning = delta?.reasoning_content ?? delta?.reasoning
+        if (typeof reasoning === "string" && reasoning) await handlers.onReasoning(reasoning)
+        if (delta?.content) await handlers.onText(delta.content)
       } catch {
         // частичный/служебный кадр — пропускаем
       }

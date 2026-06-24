@@ -66,6 +66,7 @@ type PromptBody = {
   messageID?: string
   model?: { providerID: string; modelID: string }
   agent?: string
+  variant?: string
   parts?: Array<{ type: string; text?: string }>
 }
 const promptArgs = (userId: string, token: string, sessionID: string, body: PromptBody) => ({
@@ -75,6 +76,7 @@ const promptArgs = (userId: string, token: string, sessionID: string, body: Prom
   messageID: body.messageID,
   model: body.model ?? { providerID: "anthropic", modelID: "claude-sonnet" },
   agent: body.agent,
+  variant: body.variant,
   parts: Array.isArray(body.parts) ? body.parts : [],
 })
 
