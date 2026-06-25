@@ -7,7 +7,7 @@
 | Папка | Назначение | Где деплоится |
 |---|---|---|
 | `opencode/` | Клон апстрима `anomalyco/opencode`. **Не модифицируем напрямую** — будем форкать на GitHub. Сейчас используется только для разведки кода. | — |
-| `gateway/` | LiteLLM Proxy с конфигом наших провайдеров (Claude, GPT, GigaChat) + Postgres. Один Docker Compose. | Фаза 1: локально. Фаза 2: VPS вне РФ |
+| ⤴ **отдельный репо** `paragraf-gateway` | LiteLLM Proxy + Postgres (Claude/GPT/GigaChat). **Вынесен из монорепо** (зарубежный деплой). Для локального дева клонировать соседней папкой `../paragraf-gateway`. github.com/GlebAvershin/paragraf-gateway | VPS вне РФ |
 | `billing/` | Bun + Hono + Drizzle + Postgres. Управление пользователями, подписками, тарифами, синхронизация с Gateway через Management API. | Фаза 1: локально. Фаза 2: VPS в РФ (152-ФЗ) |
 | `doc-tools/` | Парсеры PDF/DOCX/XLSX + генератор DOCX. Pure JS, юнит-тесты. Переедет в форк opencode как плагин агента. | n/a — workspace package |
 
@@ -18,8 +18,9 @@
 ## Порядок запуска для smoke-теста Фазы 1
 
 ```
-1. Поднять Gateway (см. gateway/README.md):
-   cd gateway
+1. Поднять Gateway (ОТДЕЛЬНЫЙ репо — клонировать соседней папкой):
+   git clone https://github.com/GlebAvershin/paragraf-gateway.git ../paragraf-gateway
+   cd ../paragraf-gateway
    cp .env.example .env  # заполнить ANTHROPIC_API_KEY + сгенерировать секреты
    docker compose up -d
    ./scripts/create-test-key.sh   # для прямого ручного теста

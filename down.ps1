@@ -9,6 +9,8 @@
 param([switch]$Docker)
 
 $ROOT = $PSScriptRoot
+# Gateway вынесен в отдельный репо -- соседний клон ..\paragraf-gateway (см. up.ps1/DEPLOY.md).
+$GATEWAY = if ($env:PARAGRAF_GATEWAY_DIR) { $env:PARAGRAF_GATEWAY_DIR } else { Join-Path (Split-Path $ROOT -Parent) "paragraf-gateway" }
 
 function Step($m) { Write-Host "[down] $m" -ForegroundColor Cyan }
 function Ok($m)   { Write-Host "  OK $m" -ForegroundColor Green }
@@ -31,7 +33,7 @@ if ($etl) {
 # -- Docker (optional) --
 if ($Docker) {
   Step "Stopping docker containers..."
-  docker compose -f "$ROOT\gateway\docker-compose.yml" down 2>$null | Out-Null
+  if (Test-Path "$GATEWAY\docker-compose.yml") { docker compose -f "$GATEWAY\docker-compose.yml" down 2>$null | Out-Null }
   docker compose -f "$ROOT\billing\docker-compose.yml" down 2>$null | Out-Null
   Ok "gateway + billing containers stopped (volumes kept)"
 } else {

@@ -1,5 +1,0 @@
-.env
-.env.local
-*.log
-postgres_data/
-.DS_Store

@@ -35,10 +35,15 @@ D:\TEMKA\
 │                         1. Bearer auth auto-detect for Anthropic provider behind proxy
 │                         2. PATCHES.md tracking fork delta + Windows symlink nuance
 │                         3. @ourapp/doc-tools workspace package + plugin registration
-├── gateway/            LiteLLM Proxy + Postgres (Docker Compose, runs locally)
 ├── billing/            Bun/Hono service: users, subscriptions, magic-link auth, LiteLLM sync
 └── doc-tools/          Pure-TS parsers (PDF/DOCX/XLSX) + DOCX generator. Tests pass 10/10.
 ```
+
+> **gateway вынесен в ОТДЕЛЬНЫЙ репо** (github.com/GlebAvershin/paragraf-gateway —
+> зарубежный деплой, см. DEPLOY.md). Для локального дева клонируется соседней папкой
+> `../paragraf-gateway`; `up.ps1`/`down.ps1` смотрят туда (override `$env:PARAGRAF_GATEWAY_DIR`).
+> Внутренняя структура шлюза (litellm-config.yaml, docker-compose.yml, .env) не изменилась —
+> ссылки на `gateway/<файл>` ниже теперь относятся к корню репо paragraf-gateway.
 
 ## Phase 1 (local-first) — running services
 
@@ -62,7 +67,7 @@ NOTICE) doesn't abort them.
 # (or in PowerShell: $env:PATH = "C:\Users\Home\.bun\bin;$env:PATH")
 
 # 1. Gateway (LiteLLM + its Postgres)
-cd /d/TEMKA/gateway && docker compose up -d        # exposes :4000
+cd /d/TEMKA/../paragraf-gateway && docker compose up -d   # отдельный репо; exposes :4000
 
 # 2. Billing Postgres (container) + service (bun process)
 cd /d/TEMKA/billing && docker compose up -d        # postgres on :5433

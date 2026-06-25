@@ -11,12 +11,19 @@
 | **web** (статика) | SolidJS-рендерер (`desktop/packages/app`) — сам сайт | 5173 (vite dev) | `vite build` → `dist/` на статик-хостинг/CDN |
 | **engine** | Наш бэкенд чата (Hono), контракт opencode (`engine/`) | 4096 | Node/Bun-процесс |
 | **billing** | Пользователи, OTP-вход, подписки, кредиты, платежи (`billing/`) | 3000 | Node/Bun-процесс |
-| **gateway** | LiteLLM Proxy — абстракция Claude/GPT/GigaChat/Yandex (`gateway/`) | 4000 | Docker |
+| **gateway** | LiteLLM Proxy — абстракция Claude/GPT/GigaChat/Yandex | 4000 | Docker — **отдельный репо `paragraf-gateway`** (зарубеж) |
 | **postgres × 3** | БД engine, billing, gateway(litellm) | 5434/5433/5432 | Managed Postgres ×3 (или 1 инстанс, 3 БД) |
 | **SMTP** | Отправка OTP-кодов и платёжных писем | — | Транзакционный сервис (см. §6) |
 
 Поток: **web** → (API чата) **engine** → **gateway** → провайдеры моделей; **web** →
 (вход/кредиты/платежи) **billing**; **billing** ↔ **gateway** (sync ключей, ETL-списание).
+
+**Репозитории (3 + ML-коллеги):**
+- `paragraf-monorepo` (этот) — **РФ**: `engine`, `billing`, `doc-tools`, `landing`, docs.
+- `paragraf-gateway` — **зарубеж**: LiteLLM (вынесен из монорепо).
+- `glar` — веб-рендерер (форк opencode), собирается в статику → раздаётся с РФ.
+- (ML-коллега заводит свой репо отдельно — верификация ответов/аналитика, РФ.)
+Локальный дев: `gateway` клонировать соседней папкой `../paragraf-gateway`; `up.ps1` это учитывает.
 
 ## 2. Сборка web (статика)
 
@@ -93,7 +100,8 @@ ETL-воркер (списание кредитов из spend-логов): `NOD
 
 ## 6. gateway (LiteLLM) + ключи провайдеров
 
-`gateway/` (Docker Compose). Нужны (в `gateway/.env` / `litellm-config.yaml`):
+**Отдельный репозиторий:** `github.com/GlebAvershin/paragraf-gateway` (вынесен из монорепо —
+деплоится на зарубежный VPS). Docker Compose в корне. Нужны (в `.env` / `litellm-config.yaml`):
 - **`ANTHROPIC_API_KEY`** — Claude (Opus 4.8 / Sonnet 4.6 / Haiku 4.5). **Уже работает.**
 - **GigaChat** (Sber) — `GIGACHAT_*` креды. **Нужно завести** (в dev не было → короткий запрос
   в авто-режиме падал). Модели РФ-хостинга — важно для 152-ФЗ.

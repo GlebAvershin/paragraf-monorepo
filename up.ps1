@@ -19,6 +19,10 @@ $ErrorActionPreference = "Continue"
 $BUN = "C:\Users\Home\.bun\bin"
 $env:PATH = "$BUN;$env:PATH"
 $ROOT = $PSScriptRoot
+# Gateway вынесен в ОТДЕЛЬНЫЙ репо (github.com/GlebAvershin/paragraf-gateway -- зарубежный
+# деплой). Для локального дева ожидается соседний клон ..\paragraf-gateway; путь можно
+# переопределить через $env:PARAGRAF_GATEWAY_DIR. См. DEPLOY.md.
+$GATEWAY = if ($env:PARAGRAF_GATEWAY_DIR) { $env:PARAGRAF_GATEWAY_DIR } else { Join-Path (Split-Path $ROOT -Parent) "paragraf-gateway" }
 
 function Step($m) { Write-Host "`n[up] $m" -ForegroundColor Cyan }
 function Ok($m)   { Write-Host "  OK $m" -ForegroundColor Green }
@@ -26,8 +30,12 @@ function Warn($m) { Write-Host "  ! $m" -ForegroundColor Yellow }
 
 # -- 1. Gateway -- (2>$null: docker writes progress to stderr, not errors)
 Step "Gateway (LiteLLM + Postgres)..."
-docker compose -f "$ROOT\gateway\docker-compose.yml" up -d 2>$null | Out-Null
-Ok "gateway containers up"
+if (Test-Path "$GATEWAY\docker-compose.yml") {
+  docker compose -f "$GATEWAY\docker-compose.yml" up -d 2>$null | Out-Null
+  Ok "gateway containers up"
+} else {
+  Warn "gateway repo not found at $GATEWAY -- clone github.com/GlebAvershin/paragraf-gateway as a sibling (see DEPLOY.md)"
+}
 
 # -- 2. Billing Postgres --
 Step "Billing Postgres..."
