@@ -8,7 +8,7 @@
 #   5. ETL worker loop (charges credits from LiteLLM spend)
 #   6. Health-check all services
 #
-# Desktop is NOT auto-started (GUI) -- command is printed at the end.
+# Web renderer is NOT auto-started -- command is printed at the end.
 #
 # Run:  powershell -ExecutionPolicy Bypass -File up.ps1
 
@@ -107,7 +107,7 @@ Check "billing" "http://localhost:3000/health/readiness" "ok"
 
 # -- Done --
 Write-Host "`n=== Stack is up ===" -ForegroundColor Green
-Write-Host "Start desktop separately:" -ForegroundColor White
-Write-Host "  bun run --cwd '$ROOT\desktop' dev:desktop" -ForegroundColor Gray
+Write-Host "Start web renderer separately:" -ForegroundColor White
+Write-Host "  bun run --cwd '$ROOT\web' dev:web" -ForegroundColor Gray
 Write-Host "Stop stack:  .\down.ps1" -ForegroundColor Gray
 Write-Host "OTP login codes -- in the BILLING window (Kod dlya vhoda: NNN NNN)" -ForegroundColor Gray

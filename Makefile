@@ -9,8 +9,8 @@ SHELL := bash
 BUN ?= bun
 # GATEWAY_DIR — клон github.com/GlebAvershin/paragraf-gateway (соседней папкой)
 GATEWAY_DIR ?= ../paragraf-gateway
-# WEB_DIR — форк-рендерер (glar); переопредите если клонирован иначе: make web WEB_DIR=../glar
-WEB_DIR ?= desktop
+# WEB_DIR — каталог веб-рендерера (форк opencode, теперь внутри монорепо: ./web)
+WEB_DIR ?= web
 # RUN — каталог логов фоновых сервисов
 RUN := .run
 
@@ -100,9 +100,9 @@ engine: ## запустить engine в текущем терминале
 etl: ## запустить ETL-воркер (списание кредитов) в текущем терминале
 	@cd billing && NODE_ENV=production $(BUN) run src/worker/etl.ts --loop --interval=30
 
-web: ## запустить веб-рендерер (vite :5173) — нужен клон glar в $(WEB_DIR)
+web: ## запустить веб-рендерер (vite :5173) из ./web
 	@if [ -d "$(WEB_DIR)/packages/app" ]; then cd "$(WEB_DIR)" && $(BUN) run dev:web; \
-	else echo "рендерер не найден в $(WEB_DIR) — клонируйте github.com/GlebAvershin/glar (ветка ourapp/main) и/или задайте WEB_DIR=путь"; fi
+	else echo "рендерер не найден в $(WEB_DIR) — он должен лежать в ./web (или задайте WEB_DIR=путь)"; fi
 
 ## ─────────────────────────── утилиты ───────────────────────────
 

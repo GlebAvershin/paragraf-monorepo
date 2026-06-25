@@ -28,16 +28,23 @@ Vertical 1 = lawyers, Vertical 2 = accountants, both ship in MVP. Two-door UX, s
 D:\TEMKA\
 ├── README.md           Top-level navigation & smoke-test cookbook
 ├── CLAUDE.md           This file (Claude Code context)
-├── .claude/skills/     Dev-team skills (gstack — 51 skills) — DO NOT ship in product
-├── opencode/           Pristine upstream clone (anomalyco/opencode) — DO NOT modify
-├── desktop/            Our fork (github.com/GlebAvershin/glar) on `ourapp/main` branch.
-│                       3 commits ahead of origin/dev:
-│                         1. Bearer auth auto-detect for Anthropic provider behind proxy
-│                         2. PATCHES.md tracking fork delta + Windows symlink nuance
-│                         3. @ourapp/doc-tools workspace package + plugin registration
-├── billing/            Bun/Hono service: users, subscriptions, magic-link auth, LiteLLM sync
-└── doc-tools/          Pure-TS parsers (PDF/DOCX/XLSX) + DOCX generator. Tests pass 10/10.
+├── .claude/skills/     Dev-team skills (gstack) — DO NOT ship in product
+├── web/                Веб-рендерер (форк opencode, SolidJS) — наш фронт. Был отдельным
+│                       репо github.com/GlebAvershin/glar; влит в монорепо 2026-06-26.
+│                       upstream opencode БОЛЬШЕ НЕ подключён — код наш, используем
+│                       свободно. dev: `bun run --cwd web dev:web` (vite :5173).
+├── engine/             Наш чат-движок (Hono + Postgres) с контрактом opencode. Веб → сюда.
+├── billing/            Bun/Hono: users, OTP auth, subscriptions, credits, payments, ETL.
+├── doc-tools/          Pure-TS parsers (PDF/DOCX/XLSX) + DOCX generator. Tests pass 10/10.
+└── landing/            Маркетинговый лендинг (Astro, :4321).
 ```
+
+> **СЛИЯНИЕ glar → `web/` (2026-06-26).** Раньше было 3 репо (monorepo + gateway + glar).
+> По просьбе команды свели к **2**: `web/` (бывший glar) влит в монорепо как обычный наш
+> код — `.git`/`upstream`-связь с anomalyco/opencode убрана, pristine `opencode/` удалён.
+> «Не зависим от opencode» = операционно (репа не тянет upstream); код всё ещё производный
+> от opencode и используется свободно. **Историческое:** все ссылки `desktop/<…>` ниже =
+> теперь `web/<…>` (каталог переименован при слиянии).
 
 > **gateway вынесен в ОТДЕЛЬНЫЙ репо** (github.com/GlebAvershin/paragraf-gateway —
 > зарубежный деплой, см. DEPLOY.md). Для локального дева клонируется соседней папкой
@@ -184,9 +191,9 @@ Always read `DESIGN.md` before making any visual or UI decisions. All font choic
 
 ## What NOT to do
 
-- **Don't modify `opencode/`** — it's the pristine scout clone, kept for reference. All fork work goes in `desktop/`.
+- **All fork/UI work goes in `web/`** (бывший glar). `opencode/` pristine-клон удалён при слиянии 2026-06-26; upstream больше не подключён.
 - **Don't write to `~/.claude/`** — it's the global agent config, off-limits. Project-local at `.claude/` is fine.
-- **Don't import gstack skills into the product** — those are dev tools for us, not features for end users. End-user scenarios live in `desktop/packages/scenarios/` (to be created in Phase 2).
+- **Don't import gstack skills into the product** — those are dev tools for us, not features for end users. End-user scenarios live in `web/packages/scenarios/` (to be created in Phase 2).
 - **Don't use real `ANTHROPIC_API_KEY` in committed files.** Always `.env` or the LiteLLM `gateway/.env`.
 
 ## Where the plan lives

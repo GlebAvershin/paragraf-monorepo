@@ -8,6 +8,7 @@
 
 | Папка | Что | Порт | Стек |
 |---|---|---|---|
+| `web/` | Веб-рендерер (форк opencode, SolidJS) — сам интерфейс; собирается в статику | 5173 | Bun + SolidJS + Vite |
 | `engine/` | Чат-движок: auth, сессии/сообщения, проксирование к шлюзу, SSE | 4096 | Bun + Hono + Postgres |
 | `billing/` | Пользователи, OTP-вход, подписки, кредиты, платежи, ETL-списание | 3000 | Bun + Hono + Drizzle + Postgres |
 | `doc-tools/` | Парсеры PDF/DOCX/XLSX + генератор DOCX (pure-TS) | — | библиотека |
@@ -17,9 +18,12 @@
 
 | Репо | Роль | Сервер |
 |---|---|---|
-| **paragraf-monorepo** (этот) | engine + billing + doc-tools + landing | РФ |
+| **paragraf-monorepo** (этот) | web (фронт) + engine + billing + doc-tools + landing | РФ |
 | **paragraf-gateway** | LiteLLM-шлюз (Claude/GPT/GigaChat/Yandex) | зарубеж |
-| **glar** | веб-рендерер (форк opencode) → статика | РФ (CDN) |
+
+> Раньше веб-рендерер жил в отдельном репо `glar` (форк opencode) — теперь он внутри
+> монорепо в `web/` и от репозитория opencode больше не зависит (используем их код,
+> но не тянем upstream). ML-коллега ведёт свой репо отдельно.
 
 > 152-ФЗ: ПДн маскируются в браузере до отправки; РФ-данные → РФ-модели; зарубежные модели —
 > через шлюз с обезличенным текстом. Детали и деплой — в [`DEPLOY.md`](DEPLOY.md).
@@ -40,8 +44,8 @@ cp ../paragraf-gateway/.env.example ../paragraf-gateway/.env
 # 3. Поднять весь бэкенд одной командой
 make up          # docker + миграции + billing/engine/ETL в фоне + health-check
 
-# 4. Веб-рендерер (отдельный терминал; нужен клон glar)
-make web WEB_DIR=../glar
+# 4. Веб-рендерер (отдельный терминал)
+make web
 ```
 
 `make help` — все команды (`up`, `down`, `restart`, `logs`, `health`, `migrate`, `seed`,
