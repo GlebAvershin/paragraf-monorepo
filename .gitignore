@@ -48,3 +48,6 @@ out/
 
 # QA: временный тестовый скан
 tmp-scan-contract.png
+
+# Makefile: логи фоновых сервисов (make up)
+.run/
