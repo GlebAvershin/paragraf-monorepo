@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# uv
+.uv/
+
+# env (root .gitignore also covers .env, repeated here for portability)
+.env
+.env.local
+
+# local data / qdrant volumes
+qdrant_storage/
+*.log

@@ -1,0 +1,93 @@
+# Gold question set. Drives precision / false-positive / coverage / recall scoring.
+# Fields:
+#   id            — stable handle
+#   query         — the question
+#   expected      — clauses that must be retrieved/cited (omit for negatives)
+#   reference     — gold answer (LLM-judge / manual review; also RAGAS reference)
+#   expects_answer— false ⇒ answer is NOT in the corpus; the system MUST abstain
+#   difficulty    — easy | medium | hard
+#   type          — citation | comparison | definition | multihop | negative
+#
+# This synthetic set exercises the harness (incl. abstain/false-positive on negatives).
+# Grow to 50–100 on the REAL corpus once ingested — it is the backbone of the comparison.
+
+- id: fields
+  query: "Какие размеры полей нужно соблюдать при оформлении документа?"
+  expected:
+    - { gost_id: "ГОСТ Р 7.0.97-2016", clause_path: "5.1" }
+  reference: "Левое поле 20 мм, правое 10 мм, верхнее и нижнее по 20 мм."
+  expects_answer: true
+  difficulty: easy
+  type: citation
+
+- id: fonts
+  query: "Какие размеры шрифтов рекомендуется применять в документах?"
+  expected:
+    - { gost_id: "ГОСТ Р 7.0.97-2016", clause_path: "6.4" }
+  reference: "Размеры шрифтов № 12, 13, 14; в таблицах допускаются меньшие."
+  expects_answer: true
+  difficulty: easy
+  type: citation
+
+- id: signature
+  query: "Что входит в состав реквизита «Подпись»?"
+  expected:
+    - { gost_id: "ГОСТ Р 7.0.97-2016", clause_path: "5.18" }
+  reference: "Наименование должности, личная подпись и её расшифровка (инициалы, фамилия)."
+  expects_answer: true
+  difficulty: easy
+  type: definition
+
+- id: page-numbering
+  query: "Как нумеруют страницы текстового документа и где ставят номер?"
+  expected:
+    - { gost_id: "ГОСТ 2.105-2019", clause_path: "4.2" }
+  reference: "Арабскими цифрами, сквозная нумерация, номер в центре нижней части листа без точки."
+  expects_answer: true
+  difficulty: easy
+  type: citation
+
+- id: section-numbering
+  query: "Как обозначают номера разделов в текстовом документе?"
+  expected:
+    - { gost_id: "ГОСТ 2.105-2019", clause_path: "4.1" }
+  reference: "Арабскими цифрами без точки, сквозная нумерация в пределах документа."
+  expects_answer: true
+  difficulty: easy
+  type: citation
+
+# --- multihop: requires two clauses from the same standard ---
+- id: fields-and-fonts
+  query: "Какие поля и какие размеры шрифта используют при оформлении документа?"
+  expected:
+    - { gost_id: "ГОСТ Р 7.0.97-2016", clause_path: "5.1" }
+    - { gost_id: "ГОСТ Р 7.0.97-2016", clause_path: "6.4" }
+  reference: "Поля: левое 20, правое 10, верх/низ по 20 мм; шрифты № 12, 13, 14."
+  expects_answer: true
+  difficulty: medium
+  type: multihop
+
+# --- negatives: NOT in the corpus → the system MUST abstain (tests false-positive rate) ---
+- id: neg-storage-term
+  query: "Какой срок хранения первичных бухгалтерских документов?"
+  expected: []
+  reference: "(нет в корпусе — ожидается воздержание)"
+  expects_answer: false
+  difficulty: medium
+  type: negative
+
+- id: neg-vat-rate
+  query: "Какая ставка НДС применяется в 2026 году?"
+  expected: []
+  reference: "(нет в корпусе — ожидается воздержание)"
+  expects_answer: false
+  difficulty: medium
+  type: negative
+
+- id: neg-electrical-marking
+  query: "Каковы требования к маркировке взрывозащищённого электрооборудования?"
+  expected: []
+  reference: "(нет в корпусе — ожидается воздержание)"
+  expects_answer: false
+  difficulty: hard
+  type: negative

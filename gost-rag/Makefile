@@ -1,0 +1,64 @@
+# gost-rag — локальный запуск в одну команду (как `make up` в монорепе).
+# Эмбеддинги + генерация — через OpenRouter (ОДИН ключ). Qdrant — в docker.
+# Нужны: docker, uv, curl. Подробности — README.md.
+
+SHELL := bash
+.DEFAULT_GOAL := help
+UV ?= uv
+SRC ?= data/fixtures          # корпус для индексации; реальные ГОСТы:  make up SRC=data/gost_pdfs
+GATEWAY_DIR ?= ../../paragraf-gateway   # сосед-репо со шлюзом (для `make gateway`)
+
+.PHONY: help up down index hybrid ask eval test dash logs gateway env-check
+
+help: ## показать команды
+	@echo "gost-rag — команды:"
+	@grep -hE '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
+	  | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-8s\033[0m %s\n",$$1,$$2}'
+	@echo ""
+	@echo "Старт:  cp env.sample .env  →  make gateway up  →  make eval   (всё через LiteLLM-шлюз)"
+
+env-check: ## проверить .env
+	@[ -f .env ] || { echo "нет .env — выполни: cp env.sample .env  и заполни ключ шлюза (LITELLM_API_KEY)"; exit 1; }
+	@grep -qE '^(LITELLM_API_KEY|OPENROUTER_API_KEY)=\S' .env || echo "ВНИМАНИЕ: в .env нет ни LITELLM_API_KEY (шлюз), ни OPENROUTER_API_KEY (прямой режим)"
+
+gateway: ## поднять LiteLLM-шлюз (сосед $(GATEWAY_DIR)), если он есть
+	@if [ -f "$(GATEWAY_DIR)/docker-compose.yml" ]; then \
+	  echo "[gateway] up ($(GATEWAY_DIR))..."; docker compose -f "$(GATEWAY_DIR)/docker-compose.yml" up -d; \
+	  printf "[gateway] жду :4000"; for i in $$(seq 1 30); do \
+	    curl -fsS http://localhost:4000/health/liveliness >/dev/null 2>&1 && { echo " — готов"; break; }; printf "."; sleep 1; done; \
+	else echo "[gateway] не найден $(GATEWAY_DIR) — клонируй paragraf-gateway и заполни его .env (OPENROUTER_API_KEY)"; fi
+
+up: env-check ## поднять всё: Qdrant + зависимости + индексация (dense + hybrid)
+	@docker compose up -d
+	@$(UV) sync >/dev/null
+	@printf "[up] жду Qdrant"; for i in $$(seq 1 30); do \
+	  curl -fsS http://localhost:6333/readyz >/dev/null 2>&1 && { echo " — готов"; break; }; printf "."; sleep 1; done
+	@$(MAKE) -s index
+	@$(MAKE) -s hybrid
+	@echo "[up] готово →  make ask q='вопрос по ГОСТу'   |   make eval"
+
+index: ## (пере)индексировать dense-коллекцию (SRC=data/fixtures по умолчанию)
+	@echo "[index] dense ($(SRC))..."
+	@$(UV) run python scripts/index_corpus.py --src "$(SRC)"
+
+hybrid: ## (пере)индексировать hybrid-коллекцию (dense+BM25) — нужна для абляции rag+hybrid
+	@echo "[index] hybrid ($(SRC))..."
+	@$(UV) run python scripts/index_corpus.py --src "$(SRC)" --hybrid
+
+ask: ## вопрос:  make ask q="..." [strategy=verify_ensemble] [model=anthropic/claude-3.7-sonnet]
+	@$(UV) run python scripts/ask.py $(if $(strategy),--strategy $(strategy),) $(if $(model),--model "$(model)",) "$(q)"
+
+eval: ## прогнать бенчмарк-матрицу → eval/results.md  (model=... чтобы ограничить одной моделью)
+	@$(UV) run python eval/run_eval.py $(if $(model),--model "$(model)",)
+
+test: ## юнит-тесты
+	@$(UV) run --extra dev pytest -q
+
+dash: ## открыть дашборд Qdrant
+	@open http://localhost:6333/dashboard 2>/dev/null || echo "http://localhost:6333/dashboard"
+
+logs: ## логи Qdrant
+	@docker compose logs -f qdrant
+
+down: ## остановить Qdrant (данные сохраняются в volume)
+	@docker compose down

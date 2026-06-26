@@ -14,7 +14,7 @@ WEB_DIR ?= web
 # RUN — каталог логов фоновых сервисов
 RUN := .run
 
-.PHONY: help up down restart infra gateway db wait migrate seed \
+.PHONY: help dev env-init docker-check up down restart infra gateway db wait migrate seed \
         billing engine etl web health logs typecheck test env-check
 
 ## ─────────────────────────── основное ───────────────────────────
@@ -24,7 +24,31 @@ help: ## показать список команд
 	@grep -hE '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
 	  | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-10s\033[0m %s\n",$$1,$$2}'
 	@echo ""
-	@echo "Быстрый старт:  make up   (поднять всё)   →   make web   (рендерер в отдельном терминале)"
+	@echo "Быстрый старт:  make dev   —  ВЕСЬ продукт одной командой (бэкенд + веб)"
+
+dev: ## ⭐ поднять ВЕСЬ продукт ОДНОЙ командой: .env + шлюз + бэкенд (фон) + веб (этот терминал)
+	@$(MAKE) -s docker-check
+	@$(MAKE) -s env-init
+	@$(MAKE) -s up
+	@echo ""
+	@echo "[dev] бэкенд поднят → запускаю веб: http://localhost:5173"
+	@echo "[dev] OTP-код для входа: в другом терминале  make logs   (или Mailpit :8025)"
+	@echo "[dev] Ctrl-C останавливает только веб; бэкенд живёт (полный стоп — make down)"
+	@$(MAKE) -s web
+
+env-init: ## создать billing/.env + engine/.env из примеров с общим JWT_SECRET (если их нет)
+	@created=0; for d in billing engine; do \
+	  if [ ! -f $$d/.env ]; then cp $$d/.env.example $$d/.env && created=1 && echo "[env-init] создан $$d/.env"; fi; \
+	done; \
+	if [ "$$created" = 1 ]; then \
+	  jwt=$$(openssl rand -hex 32); \
+	  for d in billing engine; do \
+	    if grep -qE '^JWT_SECRET=' $$d/.env; then sed -i.bak -E "s|^JWT_SECRET=.*|JWT_SECRET=$$jwt|" $$d/.env && rm -f $$d/.env.bak; \
+	    else echo "JWT_SECRET=$$jwt" >> $$d/.env; fi; \
+	  done; \
+	  echo "[env-init] JWT_SECRET синхронизирован (billing == engine)"; \
+	  echo "[env-init] ВАЖНО: впиши ключи моделей в $(GATEWAY_DIR)/.env (ANTHROPIC_API_KEY / OPENROUTER_API_KEY / GIGACHAT_CREDENTIALS)"; \
+	fi
 
 up: env-check infra migrate ## поднять весь бэкенд одной командой (docker + миграции + сервисы в фоне)
 	@mkdir -p $(RUN)
@@ -53,12 +77,19 @@ restart: down up ## перезапустить стек
 
 ## ─────────────────────────── инфраструктура ───────────────────────────
 
-infra: gateway db wait ## поднять контейнеры (gateway + postgres engine/billing)
+docker-check: ## убедиться, что Docker запущен
+	@docker info >/dev/null 2>&1 || { echo "Docker не запущен. Открой Docker Desktop (macOS: open -a Docker), дождись готовности и повтори make dev."; exit 1; }
+
+infra: docker-check gateway db wait ## поднять контейнеры (gateway + postgres engine/billing)
 
 gateway: ## поднять gateway-контейнеры (из соседнего репо, если есть)
 	@if [ -f "$(GATEWAY_DIR)/docker-compose.yml" ]; then \
 	  echo "[gateway] up ($(GATEWAY_DIR))..."; \
-	  docker compose -f "$(GATEWAY_DIR)/docker-compose.yml" up -d >/dev/null; \
+	  docker compose -f "$(GATEWAY_DIR)/docker-compose.yml" up -d >/dev/null \
+	    || { echo "[gateway] не поднялся. Если 'name is already in use' — застрявший контейнер от прошлого запуска:"; \
+	         echo "          docker rm -f gateway_postgres gateway_litellm   (данные в volume сохранятся), затем make dev"; exit 1; }; \
+	  printf "[gateway] жду :4000"; for i in $$(seq 1 40); do \
+	    curl -fsS http://localhost:4000/health/liveliness >/dev/null 2>&1 && { echo " — готов"; break; }; printf "."; sleep 1; done; \
 	else \
 	  echo "[gateway] ВНИМАНИЕ: не найден $(GATEWAY_DIR) — клонируйте github.com/GlebAvershin/paragraf-gateway соседней папкой (см. DEPLOY.md), модели работать не будут"; \
 	fi
@@ -100,8 +131,10 @@ engine: ## запустить engine в текущем терминале
 etl: ## запустить ETL-воркер (списание кредитов) в текущем терминале
 	@cd billing && NODE_ENV=production $(BUN) run src/worker/etl.ts --loop --interval=30
 
-web: ## запустить веб-рендерер (vite :5173) из ./web
-	@if [ -d "$(WEB_DIR)/packages/app" ]; then cd "$(WEB_DIR)" && $(BUN) run dev:web; \
+web: ## запустить веб-рендерер (vite :5173) из ./web (первый раз поставит зависимости)
+	@if [ -d "$(WEB_DIR)/packages/app" ]; then \
+	  [ -d "$(WEB_DIR)/node_modules" ] || { echo "[web] ставлю зависимости (bun install, первый раз — небыстро)..."; (cd "$(WEB_DIR)" && $(BUN) install); }; \
+	  cd "$(WEB_DIR)" && $(BUN) run dev:web; \
 	else echo "рендерер не найден в $(WEB_DIR) — он должен лежать в ./web (или задайте WEB_DIR=путь)"; fi
 
 ## ─────────────────────────── утилиты ───────────────────────────
