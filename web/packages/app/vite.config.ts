@@ -24,7 +24,9 @@ export default defineConfig({
   server: {
     host: "0.0.0.0",
     allowedHosts: true,
-    port: 3000,
+    // 5173 — наш порт рендерера (billing занимает :3000, engine :4096,
+    // gateway :4000, landing :4321). Совпадает с README/DEPLOY/CLAUDE.
+    port: 5173,
   },
   build: {
     target: "esnext",
