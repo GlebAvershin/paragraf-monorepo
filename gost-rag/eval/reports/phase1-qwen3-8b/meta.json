@@ -1,0 +1,7 @@
+{
+  "label": "phase1-qwen3-8b",
+  "what": "Phase-1 keystone: gate (fix A) vs raw vs hybrid, full 27-q gold, qwen3-8b gen, deepseek judge",
+  "headline": "gate: precision 0.35->0.54, FPR 0.56->0.22, pos_cov 1.00->0.57; hybrid recall 0.62->0.69",
+  "note": "run predates --dump, so no per-row dump.jsonl here; results.md only",
+  "verdict": "gate validated; qwen3-8b too weak (prec 0.54 << 0.90 bar) -> move to stronger/diverse models + multi-agent"
+}

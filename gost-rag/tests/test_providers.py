@@ -9,7 +9,8 @@ from gost_rag.providers import resolve_chat_provider
 
 
 def test_openrouter_is_the_active_default():
-    p = resolve_chat_provider(Settings(openrouter_api_key="sk-x"))
+    # _env_file=None → test the source-code default, not the deployment .env (which may pin litellm)
+    p = resolve_chat_provider(Settings(openrouter_api_key="sk-x", _env_file=None))
     assert p.name == "openrouter"
     assert "openrouter" in p.base_url
     assert p.api_key == "sk-x"

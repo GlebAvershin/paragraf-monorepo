@@ -21,7 +21,8 @@ QUOTE_MATCH_THRESHOLD = 80.0   # rapidfuzz partial_ratio (0..100)
 FAITHFULNESS_THRESHOLD = 0.5
 
 
-def check_citations(answer: Answer, context_by_ref: dict[tuple[str, str], str]) -> list[CitationCheck]:
+def check_citations(answer: Answer, context_by_ref: dict[tuple[str, str], str],
+                    quote_threshold: float = QUOTE_MATCH_THRESHOLD) -> list[CitationCheck]:
     checks: list[CitationCheck] = []
     for cit in answer.citations:
         key = (cit.gost_id, cit.clause_path)
@@ -32,7 +33,7 @@ def check_citations(answer: Answer, context_by_ref: dict[tuple[str, str], str]) 
             CitationCheck(
                 citation=cit,
                 in_context=in_context,
-                quote_found=score >= QUOTE_MATCH_THRESHOLD,
+                quote_found=score >= quote_threshold,
                 match_score=round(score, 1),
             )
         )
@@ -53,9 +54,11 @@ def validate(
     context_by_ref: dict[tuple[str, str], str],
     context_text: str,
     usage: Usage,
+    faith_threshold: float = FAITHFULNESS_THRESHOLD,
+    quote_threshold: float = QUOTE_MATCH_THRESHOLD,
 ) -> ValidationReport:
     issues: list[str] = []
-    checks = check_citations(answer, context_by_ref)
+    checks = check_citations(answer, context_by_ref, quote_threshold)
 
     if not answer.abstained and not answer.citations:
         issues.append("ответ без единой ссылки на пункт ГОСТа")
@@ -71,6 +74,6 @@ def validate(
     ok = answer.abstained or (
         not any(not c.in_context or not c.quote_found for c in checks)
         and bool(answer.citations)
-        and faithfulness >= FAITHFULNESS_THRESHOLD
+        and faithfulness >= faith_threshold
     )
     return ValidationReport(ok=ok, faithfulness=faithfulness, citation_checks=checks, issues=issues)

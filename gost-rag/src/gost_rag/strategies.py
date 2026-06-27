@@ -27,11 +27,21 @@ class RAGStrategy:
     name = "rag"
 
     def __init__(self, llm: LLM, store: Store, gen_model: str, judge_model: str,
-                 top_k: int = 8, rerank=False, reranker=None):
+                 top_k: int = 8, rerank=False, reranker=None, gate: bool = True,
+                 faith_threshold=None, quote_threshold=None, diversify: bool = False):
         self._llm, self._store = llm, store
         self._gen_model, self._judge_model = gen_model, judge_model
         self._top_k = top_k
         self._reranker = reranker  # NativeReranker | None (Stream D2)
+        self._diversify = diversify  # round-robin retrieval by document (lifts multi-doc recall)
+        # validation thresholds (None ⇒ validate() defaults) — the Phase-2 abstain-calibration knobs.
+        self._faith_threshold = faith_threshold
+        self._quote_threshold = quote_threshold
+        # Enforce the guardrail: abstain when validation fails (gate=True). The multi-agent
+        # strategies already do this; plain RAG historically did NOT — it returned answers the
+        # validator rejected, which is most of the false-positive rate. gate=False keeps the raw
+        # (un-gated) baseline for comparison.
+        self._gate = gate
         # rerank mode: "off" | "llm" (the in-house LLM ranker) | "native" (a cross-encoder endpoint).
         mode = str(rerank).lower() if rerank else "off"
         self._rerank = "llm" if mode in ("true", "1", "llm") else ("native" if mode == "native" else "off")
@@ -39,7 +49,8 @@ class RAGStrategy:
     def answer(self, query: str, industry: str | None = None) -> Result:
         usage = Usage()
         overfetch = self._rerank in ("llm", "native")
-        hits = self._store.search(query, top_k=self._top_k * 3 if overfetch else self._top_k, industry=industry)
+        hits = self._store.search(query, top_k=self._top_k * 3 if overfetch else self._top_k,
+                                  industry=industry, diversify=self._diversify)
         if self._rerank == "native" and self._reranker is not None:
             hits = self._reranker.rerank(query, hits, self._top_k)
         elif self._rerank == "llm":
@@ -48,10 +59,17 @@ class RAGStrategy:
             hits = hits[: self._top_k]
         answer = generate_answer(self._llm, self._gen_model, query, hits, usage)
         used = [h.chunk for h in hits]
+        vkw = {}
+        if self._faith_threshold is not None:
+            vkw["faith_threshold"] = self._faith_threshold
+        if self._quote_threshold is not None:
+            vkw["quote_threshold"] = self._quote_threshold
         report = validate(
             self._llm, self._judge_model, query, answer,
-            _context_by_ref(used), format_context(hits), usage,
+            _context_by_ref(used), format_context(hits), usage, **vkw,
         )
+        if self._gate and not report.ok:
+            answer = answer.model_copy(update={"abstained": True})  # guardrail rejected → abstain
         return Result(
             query=query, strategy=self.name, model=self._gen_model, answer=answer,
             validation=report, usage=usage, contexts=[c.ref for c in used],

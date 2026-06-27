@@ -1,0 +1,17 @@
+{
+  "label": "multiagent-deepseek-v4",
+  "when": "2026-06-27T14:26:44+00:00",
+  "filters": {
+    "model": "deepseek/deepseek-v4-pro",
+    "strategy": null,
+    "label": "model_ensemble",
+    "limit": 0
+  },
+  "corpus": "data/pdfs",
+  "n_rows": 81,
+  "configs": [
+    "model_ensemble",
+    "rag+gate",
+    "verify_ensemble"
+  ]
+}

@@ -4,9 +4,12 @@
 **валидировать** ответ модели до выдачи пользователю, и **сравнивать** подходы (RAG vs RLM)
 и модели (через OpenRouter) по качеству / цене / латентности.
 
-> Тексты ГОСТов подключаются позже. Сейчас работаем на синтетических фикстурах
-> (`data/fixtures/*.json`), повторяющих структуру стандарта (документ → пункты).
-> Ингест устроен так, что подмена фикстур на реальный парсер PDF/сканов не трогает остальной пайплайн.
+> **Реальный корпус подключён.** Домен — «арматура» (двойной смысл: арматурный прокат ЖБК +
+> трубопроводная/санитарная арматура): **23 текстовых ГОСТ/СП/ТР ТС** в `data/pdfs/` + размеченный
+> `eval/gold.yaml` (23 сценария + 4 негатива) из пользовательской разметки. Один документ
+> (СанПиН 1.2.3685-21) — известный scan-gap (везде только скан без текстового слоя), оставлен
+> ожидаемым в gold → harness честно показывает его как retrieval-miss. Синтетические фикстуры
+> (`data/fixtures/*.json`) сохранены для юнит-тестов харнесса.
 
 ## Архитектура
 
@@ -22,9 +25,10 @@ query ──────────────────┘
 | Модуль | Роль |
 |---|---|
 | `schema.py` | контракты (Document, Chunk, Citation, Answer, ValidationReport, Result) |
-| `corpus.py` | ингест фикстур + **структурный чанкинг по пунктам** (основа точных ссылок) |
-| `embeddings.py` | эмбеддинги через OpenAI-совместимый эндпоинт (self-host **Qwen3-Embedding-8B**) |
-| `store.py` | Qdrant: dense-поиск + фильтр по отрасли |
+| `ingest/pdf.py` | парсер реальных PDF → пункты: детект маркировки (ГОСТ/СП/СанПиН/ТР ТС, нормализация em-dash), **оконный фоллбэк** для нестандартной нумерации; метаданные из `registry.yaml` по slug файла |
+| `corpus.py` | ингест фикстур/PDF + **структурный чанкинг по пунктам** (основа точных ссылок) |
+| `embeddings.py` | эмбеддинги через OpenAI-совместимый эндпоинт (**Qwen3-Embedding-8B** через шлюз→OpenRouter) |
+| `store.py` | Qdrant: dense ИЛИ hybrid (dense+BM25, RRF) + фильтр по отрасли |
 | `generate.py` | генерация ответа + цитат (OpenRouter), строгий JSON |
 | `validate.py` | **гард перед выдачей**: проверка цитат (пункт реально есть + дословная цитата) + LLM-судья faithfulness + abstain |
 | `strategies.py` | `RAGStrategy` и `RLMStrategy` за одним интерфейсом |
@@ -42,8 +46,10 @@ query ──────────────────┘
 
 ## Стек
 
-Python + uv · **Qdrant** (вектор-стор, docker) · **OpenRouter** — один ключ на всё:
-**Qwen3-Embedding-8B** (эмбеддинги), генерация, LLM-судья, RLM/мультиагент-подвызовы.
+Python + uv · **Qdrant** (вектор-стор, docker) · **LiteLLM-шлюз (paragraf-gateway :4000)** —
+единый эндпоинт на всё: **Qwen3-Embedding-8B** (эмбеддинги), генерация, LLM-судья,
+RLM/мультиагент-подвызовы; OpenRouter-ключ живёт внутри шлюза (`llm_provider=litellm` в `.env`).
+Провайдер-шов (`providers.py`) позволяет переключиться обратно на прямой OpenRouter одним полем.
 Самостоятельно поднимать эмбеддер не нужно.
 
 ## Запуск — в одну команду
@@ -64,8 +70,22 @@ make eval model=anthropic/claude-3.7-sonnet   # ограничить одной 
 make help                     # все команды (up/index/hybrid/ask/eval/test/dash/logs/down)
 ```
 
-> Реальные ГОСТы: положи текстовые PDF в `data/gost_pdfs/`, пропиши `industry` в `data/registry.yaml`,
-> затем `make up SRC=data/gost_pdfs`. Без Makefile всё то же доступно как `uv run python scripts/...`.
+### Реальный корпус — как он собран (воспроизводимо)
+
+```bash
+bash scripts/fetch_corpus.sh data/pdfs              # скачать 23 ГОСТ/СП/ТР ТС по ссылкам из разметки
+uv run python scripts/diagnose_corpus.py data/pdfs  # детект маркировки, пункты, скан-риск (до фриза)
+# data/registry.yaml — slug файла → {gost_id, industry, title, year} (источник истины маркировки)
+uv run python scripts/index_corpus.py --src data/pdfs           # индексировать реальный корпус (dense)
+uv run python scripts/index_corpus.py --src data/pdfs --hybrid  # + гибридная коллекция (dense+BM25)
+uv run python scripts/ask.py --strategy rag "Какая арматура для фундамента при -40..+50?"
+uv run python eval/run_eval.py --corpus data/pdfs --model qwen/qwen3-8b --strategy rag   # дешёвый срез
+```
+
+`eval/gold.yaml` размечен **на уровне документа** (какие стандарты открыть): `expected` — список
+`gost_id` без пункта, recall считается «документ покрыт, если найден любой его пункт». Существо
+ответа (классы проката А400/А500С/Ап600…) меряет колонка `mat` (homoglyph-устойчивый матч).
+Точность ссылок на конкретный пункт — отдельно, детерминированным валидатором против корпуса.
 
 ## Карта на задачи трека
 
@@ -78,5 +98,12 @@ make help                     # все команды (up/index/hybrid/ask/eval/
 
 ## Что реализовано vs дальше
 
-- **Есть:** end-to-end RAG, RLM-контроллер с рекурсией, валидация (цитаты + судья), eval-матрица, CLI, фикстуры.
-- **Дальше:** гибрид dense+BM25 (Qdrant sparse-векторы), нативный Qwen3-Reranker вместо LLM-реранка, реальные парсеры ГОСТов (PDF/сканы), расширение gold-набора, опц. трейсинг (Langfuse) и RAGAS-метрики (`uv sync --extra eval`).
+- **Есть:** реальный корпус (23 текстовых ГОСТ/СП/ТР ТС, домен «арматура») + размеченный gold
+  (document-level, 23 + 4 негатива); парсер PDF с детектом маркировки и оконным фоллбэком;
+  end-to-end RAG, RLM-контроллер с рекурсией, мультиагентные стратегии (verify-ensemble,
+  decompose, self-consistency, model-ensemble), гибрид dense+BM25 и нативный реранкер; валидация
+  (цитаты + судья + abstain); eval-матрица с метриками достоверность×стоимость (precision/FP/
+  coverage/recall/mat/USD) + bootstrap-CI; CLI.
+- **Дальше:** прогон полной матрицы стратегия×модель на реальном gold → Pareto «достоверность ×
+  цена» (ветки-эксперименты); калибровка abstain под ≈100% precision; OCR для scan-gap
+  (СанПиН 1.2.3685-21); расширение gold до 50–100; опц. трейсинг (Langfuse) и RAGAS (`uv sync --extra eval`).

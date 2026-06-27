@@ -43,7 +43,7 @@ class LLM:
         latency = time.perf_counter() - t0
         u = resp.usage
         pt, ct = (u.prompt_tokens or 0, u.completion_tokens or 0) if u else (0, 0)
-        usage.add(pt, ct)
+        usage.add(pt, ct, model)
         out = resp.choices[0].message.content or ""
         self._tracer.generation(
             name="chat", model=model, prompt=user, output=out,

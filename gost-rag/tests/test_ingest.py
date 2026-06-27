@@ -6,7 +6,12 @@ Run: cd paragraf-monorepo/gost-rag && uv run --extra dev pytest
 from __future__ import annotations
 
 from gost_rag.corpus import _chunk_id
-from gost_rag.ingest.pdf import detect_gost_id, segment_clauses
+from gost_rag.ingest.pdf import (
+    detect_gost_id,
+    segment_clauses,
+    segment_or_window,
+    window_chunks,
+)
 
 GOST_TEXT = """\
 ГОСТ Р 7.0.97-2016
@@ -72,3 +77,34 @@ def test_parse_pdf_year_falls_back_to_id_suffix(monkeypatch, tmp_path):
     doc = pdfmod.parse_pdf(tmp_path / "x.pdf", {})  # empty registry
     assert doc.year == 2016  # parsed from the "-2016" suffix
     assert doc.industry == ""  # absent from registry → empty (warned at load time)
+
+
+# --- real-corpus hardening: dash normalization, СП/СанПиН/ТР ТС, slug registry, window fallback ---
+
+def test_detect_designation_em_dash_and_kinds():
+    # Russian standards print the year with an EM DASH (U+2014) — must normalize to a hyphen
+    assert detect_gost_id("ГОСТ 34028—2016 Прокат арматурный") == "ГОСТ 34028-2016"
+    assert detect_gost_id("СП 295.1325800.2017 Конструкции бетонные") == "СП 295.1325800.2017"
+    assert detect_gost_id("ТР ТС 012/2011 О безопасности оборудования") == "ТР ТС 012/2011"
+    assert detect_gost_id("СанПиН 1.2.3685-21 Гигиенические нормативы") == "СанПиН 1.2.3685-21"
+
+
+def test_parse_pdf_registry_keyed_by_slug(monkeypatch, tmp_path):
+    import gost_rag.ingest.pdf as pdfmod
+
+    # the title page mis-detects (truncated "СП 1325800.2017"); slug entry is the source of truth
+    monkeypatch.setattr(pdfmod, "extract_pages", lambda _p: ["СП 1325800.2017\nКонструкции бетонные\n1 Область применения\nТекст."])
+    registry = {"sp-295.1325800.2017": {"gost_id": "СП 295.1325800.2017", "industry": "жбк"}}
+    doc = pdfmod.parse_pdf(tmp_path / "sp-295.1325800.2017.pdf", registry)
+    assert doc.gost_id == "СП 295.1325800.2017"  # registry slug wins over mis-detection
+    assert doc.industry == "жбк"
+
+
+def test_window_fallback_when_no_clause_numbering():
+    # text with NO leading-numbered clauses → structural segmentation is empty → window fallback
+    text = ("Статья 1. Общие положения. " + "Настоящий регламент устанавливает требования. " * 80)
+    clauses, used = segment_or_window(text)
+    assert used is True
+    assert clauses and all(c.clause_path.startswith("§") for c in clauses)
+    # windows overlap and cover the (whitespace-collapsed) text
+    assert window_chunks("слово " * 500)[0].clause_path == "§1"

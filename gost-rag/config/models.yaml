@@ -2,22 +2,47 @@
 # `id` = gateway alias (litellm-config.yaml). These mirror OpenRouter ids, so they also work when
 # pointing gost-rag directly at OpenRouter. Add a model here AND in the gateway config to compare it.
 # `price` is USD per 1M tokens (in/out); leave null if unknown — cost is then reported as null.
+# price = USD per 1M tokens (in/out). Live OpenRouter values (api/v1/models, 2026-06-27); Claude is
+# Anthropic's published 3.7 Sonnet price ($3/$15) since it routes via the Anthropic API in the gateway.
 generation:
+  # cheap baselines (already have data)
   - id: qwen/qwen3-8b
     label: qwen3-8b
-    price: { in: null, out: null }
+    price: { in: 0.05, out: 0.40 }
   - id: deepseek/deepseek-chat
     label: deepseek-v3
-    price: { in: null, out: null }
+    price: { in: 0.20, out: 0.80 }
+  # diverse cheap/mid models for the sweep + multi-agent decorrelation (no big SOTA Claude/GPT — by
+  # product decision this iteration). All must also be in paragraf-gateway/litellm-config.yaml.
+  - id: deepseek/deepseek-v4-pro
+    label: deepseek-v4-pro
+    price: { in: 0.435, out: 0.870 }
   - id: z-ai/glm-5.2
     label: glm-5.2
-    price: { in: null, out: null }
-  - id: z-ai/glm-4.6
-    label: glm-4.6
-    price: { in: 0.43, out: 1.74 }   # USD/1M (openrouter.ai/z-ai/glm-4.6)
-  - id: anthropic/claude-3.7-sonnet
-    label: claude-sonnet
-    price: { in: null, out: null }
+    price: { in: 0.95, out: 3.00 }
+  - id: xiaomi/mimo-v2.5-pro
+    label: mimo-2.5-pro
+    price: { in: 0.435, out: 0.870 }
+  - id: qwen/qwen3.7-plus
+    label: qwen3.7-plus
+    price: { in: 0.32, out: 1.28 }
+  - id: minimax/minimax-m3
+    label: minimax-m3
+    price: { in: 0.30, out: 1.20 }
+  - id: poolside/laguna-m.1
+    label: laguna-m1
+    price: { in: 0.20, out: 0.40 }
+  # fast flash models — used mainly as verifiers (verify_ensemble / cascade panels); listed here so
+  # their tokens get priced. Cheap + fast + cross-vendor.
+  - id: deepseek/deepseek-v4-flash
+    label: deepseek-v4-flash
+    price: { in: 0.09, out: 0.18 }
+  - id: z-ai/glm-4.7-flash
+    label: glm-4.7-flash
+    price: { in: 0.06, out: 0.40 }
+  - id: qwen/qwen3.5-flash-02-23
+    label: qwen3.5-flash
+    price: { in: 0.065, out: 0.26 }
   # GigaChat — только через шлюз (РФ-модель, не на OpenRouter). Нужен GIGACHAT_CREDENTIALS в .env шлюза.
   # - id: gigachat-pro
   #   label: gigachat-pro
@@ -26,34 +51,78 @@ generation:
   #   label: gigachat-lite
   #   price: { in: 2.2, out: 4.4 }
 
-# Model used as the LLM-judge for faithfulness (keep cheap + capable in Russian).
+# LLM-judge for faithfulness — cheap, capable in Russian, and DECORRELATED from the qwen/glm
+# generators (a judge sharing the generator's blind spots can't catch its errors). deepseek-chat is
+# fast (~5s) too. NB: when the generator IS deepseek, judge==gen re-correlates — flag those rows.
 judge:
-  id: qwen/qwen3-8b
+  id: deepseek/deepseek-chat
 
 # Strategies / ablations swept by the eval harness. Multi-agent variants (Stream C) sit behind
 # the same interface, so each becomes a benchmark row compared on the trust×cost axes.
 strategies:
+  # raw baseline — does NOT enforce the validator (historical behavior); kept for the gate ablation.
   - name: rag
     top_k: 8
     rerank: false
+    gate: false
+  # gated RAG — abstains when validation fails (Phase 1 fix A). The cheap precision baseline.
   - name: rag
     top_k: 8
-    rerank: true
-  # D1 — hybrid dense+BM25 retrieval. Needs the *_hybrid collection: `index_corpus.py --hybrid`.
+    rerank: false
+    gate: true
+  # D1 — gated hybrid dense+BM25. Needs the *_hybrid collection: `index_corpus.py --hybrid`.
   - name: rag
     top_k: 8
     hybrid: true
+    gate: true
+  # negative ablation (documented WORSE on this corpus: lower precision, higher FPR/latency) — keep
+  # only as a recorded result, not a candidate.
+  - name: rag
+    top_k: 8
+    rerank: true
+    gate: true
   # D2 — native cross-encoder reranker (RERANK_* endpoint) instead of the in-house LLM ranker.
   - name: rag
     top_k: 8
     rerank: native
+    gate: true
+  # Recall sweep — recall@top_k=8 (0.62) is the precision ceiling. Raise top_k so more of the needed
+  # documents reach context (multihop questions name several standards; 8 chunks cluster in few docs).
+  - name: rag
+    top_k: 16
+    gate: true
+  - name: rag
+    top_k: 24
+    gate: true
+  - name: rag
+    top_k: 16
+    hybrid: true
+    gate: true
+  # Document-diversified retrieval — round-robin chunks across docs so every needed ГОСТ is represented
+  # (multi-doc recall fix; single-doc recall is already 1.0). The key retrieval lever for this corpus.
+  - name: rag
+    top_k: 8
+    gate: true
+    diversify: true
+  - name: rag
+    top_k: 16
+    gate: true
+    diversify: true
+  - name: rag
+    top_k: 16
+    hybrid: true
+    gate: true
+    diversify: true
   - name: rlm
     max_steps: 12
     max_depth: 2
-  # C1 — verifier panel; consensus="unanimous" biases hard toward precision (abstain on any reject).
+  # C1 — verifier panel on a CROSS-VENDOR set (DeepSeek + Z.ai + Qwen) so verifiers don't share the
+  # generator's blind spots. consensus="majority" = 2 of 3 must approve (balanced precision/coverage
+  # for the 0.90/0.80 bar; "unanimous" is the precision-max variant — run as a separate label).
   - name: verify_ensemble
     top_k: 8
-    consensus: unanimous
+    consensus: majority
+    verifier_models: [deepseek/deepseek-v4-flash, z-ai/glm-4.7-flash, qwen/qwen3.5-flash-02-23]
   # C2 — planner → per-subquestion RAG → aggregator.
   - name: decompose
     top_k: 6
@@ -64,8 +133,17 @@ strategies:
     k_candidates: 3
     temperature: 0.7
     min_agreement: 2
-  # C4 — same context through M models → reconcile by agreement (ignores the swept gen_model).
+  # C4 — same context through a CROSS-VENDOR panel (DeepSeek + Z.ai + MiniMax) → emit only when
+  # ≥2 vendors AGREE on the citation signature. Vendor diversity ⇒ decorrelated errors ⇒ agreement
+  # is real evidence, not a shared hallucination. (ignores the swept gen_model.)
   - name: model_ensemble
     top_k: 8
     min_agreement: 2
-    models: [qwen/qwen3-8b, deepseek/deepseek-chat]
+    models: [deepseek/deepseek-v4-pro, z-ai/glm-5.2, minimax/minimax-m3]
+  # Cascade — cheap RAG → emit if judge faith ≥ high_thr → escalate to the cross-vendor verifier panel
+  # ONLY on the gray band (gate passed, faith mid). Cost ≈ 2 + 3·escalation_rate calls. Min-cost→precision.
+  - name: cascade
+    top_k: 8
+    high_thr: 0.8
+    consensus: majority
+    verifier_models: [deepseek/deepseek-v4-flash, z-ai/glm-4.7-flash, qwen/qwen3.5-flash-02-23]

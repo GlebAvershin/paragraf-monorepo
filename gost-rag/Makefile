@@ -5,10 +5,10 @@
 SHELL := bash
 .DEFAULT_GOAL := help
 UV ?= uv
-SRC ?= data/fixtures          # корпус для индексации; реальные ГОСТы:  make up SRC=data/gost_pdfs
+SRC ?= data/pdfs              # реальный корпус (домен «арматура»); фикстуры — только для `make test`
 GATEWAY_DIR ?= ../../paragraf-gateway   # сосед-репо со шлюзом (для `make gateway`)
 
-.PHONY: help up down index hybrid ask eval test dash logs gateway env-check
+.PHONY: help up down index hybrid ask eval test dash logs gateway env-check fetch diagnose
 
 help: ## показать команды
 	@echo "gost-rag — команды:"
@@ -16,6 +16,12 @@ help: ## показать команды
 	  | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-8s\033[0m %s\n",$$1,$$2}'
 	@echo ""
 	@echo "Старт:  cp env.sample .env  →  make gateway up  →  make eval   (всё через LiteLLM-шлюз)"
+
+fetch: ## скачать реальный ГОСТ/СП корпус по ссылкам разметки → data/pdfs
+	@bash scripts/fetch_corpus.sh "$(SRC)"
+
+diagnose: ## диагностика ингеста корпуса (маркировка/пункты/скан-риск) — до фриза
+	@$(UV) run python scripts/diagnose_corpus.py "$(SRC)"
 
 env-check: ## проверить .env
 	@[ -f .env ] || { echo "нет .env — выполни: cp env.sample .env  и заполни ключ шлюза (LITELLM_API_KEY)"; exit 1; }
@@ -48,8 +54,9 @@ hybrid: ## (пере)индексировать hybrid-коллекцию (dense
 ask: ## вопрос:  make ask q="..." [strategy=verify_ensemble] [model=anthropic/claude-3.7-sonnet]
 	@$(UV) run python scripts/ask.py $(if $(strategy),--strategy $(strategy),) $(if $(model),--model "$(model)",) "$(q)"
 
-eval: ## прогнать бенчмарк-матрицу → eval/results.md  (model=... чтобы ограничить одной моделью)
-	@$(UV) run python eval/run_eval.py $(if $(model),--model "$(model)",)
+eval: ## бенчмарк → eval/results.md  [model=..] [strategy=rag] [limit=8] (дешёвый срез)
+	@$(UV) run python eval/run_eval.py --corpus "$(SRC)" \
+	  $(if $(model),--model "$(model)",) $(if $(strategy),--strategy "$(strategy)",) $(if $(limit),--limit "$(limit)",)
 
 test: ## юнит-тесты
 	@$(UV) run --extra dev pytest -q

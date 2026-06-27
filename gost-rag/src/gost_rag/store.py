@@ -28,6 +28,33 @@ from .schema import Chunk, RetrievedChunk
 from .sparse import Bm25Encoder
 
 
+def _diversify_by_doc(hits: list[RetrievedChunk], top_k: int) -> list[RetrievedChunk]:
+    """Round-robin chunks by document so the top_k spans as many distinct ГОСТы as possible.
+
+    Document-level recall is the bottleneck: dense scores cluster chunks into the 1-2 most relevant
+    documents, starving the OTHER standards a multi-doc question needs (single-doc questions retrieve
+    perfectly; multi-doc ones get ~half). Taking the best chunk of each doc first, then the second-best,
+    … guarantees every doc present in the candidate pool reaches the context. Hits must be score-sorted
+    (Qdrant returns them so); ordering within a doc is preserved."""
+    from collections import OrderedDict
+
+    groups: OrderedDict[str, list[RetrievedChunk]] = OrderedDict()
+    for h in hits:
+        groups.setdefault(h.chunk.gost_id, []).append(h)
+    out: list[RetrievedChunk] = []
+    while len(out) < top_k:
+        progressed = False
+        for g in groups:
+            if groups[g]:
+                out.append(groups[g].pop(0))
+                progressed = True
+                if len(out) >= top_k:
+                    break
+        if not progressed:
+            break
+    return out
+
+
 class Store:
     def __init__(self, url: str, collection: str, embedder: Embedder, sparse: Bm25Encoder | None = None):
         self._client = QdrantClient(url=url)
@@ -74,32 +101,35 @@ class Store:
             self._client.upsert(collection_name=self._collection, points=points)
         return len(chunks)
 
-    def search(self, query: str, top_k: int = 8, industry: str | None = None) -> list[RetrievedChunk]:
+    def search(self, query: str, top_k: int = 8, industry: str | None = None,
+               diversify: bool = False, pool: int = 4) -> list[RetrievedChunk]:
         qfilter = (
             Filter(must=[FieldCondition(key="industry", match=MatchValue(value=industry))])
             if industry
             else None
         )
+        fetch = top_k * pool if diversify else top_k  # over-fetch, then round-robin by document
         if self._hybrid:
             assert self._sparse is not None
             sv = self._sparse.encode_query(query)
             res = self._client.query_points(
                 collection_name=self._collection,
                 prefetch=[
-                    Prefetch(query=self._embedder.embed_query(query), using="dense", limit=top_k, filter=qfilter),
-                    Prefetch(query=SparseVector(**sv), using="bm25", limit=top_k, filter=qfilter),
+                    Prefetch(query=self._embedder.embed_query(query), using="dense", limit=fetch, filter=qfilter),
+                    Prefetch(query=SparseVector(**sv), using="bm25", limit=fetch, filter=qfilter),
                 ],
                 query=FusionQuery(fusion=Fusion.RRF),
-                limit=top_k,
+                limit=fetch,
                 with_payload=True,
             ).points
-            return [RetrievedChunk(chunk=Chunk.model_validate(p.payload), score=p.score) for p in res]
-
-        res = self._client.query_points(  # .search() was removed in qdrant-client 1.18
-            collection_name=self._collection,
-            query=self._embedder.embed_query(query),
-            limit=top_k,
-            query_filter=qfilter,
-            with_payload=True,
-        ).points
-        return [RetrievedChunk(chunk=Chunk.model_validate(p.payload), score=p.score) for p in res]
+            hits = [RetrievedChunk(chunk=Chunk.model_validate(p.payload), score=p.score) for p in res]
+        else:
+            res = self._client.query_points(  # .search() was removed in qdrant-client 1.18
+                collection_name=self._collection,
+                query=self._embedder.embed_query(query),
+                limit=fetch,
+                query_filter=qfilter,
+                with_payload=True,
+            ).points
+            hits = [RetrievedChunk(chunk=Chunk.model_validate(p.payload), score=p.score) for p in res]
+        return _diversify_by_doc(hits, top_k) if diversify else hits

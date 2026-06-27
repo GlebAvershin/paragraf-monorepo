@@ -5,6 +5,7 @@ without any network."""
 from __future__ import annotations
 
 from gost_rag.multiagent import (
+    CascadeStrategy,
     ModelEnsembleStrategy,
     SelfConsistencyStrategy,
     VerifyEnsembleStrategy,
@@ -97,3 +98,56 @@ def test_model_ensemble_single_model_can_emit():
     r = s.answer("Какие поля?")
     assert not r.answer.abstained
     assert r.validation.ok
+
+
+# ───────────────────────── Cascade: cheap → escalate only on the gray band ─────────────────────────
+
+class CascadeLLM:
+    """SYSTEM_GOST → answer · JUDGE_FAITHFULNESS ('faithfulness') → judge · verifier ('approve') → vote."""
+
+    def __init__(self, answer_json, judge_json, votes):
+        self._answer, self._judge, self._votes = answer_json, judge_json, list(votes)
+
+    def chat(self, model, system, user, usage, temperature=0.0):
+        usage.add(1, 1, model)
+        if "approve" in system:
+            return self._votes.pop(0)  # IndexError if the panel runs when it must not
+        if "faithfulness" in system:
+            return self._judge
+        return self._answer
+
+
+def test_cascade_emits_on_high_faith_without_panel():
+    # gate passes, judge faith ≥ high_thr → emit with only generate + judge (2 calls), panel never runs
+    llm = CascadeLLM(ANSWER, '{"faithfulness": 0.9, "issues": []}', [])  # no votes queued
+    s = CascadeStrategy(llm, FakeStore([CHUNK]), "gen", "judge", high_thr=0.8)
+    r = s.answer("Какие поля?")
+    assert not r.answer.abstained and r.validation.ok
+    assert r.usage.model_calls == 2
+
+
+def test_cascade_gray_band_escalates_and_emits_on_consensus():
+    # mid faith → escalate; majority panel approves → emit. Cost = generate + judge + 3 verifiers = 5.
+    llm = CascadeLLM(ANSWER, '{"faithfulness": 0.5, "issues": []}', [APPROVE, APPROVE, REJECT])
+    s = CascadeStrategy(llm, FakeStore([CHUNK]), "gen", "judge", high_thr=0.8, consensus="majority")
+    r = s.answer("Какие поля?")
+    assert not r.answer.abstained and r.validation.ok
+    assert r.usage.model_calls == 5
+
+
+def test_cascade_gray_band_abstains_when_panel_rejects():
+    llm = CascadeLLM(ANSWER, '{"faithfulness": 0.5, "issues": []}', [APPROVE, REJECT, REJECT])
+    s = CascadeStrategy(llm, FakeStore([CHUNK]), "gen", "judge", high_thr=0.8, consensus="majority")
+    r = s.answer("Какие поля?")
+    assert r.answer.abstained and not r.validation.ok
+
+
+def test_cascade_gate_fail_abstains_for_free():
+    # fabricated citation → free deterministic gate fails → abstain with NO judge/panel calls (1 call)
+    bad = ('{"answer":"x","citations":[{"gost_id":"ГОСТ X","clause_path":"9.9","quote":"нет"}],'
+           '"confidence":0.9,"abstained":false}')
+    llm = CascadeLLM(bad, '{"faithfulness": 0.9, "issues": []}', [])  # judge/votes must NOT be consumed
+    s = CascadeStrategy(llm, FakeStore([CHUNK]), "gen", "judge")
+    r = s.answer("?")
+    assert r.answer.abstained and not r.validation.ok
+    assert r.usage.model_calls == 1

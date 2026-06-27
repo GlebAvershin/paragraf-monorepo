@@ -30,7 +30,7 @@ from .llm import LLM, num, parse_json
 from .prompts import AGGREGATOR, PLANNER, VERIFIER_LENSES
 from .schema import Answer, Chunk, Citation, Result, Usage, ValidationReport, parse_citations
 from .store import Store
-from .validate import check_citations, validate
+from .validate import check_citations, judge_faithfulness, validate
 
 
 def _ctx_by_ref(chunks: list[Chunk]) -> dict[tuple[str, str], str]:
@@ -66,6 +66,35 @@ def _mk(name: str, model: str, query: str, answer: Answer, report: ValidationRep
                   validation=report, usage=usage, contexts=contexts)
 
 
+def _vote(llm: LLM, lens: str, model: str, prompt: str, query: str, candidate: Answer,
+          cited_text: str, usage: Usage) -> dict:
+    user = (f"ВОПРОС: {query}\n\nЦИТИРУЕМЫЕ ПУНКТЫ:\n{cited_text}\n\n"
+            f"ОТВЕТ:\n{candidate.text}\n\nЦИТАТЫ: {_cited_str(candidate.citations)}")
+    data = parse_json(llm.chat(model=model, system=prompt, user=user, usage=usage))
+    # missing / unparseable / non-true 'approve' counts as REJECT (conservative; bool("false") is True!)
+    return {"lens": lens, "approve": as_bool_vote(data.get("approve", False)),
+            "score": num(data.get("score")), "issues": list(data.get("issues", []))}
+
+
+def run_verifier_panel(llm: LLM, verifier_models: list[str], consensus, query: str,
+                       candidate: Answer, full_ctx: dict[tuple[str, str], str],
+                       usage: Usage) -> tuple[bool, float, list[str]]:
+    """Run the N-lens verifier panel on an EXISTING candidate — verifiers see CITED-ONLY context, so
+    they can't inherit the generator's over-broad retrieval. No re-retrieve / re-generate (the caller
+    already has a gate-passed candidate), so C1 and the cascade reuse it. Returns (emit, faith, issues).
+    Assumes the deterministic gate already passed (caller short-circuits gate failures for free)."""
+    cited_text = _format_ctx(select_cited_context(candidate.citations, full_ctx))
+    votes = [
+        _vote(llm, lens, verifier_models[i % len(verifier_models)], prompt, query, candidate, cited_text, usage)
+        for i, (lens, prompt) in enumerate(VERIFIER_LENSES)
+    ]
+    min_app = normalize_consensus(consensus, len(VERIFIER_LENSES))
+    emit = decide_emission(False, True, [v["approve"] for v in votes], min_app)
+    issues = [f"{v['lens']}: {'; '.join(v['issues'])}" for v in votes if not v["approve"]]
+    faith = min((v["score"] for v in votes), default=0.0)
+    return emit, faith, issues
+
+
 # ───────────────────────────── C1: verification ensemble ─────────────────────────────
 
 class VerifyEnsembleStrategy:
@@ -94,31 +123,17 @@ class VerifyEnsembleStrategy:
         checks = check_citations(candidate, full_ctx)
         gate = deterministic_gate(checks, bool(candidate.citations))
 
-        votes: list[dict] = []
-        if gate:  # free gate short-circuits the panel on the dominant failure (bad citations)
-            cited_text = _format_ctx(select_cited_context(candidate.citations, full_ctx))
-            for i, (lens, prompt) in enumerate(VERIFIER_LENSES):
-                model = self._verifier_models[i % len(self._verifier_models)]
-                votes.append(self._vote(lens, model, prompt, query, candidate, cited_text, usage))
+        # free gate short-circuits the panel on the dominant failure (bad citations) — never pay for verifiers there
+        if gate:
+            emit, faith, vissues = run_verifier_panel(
+                self._llm, self._verifier_models, self._consensus, query, candidate, full_ctx, usage)
+            issues = vissues
+        else:
+            emit, faith, issues = False, 0.0, ["цитаты не прошли детерминированный гейт"]
 
-        min_app = normalize_consensus(self._consensus, len(VERIFIER_LENSES))
-        emit = decide_emission(False, gate, [v["approve"] for v in votes], min_app)
-
-        issues = [] if gate else ["цитаты не прошли детерминированный гейт"]
-        issues += [f"{v['lens']}: {'; '.join(v['issues'])}" for v in votes if not v["approve"]]
-        faith = min((v["score"] for v in votes), default=0.0)
         report = ValidationReport(ok=emit, faithfulness=faith, citation_checks=checks, issues=issues)
         answer = candidate if emit else candidate.model_copy(update={"abstained": True})
         return _mk(self.name, self._gen_model, query, answer, report, usage, contexts)
-
-    def _vote(self, lens: str, model: str, prompt: str, query: str, candidate: Answer,
-              cited_text: str, usage: Usage) -> dict:
-        user = (f"ВОПРОС: {query}\n\nЦИТИРУЕМЫЕ ПУНКТЫ:\n{cited_text}\n\n"
-                f"ОТВЕТ:\n{candidate.text}\n\nЦИТАТЫ: {_cited_str(candidate.citations)}")
-        data = parse_json(self._llm.chat(model=model, system=prompt, user=user, usage=usage))
-        # missing / unparseable / non-true 'approve' counts as REJECT (conservative; bool("false") is True!)
-        return {"lens": lens, "approve": as_bool_vote(data.get("approve", False)),
-                "score": num(data.get("score")), "issues": list(data.get("issues", []))}
 
 
 # ───────────────────────────── C2: decomposition / orchestration ─────────────────────────────
@@ -259,3 +274,65 @@ class ModelEnsembleStrategy:
         if not report.ok:
             final = final.model_copy(update={"abstained": True})
         return _mk(self.name, f"ensemble:{winner['model']}", query, final, report, usage, contexts)
+
+
+# ───────────────────────────── Cascade: cheap → escalate only on the gray band ─────────────────────────────
+
+class CascadeStrategy:
+    """Cost-aware selective prediction: pay the cheap path for the easy cases, the verifier panel only
+    for the genuinely uncertain ones, abstain otherwise.
+
+    1. cheap RAG candidate (generator).
+    2. generator abstained          → abstain.
+    3. free deterministic gate fails → abstain (do NOT escalate: a fabricated/paraphrased citation is
+       already disqualified; the panel would just burn calls).
+    4. cheap judge once; faith ≥ high_thr → EMIT (2 calls total — the common easy case).
+    5. gray band (gate passed, faith mid) → escalate to the cross-vendor verifier panel on the EXISTING
+       candidate (+3 calls) → emit on consensus, else abstain.
+
+    Expected cost ≈ 2 + 3·escalation_rate calls; escalation_rate is observable from a run.
+    """
+
+    name = "cascade"
+
+    def __init__(self, llm: LLM, store: Store, gen_model: str, judge_model: str,
+                 top_k: int = 8, high_thr: float = 0.8, verifier_models=None, consensus="majority"):
+        self._llm, self._store = llm, store
+        self._gen_model, self._judge_model = gen_model, judge_model
+        self._top_k = top_k
+        self._high_thr = high_thr
+        self._verifier_models = as_model_list(verifier_models) or [judge_model]
+        self._consensus = consensus
+
+    def answer(self, query: str, industry: str | None = None) -> Result:
+        usage = Usage()
+        hits = self._store.search(query, top_k=self._top_k, industry=industry)
+        used = [h.chunk for h in hits]
+        full_ctx = _ctx_by_ref(used)
+        contexts = [c.ref for c in used]
+        candidate = generate_answer(self._llm, self._gen_model, query, hits, usage)
+
+        if candidate.abstained:
+            ans, rep = _abstain(candidate.text or "Нет данных в документах.", ["генератор воздержался"])
+            return _mk(self.name, self._gen_model, query, ans, rep, usage, contexts)
+
+        checks = check_citations(candidate, full_ctx)
+        if not deterministic_gate(checks, bool(candidate.citations)):
+            ans = candidate.model_copy(update={"abstained": True})
+            rep = ValidationReport(ok=False, faithfulness=0.0, citation_checks=checks,
+                                   issues=["цитаты не прошли детерминированный гейт"])
+            return _mk(self.name, self._gen_model, query, ans, rep, usage, contexts)
+
+        faith, judge_issues = judge_faithfulness(self._llm, self._judge_model, query, candidate,
+                                                 _format_ctx(full_ctx), usage)
+        if faith >= self._high_thr:  # confident easy case → emit cheaply (2 calls)
+            rep = ValidationReport(ok=True, faithfulness=faith, citation_checks=checks, issues=judge_issues)
+            return _mk(self.name, self._gen_model, query, candidate, rep, usage, contexts)
+
+        # gray band → escalate to the verifier panel on the existing candidate (no re-generate)
+        emit, vfaith, vissues = run_verifier_panel(
+            self._llm, self._verifier_models, self._consensus, query, candidate, full_ctx, usage)
+        issues = judge_issues + vissues + ([] if emit else ["каскад: панель не подтвердила"])
+        report = ValidationReport(ok=emit, faithfulness=max(faith, vfaith), citation_checks=checks, issues=issues)
+        answer = candidate if emit else candidate.model_copy(update={"abstained": True})
+        return _mk(self.name, self._gen_model, query, answer, report, usage, contexts)

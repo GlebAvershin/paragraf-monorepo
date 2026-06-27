@@ -15,3 +15,9 @@ venv/
 # local data / qdrant volumes
 qdrant_storage/
 *.log
+
+# corpus PDFs — large binaries (~58MB), reproducible via scripts/fetch_corpus.sh (do not commit)
+data/pdfs/
+# transient: overwritten by every eval run; durable snapshots are archived in eval/reports/
+eval/results.md
+eval/ragas_samples.jsonl

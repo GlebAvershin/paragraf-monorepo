@@ -2,7 +2,13 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+import re
+
+from pydantic import BaseModel, Field, field_validator
+
+# Models echo the human style "п. 6.2.5" / "пункт 6.2.5"; chunks store the bare "6.2.5". Strip a
+# leading "п."/"пункт" (possibly repeated) before a digit so citation matching isn't broken by it.
+_CLAUSE_PREFIX_RE = re.compile(r"^\s*(?:(?:пункт|п\.?)\s*)+(?=\d)", re.IGNORECASE)
 
 
 def clause_ref(gost_id: str, clause_path: str) -> str:
@@ -55,6 +61,12 @@ class Citation(BaseModel):
     clause_path: str = ""
     quote: str = ""  # verbatim span the model claims to rely on
 
+    @field_validator("clause_path", mode="before")
+    @classmethod
+    def _normalize_clause_path(cls, v):
+        # "п. 6.2.5" → "6.2.5" so the deterministic check matches the retrieved clause's bare path.
+        return _CLAUSE_PREFIX_RE.sub("", v).strip() if isinstance(v, str) else v
+
 
 def parse_citations(items) -> list["Citation"]:
     """Validate a list of raw citation dicts, dropping malformed ones (missing gost_id etc.)
@@ -98,11 +110,20 @@ class Usage(BaseModel):
     completion_tokens: int = 0
     model_calls: int = 0
     latency_s: float = 0.0
+    # Per-model token attribution [prompt, completion, calls] — so a mixed-model run
+    # (Claude generator + qwen judge, or a cheap→expensive cascade) is costed per its own price,
+    # not the single gen-model price. Without this the cost Pareto is fiction for ensembles/cascade.
+    by_model: dict[str, list[int]] = Field(default_factory=dict)
 
-    def add(self, prompt: int, completion: int) -> None:
+    def add(self, prompt: int, completion: int, model: str = "") -> None:
         self.prompt_tokens += prompt
         self.completion_tokens += completion
         self.model_calls += 1
+        if model:
+            acc = self.by_model.setdefault(model, [0, 0, 0])
+            acc[0] += prompt
+            acc[1] += completion
+            acc[2] += 1
 
 
 class Result(BaseModel):

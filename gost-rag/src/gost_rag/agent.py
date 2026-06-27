@@ -11,10 +11,11 @@ import time
 from pathlib import Path
 
 from .config import ROOT, load_settings
-from .corpus import chunk_documents, load_documents
+from .corpus import chunk_documents, load_corpus
 from .embeddings import Embedder
 from .llm import LLM
 from .multiagent import (
+    CascadeStrategy,
     DecomposeStrategy,
     ModelEnsembleStrategy,
     SelfConsistencyStrategy,
@@ -36,6 +37,7 @@ _STORE_STRATEGIES = {
     "decompose": DecomposeStrategy,
     "self_consistency": SelfConsistencyStrategy,
     "model_ensemble": ModelEnsembleStrategy,
+    "cascade": CascadeStrategy,
 }
 
 
@@ -54,7 +56,12 @@ def build_strategy(name: str, *, gen_model: str | None = None, **opts):
             opts["reranker"] = NativeReranker(settings.rerank_base_url, settings.rerank_api_key, settings.rerank_model)
         return _STORE_STRATEGIES[name](llm, store, gen_model, judge_model, **opts)
     if name == "rlm":
-        chunks = chunk_documents(load_documents(opts.get("fixtures", FIXTURES)))
+        # RLM reads the corpus directly (no Qdrant). Prefer the real PDF corpus when present, else
+        # the JSON fixtures; load_corpus auto-detects pdf/json so RLM matches what RAG indexed.
+        pdf_dir = ROOT / "data" / "pdfs"
+        default_src = pdf_dir if any(pdf_dir.glob("*.pdf")) else FIXTURES
+        src = opts.get("fixtures") or opts.get("corpus") or default_src
+        chunks = chunk_documents(load_corpus(src, registry_path=ROOT / "data" / "registry.yaml"))
         return RLMStrategy(llm, chunks, gen_model, judge_model,
                            max_steps=opts.get("max_steps", 12), max_depth=opts.get("max_depth", 2))
     raise ValueError(f"unknown strategy: {name!r} (expected one of {sorted(_STORE_STRATEGIES) + ['rlm']})")
