@@ -93,7 +93,11 @@ function model(input: {
     status: "active",
     options: {},
     headers: {},
-    release_date: input.release ?? "2025-01-01",
+    // Пустой release_date НАМЕРЕННО: рендерер (context/models.tsx `visible()`) по умолчанию
+    // прячет модели с валидной датой, не попавшие в «latest»-набор (а тот строится через
+    // groupBy(family), которого у нас нет → набор пуст → спрятались бы ВСЕ). Наш пул
+    // курируемый (5 моделей) — показываем все всегда: невалидная дата → visible()=true.
+    release_date: "",
   }
 }
 
