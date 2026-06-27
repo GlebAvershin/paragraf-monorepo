@@ -19,9 +19,6 @@ import { buildRequestParts } from "./build-request-parts"
 import { setCursorPosition } from "./editor-dom"
 import { guardSendCredits } from "@/ourapp/low-balance-guard"
 import { formatServerError } from "@/utils/server-errors"
-import { maskText } from "@/ourapp/pii/masker"
-import { getOrCreateVault } from "@/ourapp/pii/session-vaults"
-import { effectivePiiMode } from "@/ourapp/pii/settings-store"
 import { getAutoModelEnabled } from "@/ourapp/auto-model/store"
 import { pickAutoModel } from "@/ourapp/auto-model/resolve"
 import { getDeepThinkingEnabled, isReasoningModel, DEEP_THINKING_VARIANT } from "@/ourapp/deep-thinking/store"
@@ -95,25 +92,17 @@ const draftImages = (prompt: Prompt, inlineScans: boolean) =>
   )
 
 export async function sendFollowupDraft(input: FollowupSendInput) {
-  // OurApp: PII-маскирование (ТЗ-04). Перед отправкой в облачные модели
-  // (Claude/GPT) заменяем ФИО/паспорта/ИНН на плейсхолдеры; для РФ-моделей
-  // (GigaChat/YandexGPT) effectivePiiMode = "off" — данные и так в РФ.
-  const piiMode = effectivePiiMode(input.draft.model.modelID, input.draft.model.providerID)
-  // Скан-документы ВСЕГДА отправляем распознанным текстом, не картинкой:
-  //  - не-Vision модели (GigaChat Lite) картинку не принимают вовсе;
-  //  - зарубежным Vision-моделям картинку с ПДн слать нельзя (152-ФЗ) — нужен
-  //    замаскированный текст.
-  // Маскирование текста ниже применяется только при piiMode != off.
+  // OurApp: маскирование ПДн теперь на СЕРВЕРЕ (gateway, РФ) — браузер шлёт СЫРОЙ
+  // текст (РФ→РФ, законно), gateway маскирует до зарубежного вызова и демаскирует ответ.
+  // См. docs/arch-migration.md (разворот архитектуры, фаза 2).
+  // Скан-документы по-прежнему инлайнятся распознанным текстом (OCR на клиенте — пока
+  // фаза 4 не перенесёт его в gateway; см. attachments.ts).
   const inlineScans = true
 
   const rawText = draftText(input.draft.prompt, inlineScans)
   const images = draftImages(input.draft.prompt, inlineScans)
 
-  const text = (() => {
-    if (piiMode === "off") return rawText
-    const vault = getOrCreateVault(input.draft.sessionID)
-    return maskText(rawText, vault, { mode: piiMode }).maskedText
-  })()
+  const text = rawText
 
   const [, setStore] = input.globalSync.child(input.draft.sessionDirectory)
 
