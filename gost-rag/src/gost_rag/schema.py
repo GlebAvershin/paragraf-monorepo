@@ -82,6 +82,29 @@ def parse_citations(items) -> list["Citation"]:
     return out
 
 
+class SourceView(BaseModel):
+    """HOW to render a source — the ONLY thing the frontend depends on, so storage is decoupled.
+    Decide where/how documents live by changing the resolver, not the viewer."""
+
+    kind: str = "unavailable"  # "external" (portal URL) | "backend" (our file stream) | "unavailable"
+    url: str = ""              # portal URL, or a backend path like /api/sources/<doc_id>
+    mime: str = ""             # "application/pdf", "text/html", …  — how the viewer renders it
+    page: int | None = None    # deep-link page if known (best-effort)
+
+
+class Source(BaseModel):
+    """Source-INDEPENDENT reference for viewing a cited document so an engineer can validate the answer.
+    A Citation (gost_id, clause_path, quote) resolves to this; the frontend renders from `view` alone,
+    agnostic to whether the document is our backend file or an external portal."""
+
+    doc_id: str               # canonical id == gost_id, e.g. "ГОСТ 34028-2016"
+    title: str = ""
+    clause_path: str = ""     # cited clause, for a "п. 5.2.1" affordance
+    quote: str = ""           # verbatim span to highlight in the viewer
+    view: SourceView = Field(default_factory=SourceView)
+    available: bool = False   # False ⇒ no viewable source (scan-gap) → "источник недоступен"
+
+
 class Answer(BaseModel):
     text: str
     citations: list[Citation] = Field(default_factory=list)

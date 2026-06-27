@@ -17,6 +17,7 @@ from rich.panel import Panel
 
 from gost_rag.agent import answer_gost_query
 from gost_rag.config import ROOT
+from gost_rag.sources import resolve_citations
 
 app = typer.Typer(add_completion=False)
 console = Console()
@@ -61,9 +62,13 @@ def main(
         console.print(Panel(reference, title="ЭТАЛОН (gold reference)", border_style="green"))
 
     if r.answer.citations:
-        console.print("[bold]Ссылки в ответе:[/bold]")
-        for c in r.answer.citations:
-            console.print(f"  • [bold]{c.gost_id}[/bold], п. {c.clause_path} — «{c.quote[:110]}»")
+        console.print("[bold]Ссылки в ответе (открыть исходник для проверки):[/bold]")
+        for c, src in zip(r.answer.citations, resolve_citations(r.answer.citations)):
+            console.print(f"  • [bold]{c.gost_id}[/bold], п. {c.clause_path} — «{c.quote[:90]}»")
+            if src.available:
+                console.print(f"      источник ({src.view.kind}): [link={src.view.url}]{src.view.url}[/link]")
+            else:
+                console.print("      [dim]источник недоступен[/dim]")
 
     # which documents reached the context (and, for a gold question, which expected ones were hit/missed)
     ctx_docs = sorted({ref.split(", п. ")[0] for ref in r.contexts})
