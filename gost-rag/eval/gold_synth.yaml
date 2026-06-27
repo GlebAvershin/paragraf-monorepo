@@ -1,0 +1,801 @@
+- id: syn-ГОСТ14098-2014-1
+  query: У меня арматура класса А600С, какой должна быть марка стали для сварных соединений?
+  task_type: lookup
+  type: citation
+  expected:
+  - gost_id: ГОСТ 14098-2014
+    clause_path: 5.4.1
+  materials:
+  - А600С
+  reference: Марка стали должна быть 20Г2СФБА.
+  industry: арматура-жби
+  expects_answer: true
+  difficulty: easy
+  source: synthetic
+  split: train
+- id: syn-ГОСТ14098-2014-2
+  query: Можно ли использовать термомеханически упрочненную арматуру класса Ат800
+    в сварных арматурных изделиях?
+  task_type: substitution
+  type: citation
+  expected:
+  - gost_id: ГОСТ 14098-2014
+    clause_path: '5.6'
+  materials:
+  - Ат800
+  reference: Да, можно использовать, но она должна применяться в качестве арматуры
+    класса А400 без пересчета сечения.
+  industry: арматура-жби
+  expects_answer: true
+  difficulty: medium
+  source: synthetic
+  split: train
+- id: syn-ГОСТ14098-2014-3
+  query: Какой стандарт регламентирует химический состав арматуры класса А500С для
+    сварных соединений?
+  task_type: lookup
+  type: citation
+  expected:
+  - gost_id: ГОСТ 14098-2014
+    clause_path: '5.4'
+  materials:
+  - А500С
+  reference: Химический состав должен соответствовать действующим нормативным документам.
+  industry: арматура-жби
+  expects_answer: true
+  difficulty: easy
+  source: synthetic
+  split: train
+- id: syn-ГОСТ14098-2014-4
+  query: Можно ли заменить тип сварного соединения на другой при изготовлении железобетонных
+    конструкций?
+  task_type: substitution
+  type: citation
+  expected:
+  - gost_id: ГОСТ 14098-2014
+    clause_path: '5.3'
+  materials: []
+  reference: Да, допускается замена на равноценные по эксплуатационным качествам типы
+    соединений в соответствии с Приложением А.
+  industry: арматура-жби
+  expects_answer: true
+  difficulty: medium
+  source: synthetic
+  split: train
+- id: syn-ГОСТ14098-2014-5
+  query: Какие документы нужны для сварных соединений, не предусмотренных стандартом?
+  task_type: procedure
+  type: citation
+  expected:
+  - gost_id: ГОСТ 14098-2014
+    clause_path: '5.2'
+  materials: []
+  reference: Необходимо разработать рабочие чертежи с технологическим описанием условий
+    сварки и ведомственный нормативный документ или стандарт предприятия, согласованный
+    в установленном порядке.
+  industry: арматура-жби
+  expects_answer: true
+  difficulty: hard
+  source: synthetic
+  split: test
+- id: syn-ГОСТ14098-2014-6
+  query: Какие классы арматуры могут быть использованы в сварных соединениях по ГОСТ
+    14098-2014?
+  task_type: selection
+  type: multihop
+  expected:
+  - gost_id: ГОСТ 14098-2014
+    clause_path: '5.4'
+  - gost_id: ГОСТ 14098-2014
+    clause_path: '5.5'
+  - gost_id: ГОСТ 14098-2014
+    clause_path: '5.6'
+  materials:
+  - А240
+  - А300
+  - АсЗОО
+  - А400
+  - А600
+  - А800
+  - А1000
+  - Ат500С
+  - АтбООС
+  - А500С
+  - В500С
+  - ЕЗр-1
+  - АтбОО
+  - АтбООК
+  - Ат800
+  - Ат800К
+  - АтЮОО
+  - АтЮООК
+  - А600С
+  reference: 'Классы арматуры: А240, А300, АсЗОО, А400, А600, А800, А1000, Ат500С,
+    АтбООС, А500С, В500С, ЕЗр-1, АтбОО, АтбООК, Ат800, Ат800К, АтЮОО, АтЮООК, А600С.'
+  industry: арматура-жби
+  expects_answer: true
+  difficulty: medium
+  source: synthetic
+  split: train
+- id: syn-ГОСТ19681-2016-7
+  query: У меня система водоснабжения с рабочим давлением 0.8 МПа и температурой до
+    70°C. Какие типы водоразборной арматуры можно использовать?
+  task_type: selection
+  type: citation
+  expected:
+  - gost_id: ГОСТ 19681-2016
+    clause_path: '1'
+  materials: []
+  reference: Можно использовать смесители, краны и лабораторную арматуру, в том числе
+    ниппели, панели и т.п., предназначенные для холодной и горячей воды при рабочем
+    давлении от 0,05 до 1,0 МПа и температуре до 75°C.
+  industry: санитарная-арматура
+  expects_answer: true
+  difficulty: easy
+  source: synthetic
+  split: test
+- id: syn-ГОСТ19681-2016-8
+  query: Какое максимальное рабочее давление допускается для водоразборной арматуры
+    по ГОСТ 19681-2016?
+  task_type: lookup
+  type: citation
+  expected:
+  - gost_id: ГОСТ 19681-2016
+    clause_path: '1'
+  materials: []
+  reference: Максимальное рабочее давление для водоразборной арматуры составляет 1,0
+    МПа.
+  industry: санитарная-арматура
+  expects_answer: true
+  difficulty: easy
+  source: synthetic
+  split: train
+- id: syn-ГОСТ25809-2019-9
+  query: Можно ли использовать смеситель для биде в системе с давлением 1,5 МПа?
+  task_type: lookup
+  type: citation
+  expected:
+  - gost_id: ГОСТ 25809-2019
+    clause_path: '1.1'
+  materials: []
+  reference: Нет, стандарт предусматривает рабочее давление только до 1,0 МПа.
+  industry: санитарная-арматура
+  expects_answer: true
+  difficulty: easy
+  source: synthetic
+  split: train
+- id: syn-ГОСТ25809-2019-10
+  query: Какое расстояние между центрами штуцеров должно быть у настенного смесителя
+    по заказу потребителя?
+  task_type: lookup
+  type: citation
+  expected:
+  - gost_id: ГОСТ 25809-2019
+    clause_path: '3.3'
+  materials: []
+  reference: 100 или 150 мм.
+  industry: санитарная-арматура
+  expects_answer: true
+  difficulty: easy
+  source: synthetic
+  split: train
+- id: syn-ГОСТ25809-2019-11
+  query: Какой размер резьбы должен быть у накидных гаек для присоединения душевых
+    шлангов?
+  task_type: lookup
+  type: citation
+  expected:
+  - gost_id: ГОСТ 25809-2019
+    clause_path: '3.8'
+  materials: []
+  reference: G 1/2-В.
+  industry: санитарная-арматура
+  expects_answer: true
+  difficulty: medium
+  source: synthetic
+  split: train
+- id: syn-ГОСТ25809-2019-12
+  query: Какой диаметр отверстия раковины необходим для монтажа центрального набортного
+    смесителя?
+  task_type: lookup
+  type: citation
+  expected:
+  - gost_id: ГОСТ 25809-2019
+    clause_path: '3.11'
+  materials: []
+  reference: 34 мм.
+  industry: санитарная-арматура
+  expects_answer: true
+  difficulty: easy
+  source: synthetic
+  split: train
+- id: syn-ГОСТ25809-2019-13
+  query: Какие конструктивные элементы смесителя для ванны не регламентируются стандартом?
+  task_type: interpretation
+  type: citation
+  expected:
+  - gost_id: ГОСТ 25809-2019
+    clause_path: '1.2'
+  materials: []
+  reference: Форма и конструкция корпусов, переключателей воды, изливов, аэраторов,
+    душевых трубок, шлангов, сеток, рукояток, деталей присоединения и крепления душевых
+    сеток.
+  industry: санитарная-арматура
+  expects_answer: true
+  difficulty: hard
+  source: synthetic
+  split: test
+- id: syn-ГОСТ31938-2022-14
+  query: С какого числа действует ГОСТ 31938—2022 как национальный стандарт Российской
+    Федерации?
+  task_type: lookup
+  type: citation
+  expected:
+  - gost_id: ГОСТ 31938-2022
+    clause_path: '4'
+  materials: []
+  reference: ГОСТ 31938—2022 введён в действие с 1 сентября 2022 года.
+  industry: арматура-жби
+  expects_answer: true
+  difficulty: easy
+  source: synthetic
+  split: train
+- id: syn-ГОСТ31938-2022-15
+  query: Какие стандарты используются для стекловолокна и шпагатов в настоящем документе?
+  task_type: lookup
+  type: citation
+  expected:
+  - gost_id: ГОСТ 31938-2022
+    clause_path: '2'
+  materials: []
+  reference: ГОСТ 17139 (Стекловолокно. Ровинги. Технические условия) и ГОСТ 17308
+    (Шпагаты. Технические условия).
+  industry: арматура-жби
+  expects_answer: true
+  difficulty: medium
+  source: synthetic
+  split: test
+- id: syn-ГОСТ33257-2015-16
+  query: Какие общие требования предъявляются к условиям проведения испытаний трубопроводной
+    арматуры?
+  task_type: lookup
+  type: citation
+  expected:
+  - gost_id: ГОСТ 33257-2015
+    clause_path: '4'
+  materials: []
+  reference: Общие требования к условиям, обеспечению и проведению испытаний указаны
+    в п. 4 стандарта.
+  industry: трубопроводная-арматура
+  expects_answer: true
+  difficulty: easy
+  source: synthetic
+  split: train
+- id: syn-ГОСТ33260-2015-17
+  query: Заменяем материал для корпусных деталей трубопроводной арматуры. Какие варианты
+    замены разрешены?
+  task_type: substitution
+  type: citation
+  expected:
+  - gost_id: ГОСТ 33260-2015
+    clause_path: '8.3'
+  materials: []
+  reference: Разрешены материалы для корпусных деталей и узла затвора из проката,
+    поковок (штамповок), соответствующие требованиям п. 8.3.
+  industry: трубопроводная-арматура
+  expects_answer: true
+  difficulty: hard
+  source: synthetic
+  split: train
+- id: syn-ГОСТР53772-2010-18
+  query: Могу ли я использовать пластически обжатую проволоку для изготовления канатов
+    типа К7Т?
+  task_type: substitution
+  type: citation
+  expected:
+  - gost_id: ГОСТ Р 53772-2010
+    clause_path: '3.2'
+  materials:
+  - К7Т
+  - К70
+  reference: Нет, канаты типа К7Т изготавливаются из проволоки периодического профиля,
+    а пластически обжатая проволока используется для канатов типа К70.
+  industry: арматура-жби
+  expects_answer: true
+  difficulty: medium
+  source: synthetic
+  split: train
+- id: syn-ГОСТР53772-2010-19
+  query: Каков минимальный диаметр центральной проволоки в канатах по сравнению с
+    наружными проволоками?
+  task_type: lookup
+  type: citation
+  expected:
+  - gost_id: ГОСТ Р 53772-2010
+    clause_path: '3.4'
+  materials: []
+  reference: Диаметр центральной проволоки должен быть не менее чем на 3,0 % больше
+    диаметра наружных проволок.
+  industry: арматура-жби
+  expects_answer: true
+  difficulty: easy
+  source: synthetic
+  split: train
+- id: syn-ГОСТР53772-2010-20
+  query: Какой тип проволоки используется для центральной проволоки в канатах из проволоки
+    периодического профиля?
+  task_type: lookup
+  type: citation
+  expected:
+  - gost_id: ГОСТ Р 53772-2010
+    clause_path: '3.4'
+  materials: []
+  reference: Круглая гладкая проволока.
+  industry: арматура-жби
+  expects_answer: true
+  difficulty: easy
+  source: synthetic
+  split: train
+- id: syn-ГОСТР55018-2012-21
+  query: Упомянуты ли в стандарте конкретные марки материалов, рекомендованных для
+    изготовления арматуры? Если да, то какие?
+  task_type: selection
+  type: citation
+  expected:
+  - gost_id: ГОСТ Р 55018-2012
+    clause_path: '5.6'
+  materials: []
+  reference: В стандарте содержатся требования к материалам, но конкретные марки в
+    приведенных пунктах не указаны.
+  industry: трубопроводная-арматура
+  expects_answer: true
+  difficulty: hard
+  source: synthetic
+  split: test
+- id: syn-ГОСТР55018-2012-22
+  query: Какой документ регламентирует правила применения национальных стандартов
+    РФ?
+  task_type: lookup
+  type: citation
+  expected:
+  - gost_id: ГОСТ Р 55018-2012
+    clause_path: '27'
+  materials: []
+  reference: Правила применения национальных стандартов РФ регламентированы ГОСТ Р
+    1.0—2004 «Стандартизация в Российской Федерации. Основные положения».
+  industry: трубопроводная-арматура
+  expects_answer: true
+  difficulty: easy
+  source: synthetic
+  split: test
+- id: syn-ГОСТР55508-2013-23
+  query: Можно ли при испытаниях обратных клапанов использовать методику, аналогичную
+    испытаниям запорной арматуры?
+  task_type: substitution
+  type: citation
+  expected:
+  - gost_id: ГОСТ Р 55508-2013
+    clause_path: '7.5'
+  materials: []
+  reference: Нет, для обратных, невозвратно-запорных и невозвратно-управляемых клапанов,
+    а также обратных затворов применяется отдельная методика, указанная в п. 7.5.
+  industry: трубопроводная-арматура
+  expects_answer: true
+  difficulty: easy
+  source: synthetic
+  split: train
+- id: syn-ГОСТР57997-2017-24
+  query: Каково минимальное требование к прочности на срез для крестообразных сварных
+    соединений сеток с ненормируемой прочностью?
+  task_type: lookup
+  type: citation
+  expected:
+  - gost_id: ГОСТ Р 57997-2017
+    clause_path: '3.2'
+  materials: []
+  reference: Прочность на срез соединений должна быть не ниже 0.3 ад.
+  industry: арматура-жби
+  expects_answer: true
+  difficulty: easy
+  source: synthetic
+  split: train
+- id: syn-ГОСТР57997-2017-25
+  query: Какие виды сварных арматурных изделий допустимы согласно стандарту?
+  task_type: selection
+  type: citation
+  expected:
+  - gost_id: ГОСТ Р 57997-2017
+    clause_path: '4.1'
+  materials: []
+  reference: Отдельные стержни арматуры со сварными соединениями по длине стержня,
+    арматурные сетки, арматурные каркасы, закладные сварные изделия с анкерами из
+    арматуры.
+  industry: арматура-жби
+  expects_answer: true
+  difficulty: easy
+  source: synthetic
+  split: train
+- id: syn-ГОСТР57997-2017-26
+  query: Какие требования предъявляются к сеткам с ненормируемой прочностью крестообразных
+    соединений при сбрасывании их на бетонное основание?
+  task_type: procedure
+  type: citation
+  expected:
+  - gost_id: ГОСТ Р 57997-2017
+    clause_path: '3.2'
+  materials: []
+  reference: Сетки не должны рассыпаться при сбрасывании на бетонное основание с высоты
+    1 м.
+  industry: арматура-жби
+  expects_answer: true
+  difficulty: hard
+  source: synthetic
+  split: train
+- id: syn-ГОСТР70520-2022-27
+  query: Какой термин используется для обозначения температурного воздействия на арматуру
+    длительностью менее 4 часов?
+  task_type: interpretation
+  type: citation
+  expected:
+  - gost_id: ГОСТ Р 70520-2022
+    clause_path: '3.3'
+  materials: []
+  reference: Это кратковременный нагрев.
+  industry: арматура-жби
+  expects_answer: true
+  difficulty: easy
+  source: synthetic
+  split: train
+- id: syn-ГОСТР70520-2022-28
+  query: Какие документы должны сопровождать арматуру в состоянии поставки?
+  task_type: lookup
+  type: citation
+  expected:
+  - gost_id: ГОСТ Р 70520-2022
+    clause_path: '3.5'
+  materials: []
+  reference: Арматура должна сопровождаться документацией производителя.
+  industry: арматура-жби
+  expects_answer: true
+  difficulty: easy
+  source: synthetic
+  split: train
+- id: syn-ГОСТР70520-2022-29
+  query: Как классифицируется температурное диапазон от 50 °C до 200 °C для испытаний
+    арматуры?
+  task_type: interpretation_main
+  type: citation
+  expected:
+  - gost_id: ГОСТ Р 70520-2022
+    clause_path: '3.5'
+  materials: []
+  reference: Это повышенная температура.
+  industry: арматура-жби
+  expects_answer: true
+  difficulty: easy
+  source: synthetic
+  split: train
+- id: syn-ГОСТР70520-2022-30
+  query: Какой документ регулирует технические условия для стальной горячекатаной
+    арматуры железобетонных конструкций?
+  task_type: selection
+  type: citation
+  expected:
+  - gost_id: ГОСТ Р 70520-2022
+    clause_path: '2'
+  materials: []
+  reference: Технические условия для стальной горячекатаной арматуры регулируются
+    ГОСТ 5781.
+  industry: арматура-жби
+  expects_answer: true
+  difficulty: medium
+  source: synthetic
+  split: train
+- id: syn-СП2.4.3648-20-31
+  query: Какова минимальная продолжительность перемены между уроками в начальной школе?
+  task_type: lookup
+  type: citation
+  expected:
+  - gost_id: СП 2.4.3648-20
+    clause_path: '40'
+  materials: []
+  reference: Продолжительность перемен между уроками составляет не менее 10 минут,
+    большой перемены (после 2 или 3 урока) — 20–30 минут.
+  industry: санитарная-арматура
+  expects_answer: true
+  difficulty: easy
+  source: synthetic
+  split: train
+- id: syn-СП2.4.3648-20-32
+  query: Как толковать требование «последовательность технологических процессов» в
+    пищеблоке детского сада?
+  task_type: interpretation
+  type: citation
+  expected:
+  - gost_id: СП 2.4.3648-20
+    clause_path: 2.3.3
+  materials: []
+  reference: Это означает, что поток сырья, полуфабрикатов, готовой продукции и посуды
+    должен быть линейным, без пересечений или возвратов.
+  industry: санитарная-арматура
+  expects_answer: true
+  difficulty: hard
+  source: synthetic
+  split: train
+- id: syn-СП27.13330.2017-33
+  query: Какая температура считается повышенной для бетонных конструкций?
+  task_type: lookup
+  type: citation
+  expected:
+  - gost_id: СП 27.13330.2017
+    clause_path: '3.8'
+  materials: []
+  reference: Повышенная температура для бетонных и железобетонных конструкций находится
+    в интервале от 50°С до 200°С включительно.
+  industry: жбк
+  expects_answer: true
+  difficulty: easy
+  source: synthetic
+  split: train
+- id: syn-СП27.13330.2017-34
+  query: Что такое футеровка и из каких материалов она выполняется?
+  task_type: interpretation
+  type: citation
+  expected:
+  - gost_id: СП 27.13330.2017
+    clause_path: '3.9'
+  materials:
+  - жаростойкий бетон
+  reference: Футеровка — это ненесущий элемент конструкции теплового агрегата, работающего
+    в условиях высоких температур, представляющий собой защитную внутреннюю облицовку.
+    Она выполняется из жаростойких тяжелых и легких бетонов.
+  industry: жбк
+  expects_answer: true
+  difficulty: medium
+  source: synthetic
+  split: test
+- id: syn-СП28.13330.2017-35
+  query: Можно ли заменять гидроизоляционные проникающие смеси на обычные обмазочные
+    материалы для защиты бетона?
+  task_type: substitution
+  type: citation
+  expected:
+  - gost_id: СП 28.13330.2017
+    clause_path: '3.8'
+  materials: []
+  reference: Не рекомендуется, так как гидроизоляционные проникающие смеси обеспечивают
+    глубокую защиту за счёт заполнения капилляров и микротрещин кристаллогидратами,
+    что недостижимо обычными обмазками.
+  industry: жбк
+  expects_answer: true
+  difficulty: hard
+  source: synthetic
+  split: train
+- id: syn-СП28.13330.2017-36
+  query: Как провести конструкционную огнезащиту стального каркаса здания?
+  task_type: procedure
+  type: citation
+  expected:
+  - gost_id: СП 28.13330.2017
+    clause_path: '3.11'
+  materials: []
+  reference: Нужно создать теплоизоляционный слой с использованием огнезащитных напыляемых
+    составов, обмазок, облицовок огнестойкими плитными или листовыми материалами,
+    в том числе на каркасе с воздушными прослойками.
+  industry: жбк
+  expects_answer: true
+  difficulty: medium
+  source: synthetic
+  split: train
+- id: syn-СП28.13330.2017-37
+  query: Что включает вторичная защита для стальной конструкции в агрессивной среде?
+  task_type: interpretation
+  type: citation
+  expected:
+  - gost_id: СП 28.13330.2017
+    clause_path: '3.7'
+  materials: []
+  reference: Вторичная защита применяется после возведения конструкции и включает
+    меры, ограничивающие воздействие агрессивной среды (например, нанесение покрытий,
+    облицовку), если первичная защита недостаточна.
+  industry: жбк
+  expects_answer: true
+  difficulty: easy
+  source: synthetic
+  split: train
+- id: syn-СП30.13330.2020-38
+  query: У меня здание высотой 80 м, какие требования к водоснабжению и водоотведению
+    применяются?
+  task_type: interpretation
+  type: citation
+  expected:
+  - gost_id: СП 30.13330.2020
+    clause_path: '1.1'
+  materials: []
+  reference: Настоящий свод правил не применяется к зданиям высотой более 75 м (для
+    жилых) и 50 м (для общественных). Для таких зданий требуется иное нормативное
+    регулирование.
+  industry: санитарная-арматура
+  expects_answer: true
+  difficulty: medium
+  source: synthetic
+  split: train
+- id: syn-СП30.13330.2020-39
+  query: Какие объекты исключены из действия данного СП? Подходит ли он для системы
+    водопровода в бункере гражданской обороны?
+  task_type: lookup
+  type: citation
+  expected:
+  - gost_id: СП 30.13330.2020
+    clause_path: '1.2'
+  materials: []
+  reference: Нет, данный СП не распространяется на системы внутреннего водопровода
+    защитных сооружений гражданской обороны.
+  industry: санитарная-арматура
+  expects_answer: true
+  difficulty: easy
+  source: synthetic
+  split: train
+- id: syn-СП30.13330.2020-40
+  query: Как классифицируется стояк канализации без вытяжной части, но с воздушным
+    клапаном?
+  task_type: interpretation
+  type: citation
+  expected:
+  - gost_id: СП 30.13330.2020
+    clause_path: 3.1.13
+  materials: []
+  reference: Такой стояк относится к невентилируемым.
+  industry: санитарная-арматура
+  expects_answer: true
+  difficulty: hard
+  source: synthetic
+  split: train
+- id: syn-СП30.13330.2020-41
+  query: Как определить гарантированный напор воды в точке подключения?
+  task_type: lookup
+  type: citation
+  expected:
+  - gost_id: СП 30.13330.2020
+    clause_path: 3.1.8
+  materials: []
+  reference: Гарантированный напор — это давление, обеспечиваемое организацией водопроводно-канализационного
+    хозяйства в период максимального водоразбора.
+  industry: санитарная-арматура
+  expects_answer: true
+  difficulty: medium
+  source: synthetic
+  split: train
+- id: syn-СП63.13330.2018-42
+  query: У меня объект в условиях температуры от -30°С до +40°С, можно ли проектировать
+    железобетонные конструкции по СП 63.13330.2018?
+  task_type: interpretation
+  type: citation
+  expected:
+  - gost_id: СП 63.13330.2018
+    clause_path: '1.1'
+  materials: []
+  reference: Да, можно, так как СП 63.13330.2018 распространяется на проектирование
+    бетонных и железобетонных конструкций при систематическом воздействии температур
+    не выше 50°С и не ниже минус 70°С.
+  industry: жбк
+  expects_answer: true
+  difficulty: easy
+  source: synthetic
+  split: train
+- id: syn-СП63.13330.2018-43
+  query: Какие типы бетонов можно использовать для проектирования железобетонных конструкций
+    по СП 63.13330.2018?
+  task_type: selection
+  type: citation
+  expected:
+  - gost_id: СП 63.13330.2018
+    clause_path: '1.2'
+  materials:
+  - тяжелый
+  - мелкозернистый
+  - легкий
+  - ячеистый
+  - напрягающий
+  reference: Для проектирования железобетонных конструкций можно использовать тяжелый,
+    мелкозернистый, легкий, ячеистый и напрягающий бетоны.
+  industry: жбк
+  expects_answer: true
+  difficulty: medium
+  source: synthetic
+  split: train
+- id: syn-СП63.13330.2018-44
+  query: Можно ли проектировать сталежелезобетонные конструкции по СП 63.13330.2018?
+  task_type: substitution
+  type: citation
+  expected:
+  - gost_id: СП 63.13330.2018
+    clause_path: '1.3'
+  materials: []
+  reference: Нет, требования СП 63.13330.2018 не распространяются на проектирование
+    сталежелезобетонных конструкций.
+  industry: жбк
+  expects_answer: true
+  difficulty: easy
+  source: synthetic
+  split: train
+- id: syn-СП63.13330.2018-45
+  query: Как определяется марка бетона по водонепроницаемости?
+  task_type: lookup
+  type: citation
+  expected:
+  - gost_id: СП 63.13330.2018
+    clause_path: '3.9'
+  materials: []
+  reference: Марка бетона по водонепроницаемости определяется как максимальное давление
+    воды, при котором в условиях стандартных испытаний вода не проникает через бетонный
+    образец.
+  industry: жбк
+  expects_answer: true
+  difficulty: medium
+  source: synthetic
+  split: train
+- id: syn-СП63.13330.2018-46
+  query: Что такое арматура конструктивная?
+  task_type: interpretation
+  type: citation
+  expected:
+  - gost_id: СП 63.13330.2018
+    clause_path: '3.2'
+  materials: []
+  reference: Арматура конструктивная — это арматура, устанавливаемая без расчета из
+    конструктивных соображений.
+  industry: жбк
+  expects_answer: true
+  difficulty: easy
+  source: synthetic
+  split: train
+- id: syn-ТРТС0122011-47
+  query: Может ли оборудование, не соответствующее требованиям ТР ТС 012/2011, быть
+    выпущено на рынок Таможенного союза?
+  task_type: interpretation
+  type: citation
+  expected:
+  - gost_id: ТР ТС 012/2011
+    clause_path: §14
+  materials: []
+  reference: Нет, оборудование, не соответствующее требованиям ТР ТС 012/2011, не
+    допускается к выпуску в обращение на рынке и не должно быть маркировано единым
+    знаком обращения продукции.
+  industry: трубопроводная-арматура
+  expects_answer: true
+  difficulty: easy
+  source: synthetic
+  split: train
+- id: syn-ТРТС0122011-48
+  query: Какое оборудование подпадает под действие ТР ТС 012/2011?
+  task_type: selection
+  type: citation
+  expected:
+  - gost_id: ТР ТС 012/2011
+    clause_path: §4
+  materials: []
+  reference: Под действие ТР ТС 012/2011 подпадает электрическое (электрооборудование),
+    включая Ех-компоненты, и неэлектрическое оборудование для работы во взрывоопасных
+    средах.
+  industry: трубопроводная-арматура
+  expects_answer: true
+  difficulty: easy
+  source: synthetic
+  split: train
+- id: syn-ТРТС0122011-49
+  query: Должно ли оборудование сохранять взрывобезопасность при изменяющихся условиях
+    окружающей среды?
+  task_type: lookup
+  type: citation
+  expected:
+  - gost_id: ТР ТС 012/2011
+    clause_path: §16
+  materials: []
+  reference: Да, оборудование должно сохранять взрывобезопасность в изменяющихся условиях
+    окружающей среды и при наличии внешних воздействий.
+  industry: трубопроводная-арматура
+  expects_answer: true
+  difficulty: medium
+  source: synthetic
+  split: train

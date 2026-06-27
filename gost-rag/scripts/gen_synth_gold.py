@@ -24,6 +24,9 @@ from gost_rag.schema import _CLAUSE_PREFIX_RE, Usage  # models write "п. 5.4.1"
 
 app = typer.Typer(add_completion=False)
 
+# allowed task types (see eval/TAXONOMY.md) — clamp generator output to these (it sometimes invents labels)
+TASK_TYPES = {"selection", "lookup", "substitution", "norm_conflict", "procedure", "interpretation"}
+
 GEN_SYSTEM = """Ты — методист: составляешь вопросы для проверки ИИ-ассистента по российским стандартам (ГОСТ/СП).
 Дан фрагмент одного стандарта (его пункты с текстом). Сгенерируй реалистичные вопросы инженера-технолога,
 на которые ОТВЕЧАЮТ приведённые пункты. Жёсткие требования:
@@ -114,6 +117,7 @@ def main(
                 stats["rejected"] += 1
                 continue
             t = q.get("task_type", "lookup")
+            t = t if t in TASK_TYPES else "lookup"  # clamp invented labels to the taxonomy
             stats["kept"] += 1
             stats["by_type"][t] = stats["by_type"].get(t, 0) + 1
             kept.append({
