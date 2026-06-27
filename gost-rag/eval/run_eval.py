@@ -20,6 +20,7 @@ RAG combos need Qdrant indexed first (scripts/index_corpus.py); RLM reads the co
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import typer
 import yaml
@@ -43,7 +44,7 @@ from gost_rag.evalmetrics import (
 app = typer.Typer(add_completion=False)
 console = Console()
 
-COLUMNS = ["model", "strategy", "prec", "fpr", "pos_cov", "neg_spec", "recall", "mat",
+COLUMNS = ["model", "strategy", "n", "prec", "fpr", "pos_cov", "neg_spec", "recall", "mat",
            "valid", "fabr", "tokens", "cost$", "$/corr", "lat_s"]
 
 # Strategies whose computation is independent of the swept gen_model (their models come from their
@@ -80,6 +81,7 @@ def main(
     strategy: str = typer.Option(None, "--strategy", help="restrict to one strategy name (rag/rlm/verify_ensemble/…)"),
     label: str = typer.Option(None, "--label", help="restrict to specific config label(s), comma-sep (e.g. 'rag+raw,rag+gate')"),
     limit: int = typer.Option(0, "--limit", help="взять только первые N вопросов gold (0 = все) — для дешёвого смока"),
+    gold_file: str = typer.Option(str(ROOT / "eval" / "gold.yaml"), "--gold-file", help="какой gold брать (human или synthetic)"),
     corpus: str = typer.Option(str(FIXTURES), "--corpus", help="каталог корпуса для диагностики цитат"),
     registry: str = typer.Option(str(ROOT / "data" / "registry.yaml"), "--registry"),
     ragas: bool = typer.Option(False, "--ragas", help="экспорт RAGAS-сэмплов в eval/ragas_samples.jsonl"),
@@ -87,7 +89,7 @@ def main(
     report: str = typer.Option(None, "--report", help="заархивировать отчёт в eval/reports/<label>/ (results.md + dump.jsonl + meta)"),
 ) -> None:
     reg = load_model_registry()
-    gold = yaml.safe_load((ROOT / "eval" / "gold.yaml").read_text(encoding="utf-8"))
+    gold = yaml.safe_load(Path(gold_file).read_text(encoding="utf-8"))
     if limit:
         gold = gold[:limit]
     model_ids = set(model.split(",")) if model else None
@@ -116,14 +118,17 @@ def main(
             opts = {k: v for k, v in strat.items() if k != "name"}
             label = _label(strat)
             rows: list[dict] = []
+            n_fail = 0
             for q in gold:
                 try:
                     r = answer_gost_query(q["query"], strategy=strat["name"], gen_model=gm["id"], **opts)
                 except Exception as exc:  # noqa: BLE001 — one bad combo shouldn't kill the sweep
+                    n_fail += 1  # count, don't silently drop — a flaky model must not look "complete"
                     console.print(f"[red]fail[/red] {gm['label']} / {label} / {q['query'][:40]}: {exc}")
                     continue
                 row = outcome(r, q)
                 row["id"] = q.get("id")
+                row["task_type"] = q.get("task_type") or q.get("type")  # for per-type breakdown
                 row["cost"] = cost_usd_by_model(r.usage.by_model, prices)
                 row.update(corpus_citation_diagnostics(r, corpus_refs))
                 rows.append(row)
@@ -133,9 +138,13 @@ def main(
                 continue
             if dump or report:
                 dump_rows.extend({**r, "config": label, "gen_model": gm["id"]} for r in rows)
+            if n_fail:
+                console.print(f"[yellow]⚠ {gm['label']} / {label}: {n_fail} вопросов упали → "
+                              f"метрики на {len(rows)}/{len(rows) + n_fail} (неполный прогон)[/yellow]")
             agg = aggregate(rows)
+            n_note = f"{len(rows)}" + (f"⚠/{len(rows) + n_fail}" if n_fail else "")
             cells = [
-                gm["label"], label,
+                gm["label"], label, n_note,
                 _fmt(agg["precision"], ".2f"), _fmt(agg["fpr"], ".2f"),
                 _fmt(agg["pos_coverage"], ".2f"), _fmt(agg["neg_specificity"], ".2f"),
                 _fmt(agg["recall"], ".2f"), _fmt(agg["material_cov"], ".2f"),
@@ -156,7 +165,6 @@ def main(
 
     md_text = "\n".join(md + ci_lines) + "\n"
     if dump:
-        from pathlib import Path
         Path(dump).write_text("\n".join(json.dumps(r, ensure_ascii=False) for r in dump_rows) + "\n", encoding="utf-8")
         console.print(f"[dim]dumped {len(dump_rows)} rows → {dump}[/dim]")
 

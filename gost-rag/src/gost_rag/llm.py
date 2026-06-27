@@ -27,6 +27,10 @@ class LLM:
             api_key=provider.api_key or "EMPTY",
             base_url=provider.base_url,
             default_headers=provider.headers or None,
+            # resilience: retry transient gateway blips / rate-limits / 5xx with backoff (SDK-level),
+            # and a generous per-request timeout for slow reasoning / RU models (GigaChat).
+            max_retries=4,
+            timeout=180.0,
         )
         self._tracer = get_tracer()
 
@@ -44,7 +48,9 @@ class LLM:
         u = resp.usage
         pt, ct = (u.prompt_tokens or 0, u.completion_tokens or 0) if u else (0, 0)
         usage.add(pt, ct, model)
-        out = resp.choices[0].message.content or ""
+        # some models/providers return a 200 with choices=None on a content filter / soft failure —
+        # don't crash the whole run; treat as empty (callers parse_json("") → {} and skip gracefully).
+        out = (resp.choices[0].message.content or "") if resp.choices else ""
         self._tracer.generation(
             name="chat", model=model, prompt=user, output=out,
             prompt_tokens=pt, completion_tokens=ct, latency_s=latency,
