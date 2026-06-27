@@ -28,9 +28,9 @@ class LLM:
             base_url=provider.base_url,
             default_headers=provider.headers or None,
             # resilience: retry transient gateway blips / rate-limits / 5xx with backoff (SDK-level),
-            # and a generous per-request timeout for slow reasoning / RU models (GigaChat).
-            max_retries=4,
-            timeout=180.0,
+            # bounded so a flaky model fails fast instead of stalling a long run.
+            max_retries=3,
+            timeout=90.0,
         )
         self._tracer = get_tracer()
 

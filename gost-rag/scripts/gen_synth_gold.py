@@ -130,8 +130,10 @@ def main(
                 "source": "synthetic",
                 "split": _split(q["query"]),
             })
+        # incremental write after each document — a long run must never lose progress on kill/crash
+        (ROOT / out).write_text(yaml.safe_dump(kept, allow_unicode=True, sort_keys=False), encoding="utf-8")
+        print(f"[{doc.gost_id}] kept={stats['kept']} generated={stats['generated']}", flush=True)
 
-    out_path = ROOT / out if not out.startswith("/") else out
     (ROOT / out).write_text(yaml.safe_dump(kept, allow_unicode=True, sort_keys=False), encoding="utf-8")
     print(f"\n# generated={stats['generated']} kept={stats['kept']} rejected={stats['rejected']} "
           f"(accept={stats['kept'] / max(stats['generated'], 1):.0%})")
