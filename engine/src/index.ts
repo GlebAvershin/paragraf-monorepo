@@ -144,7 +144,7 @@ app.get("/global/event", (c) =>
 )
 
 await initSchema()
-console.log(`[engine] listening on :${config.PORT} (gateway=${config.GATEWAY_URL})`)
+console.log(`[engine] listening on :${config.PORT} (answer=${config.ANSWER_URL})`)
 
 // idleTimeout: 0 — НЕ убивать долгоживущие SSE-соединения (/global/event) по простою.
 // Дефолтные 10с Bun.serve рвали стрим → клиент видел обрыв → ретрай-шторм onSseError.

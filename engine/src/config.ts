@@ -20,8 +20,9 @@ export const config = {
   JWT_ISSUER: process.env.JWT_ISSUER ?? "billing.local",
   JWT_AUDIENCE: process.env.JWT_AUDIENCE ?? "ourapp-desktop",
 
-  // Наш LLM-шлюз (LiteLLM) — движок проксирует к нему стриминг.
-  GATEWAY_URL: process.env.GATEWAY_URL ?? "http://localhost:4000",
+  // gateway-app (РФ) — движок шлёт СЫРОЙ текст сюда; маскирование/модель/ML — там.
+  // Раньше движок ходил прямо в LiteLLM (:4000); теперь между ними app-слой (:4100).
+  ANSWER_URL: process.env.ANSWER_URL ?? "http://localhost:4100",
 
   // Billing — движок берёт litellm-ключ юзера (для бюджета/кредитов per-user).
   // 127.0.0.1, НЕ localhost: Bun на Windows не резолвит localhost (как в billing/CLAUDE.md).

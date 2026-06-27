@@ -1,9 +1,11 @@
 /**
- * Ядро чата: prompt → запрос к НАШЕМУ шлюзу (LiteLLM, OpenAI-совместимый стрим) →
- * накопление текста в части ассистента → SSE-события (контракт opencode).
+ * Ядро чата (engine): prompt → СЫРОЙ текст в gateway-app (РФ) → накопление частей
+ * ассистента → SSE-события (контракт opencode).
  *
- * Бюджет/кредиты считаются per-user: зовём шлюз litellm-ключом юзера (из billing).
- * Маскирование ПДн уже сделано на клиенте (152-ФЗ) — движок получает обезличенный текст.
+ * Движок БОЛЬШЕ не ходит в LiteLLM напрямую и не маскирует. Он шлёт сырой текст в
+ * gateway-app (`ANSWER_URL`), который маскирует, выбирает/зовёт модель, валидирует (ML)
+ * и демаскирует. Движок хранит сообщения (РФ), гейтит кредиты и релеит стрим в браузер.
+ * См. docs/arch-migration.md.
  */
 import { config } from "./config.ts"
 import { publish } from "./bus.ts"
@@ -29,40 +31,28 @@ export interface PromptInput {
   messageID?: string
   model: { providerID: string; modelID: string }
   agent?: string
-  /** opencode-вариант (deep-thinking тумблер шлёт "high") — транслируем в reasoning_effort. */
+  /** opencode-вариант (deep-thinking тумблер шлёт "high") — gateway-app транслирует в thinking. */
   variant?: string
   parts: Array<{ type: string; text?: string }>
 }
 
 const ZERO_TOKENS = { input: 0, output: 0, reasoning: 0, cache: { read: 0, write: 0 } }
 
-/**
- * «Углублённо»: вариант opencode → reasoning_effort для шлюза. Только для Claude
- * (RU-модели thinking не поддерживают). LiteLLM мапит reasoning_effort на нативный
- * thinking-бюджет Anthropic в /chat/completions. max → high (выше у LiteLLM нет).
- */
-function thinkingEffort(variant: string | undefined, modelID: string): "low" | "medium" | "high" | undefined {
-  if (!variant || !/^claude-(sonnet|opus)/.test(modelID)) return undefined
-  if (variant === "low") return "low"
-  if (variant === "medium") return "medium"
-  if (variant === "high" || variant === "max") return "high"
-  return undefined
-}
-
-// Заголовок сессии. У движка нет серверного title-агента opencode (он жил в sidecar),
-// поэтому после первого обмена генерируем краткий заголовок дешёвой моделью сами.
-// claude-haiku — дёшево и доступно; в проде разумно переключить на РФ-модель (gigachat-pro).
+// Заголовок сессии. После первого обмена генерируем краткий заголовок дешёвой моделью.
+// Запрос идёт через gateway-app (как и основной чат) — там же маскирование.
 const TITLE_MODEL = "claude-haiku"
 const DEFAULT_TITLE = "Новая сессия"
 
 async function generateTitle(key: string, userText: string, assistantText: string): Promise<string | undefined> {
   try {
-    const res = await fetch(`${config.GATEWAY_URL}/v1/chat/completions`, {
+    const res = await fetch(`${config.ANSWER_URL}/answer`, {
       method: "POST",
-      headers: { authorization: `Bearer ${key}`, "content-type": "application/json" },
+      headers: { "content-type": "application/json" },
       body: JSON.stringify({
         model: TITLE_MODEL,
-        max_tokens: 30,
+        userKey: key,
+        stream: false,
+        maxTokens: 30,
         messages: [
           {
             role: "system",
@@ -74,8 +64,8 @@ async function generateTitle(key: string, userText: string, assistantText: strin
       }),
     })
     if (!res.ok) return undefined
-    const json = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> }
-    const raw = json.choices?.[0]?.message?.content?.trim()
+    const json = (await res.json()) as { text?: string }
+    const raw = json.text?.trim()
     if (!raw) return undefined
     const title = raw.replace(/^["'«»\s]+|["'«».\s]+$/g, "").slice(0, 80)
     return title || undefined
@@ -146,12 +136,9 @@ export async function runPrompt(input: PromptInput): Promise<{ info: StoredMessa
   await insertMessage(userId, asstMsg)
   publish(userId, { type: "message.updated", properties: { info: asstMsg } })
 
-  // «Углублённо»: reasoning_effort транслируем в шлюз. id reasoning-части резервируем
-  // ВСЕГДА и ДО id text-части (рендерер сортирует части лексически по id → reasoning
-  // пойдёт первой; text держим на idx 1, оставляя idx 0 под reasoning). Саму reasoning-
-  // часть создаём ЛЕНИВО на первом reasoning-дельте — модель может вернуть thinking и
-  // без явного effort, поэтому id нужен всегда, иначе onReasoning создаст часть без id.
-  const effort = thinkingEffort(input.variant, input.model.modelID)
+  // id reasoning-части резервируем ВСЕГДА и ДО id text-части (рендерер сортирует части
+  // лексически по id → reasoning пойдёт первой; text держим на idx 1). Саму reasoning-
+  // часть создаём ЛЕНИВО на первом reasoning-дельте.
   const reasoningPartId = newId("prt")
   let reasoningPart: StoredPart | undefined
 
@@ -159,29 +146,29 @@ export async function runPrompt(input: PromptInput): Promise<{ info: StoredMessa
   await insertPart(userId, 1, asstPart)
   publish(userId, { type: "message.part.updated", properties: { part: asstPart } })
 
-  // 4. Стрим от шлюза.
+  // 4. Стрим от gateway-app (он маскирует/зовёт модель/демаскирует).
   try {
     const key = await getLitellmKey(input.token)
     if (!key) throw new Error("Нет доступа к моделям (litellm-ключ не найден). Проверьте подписку.")
 
     const messages = await historyForGateway(userId, sessionID)
-    const res = await fetch(`${config.GATEWAY_URL}/v1/chat/completions`, {
+    const res = await fetch(`${config.ANSWER_URL}/answer`, {
       method: "POST",
-      headers: { authorization: `Bearer ${key}`, "content-type": "application/json" },
+      headers: { "content-type": "application/json" },
       body: JSON.stringify({
         model: input.model.modelID,
+        variant: input.variant,
+        userKey: key,
         messages,
         stream: true,
-        // LiteLLM мапит reasoning_effort на нативный thinking Anthropic.
-        ...(effort ? { reasoning_effort: effort } : {}),
       }),
     })
     if (!res.ok || !res.body) {
       const detail = await res.text().catch(() => "")
-      throw new Error(`Шлюз вернул ${res.status}: ${detail.slice(0, 200)}`)
+      throw new Error(`gateway вернул ${res.status}: ${detail.slice(0, 200)}`)
     }
 
-    await consumeOpenAIStream(res.body, {
+    await consumeAnswerStream(res.body, {
       onText: async (delta) => {
         asstPart.text = (asstPart.text as string) + delta
         await updatePart(userId, asstPart)
@@ -230,18 +217,14 @@ export async function runPrompt(input: PromptInput): Promise<{ info: StoredMessa
   asstMsg.time = { created: (asstMsg.time as { created: number }).created, completed: Date.now() }
   await updateMessage(userId, asstMsg)
   publish(userId, { type: "message.updated", properties: { info: asstMsg } })
-  // Снять статус «занята»: контракт — session.status со status:{type:"idle"}
-  // (event-reducer пишет session_status[id]; отдельного "session.idle" он НЕ знает,
-  // иначе индикатор «Размышление» не гаснет после ответа).
   publish(userId, { type: "session.status", properties: { sessionID, status: { type: "idle" } } })
   await updateSession(userId, sessionID, {}) // bump time.updated
 
   return { info: asstMsg, parts: [asstPart] }
 }
 
-/** Разобрать OpenAI-совместимый SSE-стрим (data: {...delta...}\n\n, конец — data: [DONE]).
- *  content → onText; reasoning_content/reasoning (thinking Claude через LiteLLM) → onReasoning. */
-async function consumeOpenAIStream(
+/** Разобрать SSE-стрим gateway-app: data: {type:"text"|"reasoning"|"done"|"error", delta?, message?}. */
+async function consumeAnswerStream(
   body: ReadableStream<Uint8Array>,
   handlers: { onText: (delta: string) => Promise<void>; onReasoning: (delta: string) => Promise<void> },
 ): Promise<void> {
@@ -258,18 +241,17 @@ async function consumeOpenAIStream(
       const trimmed = line.trim()
       if (!trimmed.startsWith("data:")) continue
       const payload = trimmed.slice(5).trim()
-      if (payload === "[DONE]") return
+      if (!payload) continue
+      let json: { type?: string; delta?: string; message?: string } | undefined
       try {
-        const json = JSON.parse(payload) as {
-          choices?: Array<{ delta?: { content?: string; reasoning_content?: string; reasoning?: string } }>
-        }
-        const delta = json.choices?.[0]?.delta
-        const reasoning = delta?.reasoning_content ?? delta?.reasoning
-        if (typeof reasoning === "string" && reasoning) await handlers.onReasoning(reasoning)
-        if (delta?.content) await handlers.onText(delta.content)
+        json = JSON.parse(payload)
       } catch {
-        // частичный/служебный кадр — пропускаем
+        continue // частичный/служебный кадр
       }
+      if (json?.type === "text" && json.delta) await handlers.onText(json.delta)
+      else if (json?.type === "reasoning" && json.delta) await handlers.onReasoning(json.delta)
+      else if (json?.type === "error") throw new Error(json.message || "gateway error")
+      else if (json?.type === "done") return
     }
   }
 }
