@@ -161,6 +161,7 @@ export async function runPrompt(input: PromptInput): Promise<{ info: StoredMessa
         userKey: key,
         messages,
         stream: true,
+        sessionID,
       }),
     })
     if (!res.ok || !res.body) {
