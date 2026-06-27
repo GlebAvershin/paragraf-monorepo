@@ -47,6 +47,7 @@ import { shouldMarkBoundaryGesture, normalizeWheelDelta } from "@/pages/session/
 import { SessionContextUsage } from "@/components/session-context-usage"
 import { isDocxSession } from "@/ourapp/scenarios/docx-result-tracker"
 import { downloadMarkdownAsPdf } from "@/ourapp/pdf-export"
+import { SourceViewer, extractSources } from "@/ourapp/source-viewer"
 import { useDialog } from "@opencode-ai/ui/context/dialog"
 import { createResizeObserver } from "@solid-primitives/resize-observer"
 import { useLanguage } from "@/context/language"
@@ -1176,6 +1177,23 @@ export function MessageTimeline(props: {
     )
   }
 
+  // OurApp: источники под ответом ассистента — открыть процитированный ГОСТ/СП для проверки.
+  // Стопгап: тянем стандарты из текста ответа (extractSources). Когда engine начнёт класть структурный
+  // Source[] в metadata части — заменить на чтение metadata, компонент SourceViewer не меняется.
+  function OurAppSources(props: { userMessageID: string }) {
+    const sources = createMemo(() => {
+      const msgs = assistantMessagesByParent().get(props.userMessageID) ?? emptyAssistantMessages
+      const text = msgs
+        .flatMap((m) => getMsgParts(m.id))
+        .filter((p): p is TextPart => p.type === "text")
+        .filter((p) => !p.synthetic)
+        .map((p) => p.text ?? "")
+        .join("\n\n")
+      return extractSources(text)
+    })
+    return <SourceViewer sources={sources()} />
+  }
+
   function TimelineRowFrame(input: { row: FramedTimelineRow; children: JSX.Element }) {
     const anchor = () => {
       const row = input.row
@@ -1291,6 +1309,7 @@ export function MessageTimeline(props: {
                 {renderAssistantPartGroup(row)}
               </div>
               <Show when={row.lastAssistantPart && !workingTurn(row.userMessageID)}>
+                <OurAppSources userMessageID={row.userMessageID} />
                 <OurAppDocxButton userMessageID={row.userMessageID} />
               </Show>
             </div>
