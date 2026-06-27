@@ -51,8 +51,8 @@ hybrid: ## (пере)индексировать hybrid-коллекцию (dense
 	@echo "[index] hybrid ($(SRC))..."
 	@$(UV) run python scripts/index_corpus.py --src "$(SRC)" --hybrid
 
-ask: ## вопрос:  make ask q="..." [strategy=verify_ensemble] [model=anthropic/claude-3.7-sonnet]
-	@$(UV) run python scripts/ask.py $(if $(strategy),--strategy $(strategy),) $(if $(model),--model "$(model)",) "$(q)"
+ask: ## спросить (дефолт = конфиг-победитель):  make ask q="..."  |  make ask gold=rebar-monolith  [model=z-ai/glm-5.2]
+	@$(UV) run python scripts/ask.py $(if $(gold),--gold $(gold),) $(if $(strategy),--strategy $(strategy),) $(if $(model),--model "$(model)",) $(if $(q),"$(q)",)
 
 eval: ## бенчмарк → eval/results.md  [model=..] [strategy=rag] [limit=8] (дешёвый срез)
 	@$(UV) run python eval/run_eval.py --corpus "$(SRC)" \

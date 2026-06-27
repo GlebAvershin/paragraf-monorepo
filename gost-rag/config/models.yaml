@@ -43,6 +43,11 @@ generation:
   - id: qwen/qwen3.5-flash-02-23
     label: qwen3.5-flash
     price: { in: 0.065, out: 0.26 }
+  # GigaChat Max (Sber) — РФ-модель, данные остаются в стране (152-ФЗ). Через шлюз (alias gigachat-max,
+  # нужен GIGACHAT_CREDENTIALS в .env шлюза). Дорогая: ~$21.7/1M (gateway: 1.95 ₽/1K ≈ $0.0000217/токен).
+  - id: gigachat-max
+    label: gigachat-max
+    price: { in: 21.7, out: 21.7 }
   # GigaChat — только через шлюз (РФ-модель, не на OpenRouter). Нужен GIGACHAT_CREDENTIALS в .env шлюза.
   # - id: gigachat-pro
   #   label: gigachat-pro
