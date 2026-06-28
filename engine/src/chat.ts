@@ -33,7 +33,20 @@ export interface PromptInput {
   agent?: string
   /** opencode-вариант (deep-thinking тумблер шлёт "high") — gateway-app транслирует в thinking. */
   variant?: string
-  parts: Array<{ type: string; text?: string }>
+  parts: Array<{ type: string; text?: string; mime?: string; url?: string; filename?: string }>
+}
+
+/** Извлечь картинки-сканы (file-части image/*) для server-side OCR в gateway. */
+function extractAttachments(
+  parts: PromptInput["parts"],
+): Array<{ mime: string; dataBase64: string; filename?: string }> {
+  return parts
+    .filter((p) => p.type === "file" && p.mime?.startsWith("image/") && p.url)
+    .map((p) => ({
+      mime: p.mime!,
+      filename: p.filename,
+      dataBase64: p.url!.includes("base64,") ? p.url!.split("base64,")[1]! : p.url!,
+    }))
 }
 
 const ZERO_TOKENS = { input: 0, output: 0, reasoning: 0, cache: { read: 0, write: 0 } }
@@ -162,6 +175,7 @@ export async function runPrompt(input: PromptInput): Promise<{ info: StoredMessa
         messages,
         stream: true,
         sessionID,
+        attachments: extractAttachments(input.parts),
       }),
     })
     if (!res.ok || !res.body) {
@@ -176,6 +190,13 @@ export async function runPrompt(input: PromptInput): Promise<{ info: StoredMessa
         asstMsg.providerID = p
         await updateMessage(userId, asstMsg)
         publish(userId, { type: "message.updated", properties: { info: asstMsg } })
+      },
+      // Распознанный gateway'ем документ (OCR скана) — сохраняем как часть СООБЩЕНИЯ
+      // ПОЛЬЗОВАТЕЛЯ, чтобы он попал в историю (многоходовые диалоги о документе).
+      onDoc: async (docText) => {
+        const docPart: StoredPart = { id: newId("prt"), sessionID, messageID: userMsg.id, type: "text", text: docText }
+        await insertPart(userId, idx++, docPart)
+        publish(userId, { type: "message.part.updated", properties: { part: docPart } })
       },
       onText: async (delta) => {
         asstPart.text = (asstPart.text as string) + delta
@@ -238,6 +259,7 @@ async function consumeAnswerStream(
     onText: (delta: string) => Promise<void>
     onReasoning: (delta: string) => Promise<void>
     onModel?: (model: string, provider: string) => Promise<void>
+    onDoc?: (text: string) => Promise<void>
   },
 ): Promise<void> {
   const reader = body.getReader()
@@ -254,7 +276,9 @@ async function consumeAnswerStream(
       if (!trimmed.startsWith("data:")) continue
       const payload = trimmed.slice(5).trim()
       if (!payload) continue
-      let json: { type?: string; delta?: string; message?: string; model?: string; provider?: string } | undefined
+      let json:
+        | { type?: string; delta?: string; message?: string; model?: string; provider?: string; text?: string }
+        | undefined
       try {
         json = JSON.parse(payload)
       } catch {
@@ -263,6 +287,7 @@ async function consumeAnswerStream(
       if (json?.type === "text" && json.delta) await handlers.onText(json.delta)
       else if (json?.type === "reasoning" && json.delta) await handlers.onReasoning(json.delta)
       else if (json?.type === "model" && json.model) await handlers.onModel?.(json.model, json.provider ?? "anthropic")
+      else if (json?.type === "doc" && json.text) await handlers.onDoc?.(json.text)
       else if (json?.type === "error") throw new Error(json.message || "gateway error")
       else if (json?.type === "done") return
     }

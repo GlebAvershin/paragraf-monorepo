@@ -67,7 +67,8 @@ type PromptBody = {
   model?: { providerID: string; modelID: string }
   agent?: string
   variant?: string
-  parts?: Array<{ type: string; text?: string }>
+  // file-части (image/*) — сканы: пересылаются в gateway на server-side OCR.
+  parts?: Array<{ type: string; text?: string; mime?: string; url?: string; filename?: string }>
 }
 const promptArgs = (userId: string, token: string, sessionID: string, body: PromptBody) => ({
   userId,

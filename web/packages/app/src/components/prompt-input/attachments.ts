@@ -83,29 +83,15 @@ export function createPromptAttachments(input: PromptAttachmentsInput) {
     const url = await dataUrl(file, mime)
     if (!url) return false
 
-    // OurApp: для картинок — СИНХРОННЫЙ локальный OCR (ТЗ-04 §OCR), чтобы к
-    // моменту отправки скан уже был распознан (иначе race: юзер шлёт картинку
-    // до завершения фонового OCR). Скан паспорта/документа распознаём на машине
-    // юзера → в облачную модель уходит ТЕКСТ (замаскированный), не картинка с ПДн.
-    let attachment: ImageAttachmentPart = {
+    // OurApp: картинки-сканы шлём как есть (image/*). OCR теперь на СЕРВЕРЕ (gateway, РФ):
+    // картинка идёт browser→engine→gateway, где распознаётся и маскируется ДО зарубежного
+    // вызова (152-ФЗ соблюдён, картинка с ПДн не покидает РФ). Клиент больше не тащит Tesseract.
+    const attachment: ImageAttachmentPart = {
       type: "image",
       id: uuid(),
       filename: file.name,
       mime,
       dataUrl: url,
-    }
-    if (mime.startsWith("image/")) {
-      try {
-        const { ocrImageToText, looksLikeDocumentScan } = await import("@/ourapp/pii/ocr")
-        const result = await ocrImageToText(file)
-        if (looksLikeDocumentScan(result)) {
-          // Документ-скан → отправляем как текст (mime scanned-doc + extractedText).
-          attachment = { ...attachment, mime: "ourapp/scanned-doc", extractedText: result.text }
-        }
-      } catch (err) {
-        console.warn("[ocr] scan recognition failed", err)
-        // best-effort: при ошибке оставляем картинку как есть.
-      }
     }
 
     const cursor = prompt.cursor() ?? getCursorPosition(editor)
