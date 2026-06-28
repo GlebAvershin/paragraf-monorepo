@@ -14,16 +14,21 @@
   Проверено вживую: модель видит `__PII_*__`, юзеру возвращается демаскированное.
 - ✅ **Фаза 5 — каркас ML-валидации.** `/answer` зовёт ML по обезличенному тексту;
   `ML_VALIDATE_URL` пуст → пропуск (fail-open). Коммиты: gateway `feb3530`, monorepo `623a9c3`.
+- ✅ **Уборка клиентского PII-кода.** Удалён мёртвый клиентский PII-слой
+  (`pii/{masker,detectors,validators,whitelist,dictionaries,types,session-vaults,
+  settings-store,global,pii.test}.ts`, `pii-badge.tsx`, `pii-settings.tsx` + секция настроек).
+  Оставлен `pii/ocr.ts` (OCR пока на клиенте). Commit monorepo `7ad8d11`. typecheck зелёный.
+- ✅ **Найдено и исправлено при браузер-QA (2026-06-27):**
+  - Пустой пикер моделей → `release_date=""` в каталоге (monorepo `0f40862`).
+  - Демаск не срабатывал на markdown-экранированных плейсхолдерах `\_\_PII...\_\_` →
+    unmask теперь толерантен к `\` перед `_` (gateway `bfe7969`, +2 теста).
 - ⏳ **Фаза 4 — OCR → gateway.** Сейчас OCR на клиенте (`web/ourapp/pii/ocr.ts`), но
   распознанный текст всё равно маскируется gateway'ем → **комплаенс уже соблюдён**, это
-  оптимизация. Требует tesseract.js server-side + проброс картинок browser→engine→gateway.
-- ⏳ **Авто-модель → gateway.** Сейчас эвристика выбора модели на клиенте
-  (`auto-model/classify.ts`) — работает, бесплатно. Перенос требует round-trip (gateway
-  сообщает выбранную модель назад в UI). Не блокирует.
-- ⏳ **Уборка.** Клиентский PII-слой (`pii/{masker,detectors,validators,whitelist,
-  dictionaries,session-vaults,settings-store,global}.ts`, `pii-badge.tsx`, `pii-settings.tsx`)
-  после фазы 2 — мёртвый код (typecheck зелёный, дормант). Удалить вместе с переносом OCR
-  (фаза 4), т.к. `ocr.ts` пока остаётся на клиенте. Обновить PII-заметки в `CLAUDE.md`.
+  оптимизация (легче клиентский бандл). Требует tesseract.js server-side + проброс картинок
+  browser→engine→gateway. НЕ блокирует.
+- ⏳ **Авто-модель → gateway.** Эвристика выбора модели на клиенте (`auto-model/classify.ts`)
+  — работает, бесплатно/мгновенно. Перенос требует round-trip (gateway сообщает выбранную
+  модель в UI). НЕ блокирует.
 
 ## Зачем
 
