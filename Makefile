@@ -11,11 +11,13 @@ BUN ?= bun
 GATEWAY_DIR ?= ../paragraf-gateway
 # WEB_DIR — каталог веб-рендерера (форк opencode, теперь внутри монорепо: ./web)
 WEB_DIR ?= web
+# GOST_RAG_DIR — ML-проект (база знаний ГОСТ), внутри монорепо: ./gost-rag
+GOST_RAG_DIR ?= gost-rag
 # RUN — каталог логов фоновых сервисов
 RUN := .run
 
 .PHONY: help dev env-init docker-check up down restart infra gateway db wait migrate seed \
-        billing engine etl web health logs typecheck test env-check
+        billing engine etl web gost-rag health logs typecheck test env-check
 
 ## ─────────────────────────── основное ───────────────────────────
 
@@ -137,12 +139,19 @@ web: ## запустить веб-рендерер (vite :5173) из ./web (пе
 	  cd "$(WEB_DIR)" && $(BUN) run dev:web; \
 	else echo "рендерер не найден в $(WEB_DIR) — он должен лежать в ./web (или задайте WEB_DIR=путь)"; fi
 
+gost-rag: ## поднять gost-rag grounding-сервис (:8000) — заземление ответов инженера в ГОСТ
+	@if [ -d "$(GOST_RAG_DIR)" ]; then \
+	  echo "[gost-rag] serve :8000 — нужен поднятый Qdrant+индекс (см. $(GOST_RAG_DIR)/README.md: make up)"; \
+	  cd "$(GOST_RAG_DIR)" && $(MAKE) -s serve; \
+	else echo "[gost-rag] не найден $(GOST_RAG_DIR)"; fi
+
 ## ─────────────────────────── утилиты ───────────────────────────
 
 health: ## проверить здоровье сервисов
 	@printf "  gateway :4000  "; curl -fsS http://localhost:4000/health/liveliness >/dev/null 2>&1 && echo "OK" || echo "DOWN"
 	@printf "  billing :3000  "; curl -fsS http://localhost:3000/health/readiness  >/dev/null 2>&1 && echo "OK" || echo "DOWN"
 	@printf "  engine  :4096  "; curl -fsS http://localhost:4096/health/readiness  >/dev/null 2>&1 && echo "OK" || echo "DOWN"
+	@printf "  gost-rag:8000  "; curl -fsS http://localhost:8000/health >/dev/null 2>&1 && echo "OK" || echo "DOWN (опц. — make gost-rag)"
 
 logs: ## показать логи фоновых сервисов (Ctrl-C для выхода)
 	@tail -n 40 -f $(RUN)/*.log 2>/dev/null || echo "нет логов — сначала make up"
