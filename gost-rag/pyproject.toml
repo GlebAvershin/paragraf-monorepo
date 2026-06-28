@@ -22,6 +22,8 @@ dependencies = [
 eval = ["ragas>=0.2", "pandas>=2.2"]
 trace = ["langfuse>=2"]
 dev = ["pytest>=8"]
+# HTTP service so the product (engine) can ground answers in ГОСТ. Install: uv sync --extra serve
+serve = ["fastapi>=0.110", "uvicorn>=0.29"]
 
 [build-system]
 requires = ["hatchling"]
