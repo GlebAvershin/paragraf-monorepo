@@ -170,6 +170,13 @@ export async function runPrompt(input: PromptInput): Promise<{ info: StoredMessa
     }
 
     await consumeAnswerStream(res.body, {
+      // gateway сообщает выбранную модель (важно для «Авто»: input.model = "auto").
+      onModel: async (m, p) => {
+        asstMsg.modelID = m
+        asstMsg.providerID = p
+        await updateMessage(userId, asstMsg)
+        publish(userId, { type: "message.updated", properties: { info: asstMsg } })
+      },
       onText: async (delta) => {
         asstPart.text = (asstPart.text as string) + delta
         await updatePart(userId, asstPart)
@@ -227,7 +234,11 @@ export async function runPrompt(input: PromptInput): Promise<{ info: StoredMessa
 /** Разобрать SSE-стрим gateway-app: data: {type:"text"|"reasoning"|"done"|"error", delta?, message?}. */
 async function consumeAnswerStream(
   body: ReadableStream<Uint8Array>,
-  handlers: { onText: (delta: string) => Promise<void>; onReasoning: (delta: string) => Promise<void> },
+  handlers: {
+    onText: (delta: string) => Promise<void>
+    onReasoning: (delta: string) => Promise<void>
+    onModel?: (model: string, provider: string) => Promise<void>
+  },
 ): Promise<void> {
   const reader = body.getReader()
   const decoder = new TextDecoder()
@@ -243,7 +254,7 @@ async function consumeAnswerStream(
       if (!trimmed.startsWith("data:")) continue
       const payload = trimmed.slice(5).trim()
       if (!payload) continue
-      let json: { type?: string; delta?: string; message?: string } | undefined
+      let json: { type?: string; delta?: string; message?: string; model?: string; provider?: string } | undefined
       try {
         json = JSON.parse(payload)
       } catch {
@@ -251,6 +262,7 @@ async function consumeAnswerStream(
       }
       if (json?.type === "text" && json.delta) await handlers.onText(json.delta)
       else if (json?.type === "reasoning" && json.delta) await handlers.onReasoning(json.delta)
+      else if (json?.type === "model" && json.model) await handlers.onModel?.(json.model, json.provider ?? "anthropic")
       else if (json?.type === "error") throw new Error(json.message || "gateway error")
       else if (json?.type === "done") return
     }

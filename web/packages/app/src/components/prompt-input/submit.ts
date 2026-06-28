@@ -20,7 +20,6 @@ import { setCursorPosition } from "./editor-dom"
 import { guardSendCredits } from "@/ourapp/low-balance-guard"
 import { formatServerError } from "@/utils/server-errors"
 import { getAutoModelEnabled } from "@/ourapp/auto-model/store"
-import { pickAutoModel } from "@/ourapp/auto-model/resolve"
 import { getDeepThinkingEnabled, isReasoningModel, DEEP_THINKING_VARIANT } from "@/ourapp/deep-thinking/store"
 
 type PendingPrompt = {
@@ -441,29 +440,18 @@ export function createPromptSubmit(input: PromptSubmitInput) {
       return
     }
 
-    const model = {
-      modelID: currentModel.id,
-      providerID: currentModel.provider.id,
-    }
-    // OurApp: режим «Авто» — анализируем запрос эвристикой и подменяем модель
-    // на самую подходящую (GigaChat/Claude) до сборки драфта. Выбор бесплатный,
-    // PII-маскирование завязано на modelID и сработает автоматически.
-    let autoVariant = variant
-    if (getAutoModelEnabled()) {
-      const pick = pickAutoModel({ text, hasDocument: images.length > 0 }, local.model.list())
-      if (pick && (pick.modelID !== model.modelID || pick.providerID !== model.providerID)) {
-        model.modelID = pick.modelID
-        model.providerID = pick.providerID
-        // Вариант (thinking и т.п.) привязан к ручной модели — для подменённой
-        // сбрасываем, чтобы не передать несовместимый вариант.
-        autoVariant = undefined
-      }
-    }
-    // OurApp: режим «Углублённое размышление». ВКЛ → для reasoning-моделей Claude
-    // выставляем variant "high" → opencode переводит его в нативный thinking-бюджет
-    // Anthropic (extended thinking). Для не-Claude/РФ моделей — no-op (variant
-    // невалиден для них, opencode его игнорирует), но гейтим явно для чистоты.
-    if (getDeepThinkingEnabled() && isReasoningModel(model.modelID)) {
+    // OurApp: режим «Авто» — выбор модели делает GATEWAY (вся логика модели/маскинга/ML
+    // на сервере). Шлём sentinel "auto"; gateway классифицирует запрос, подставит модель
+    // и вернёт выбранную обратно (engine обновит сообщение). PII-маскинг тоже на сервере.
+    const autoEnabled = getAutoModelEnabled()
+    const model = autoEnabled
+      ? { modelID: "auto", providerID: "auto" }
+      : { modelID: currentModel.id, providerID: currentModel.provider.id }
+    // «Углублённо»: для ручной reasoning-модели Claude шлём variant "high". Для «Авто»
+    // тоже шлём high — gateway применит thinking ТОЛЬКО если выбранная модель reasoning-
+    // Claude (thinkingEffort гейтит по коду), иначе проигнорирует.
+    let autoVariant = autoEnabled ? undefined : variant
+    if (getDeepThinkingEnabled() && (autoEnabled || isReasoningModel(model.modelID))) {
       autoVariant = DEEP_THINKING_VARIANT
     }
     const agent = currentAgent.name
