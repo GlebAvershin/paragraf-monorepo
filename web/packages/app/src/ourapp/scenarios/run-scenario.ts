@@ -15,14 +15,23 @@
 import { uuid } from "@/utils/uuid"
 import type { ContentPart, ImageAttachmentPart } from "@/context/prompt"
 import { parseOfficeDocumentLocally } from "../doc-parse"
-import { ocrImageToText, looksLikeDocumentScan } from "../pii/ocr"
 import { renderTemplate } from "./render-template"
 import type { Scenario, ScenarioAnswers } from "./types"
 
-/** Скан-картинка (фото/скан документа) — распознаём через OCR, а не office-парсер. */
+/** Скан-картинка (фото/скан документа) — уходит картинкой в gateway на OCR (РФ). */
 const IMAGE_EXT = /\.(jpe?g|png|webp|bmp|tiff?)$/i
 function isImageFile(file: File): boolean {
   return file.type.startsWith("image/") || IMAGE_EXT.test(file.name)
+}
+
+/** Прочитать файл как data:URL (base64) для отправки картинки в gateway. */
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader()
+    r.onerror = () => reject(new Error("read failed"))
+    r.onload = () => resolve(typeof r.result === "string" ? r.result : "")
+    r.readAsDataURL(file)
+  })
 }
 
 export interface BuiltScenarioPrompt {
@@ -52,17 +61,16 @@ export async function buildScenarioPrompt(
   const attachments: ImageAttachmentPart[] = []
   for (const file of files) {
     if (isImageFile(file)) {
-      // Скан-картинка: распознаём локально (рус+eng), как composer (attachments.ts).
-      // В облако уйдёт текст (замаскированный для зарубежных моделей), не картинка с ПДн.
-      const result = await ocrImageToText(file).catch(() => null)
-      if (!result || !looksLikeDocumentScan(result)) continue
+      // Скан-картинка: прикрепляем КАК ЕСТЬ (image/*). OCR делает gateway (РФ), как и в
+      // композере (attachments.ts) — картинка идёт browser→engine→gateway, не покидая РФ.
+      const url = await fileToDataUrl(file).catch(() => "")
+      if (!url) continue
       attachments.push({
         type: "image",
         id: uuid(),
         filename: file.name,
-        mime: "ourapp/scanned-doc",
-        dataUrl: "",
-        extractedText: result.text,
+        mime: file.type || "image/png",
+        dataUrl: url,
       })
       continue
     }
