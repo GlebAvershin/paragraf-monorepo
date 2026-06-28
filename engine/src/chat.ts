@@ -10,6 +10,7 @@
 import { config } from "./config.ts"
 import { publish } from "./bus.ts"
 import { getLitellmKey } from "./billing.ts"
+import { retrieveGost } from "./gostrag.ts"
 import { getSession, updateSession } from "./sessions.ts"
 import {
   historyForGateway,
@@ -57,6 +58,34 @@ function answerHeaders(): Record<string, string> {
   if (config.ANSWER_SECRET) headers["x-internal-key"] = config.ANSWER_SECRET
   return headers
 }
+
+// ── Заземление в ГОСТ (помощник инженера) ──────────────────────────────────────────────────
+// Грундинг включён, когда выбран ГОСТ-агент или поднят глобальный флаг. Тогда движок дёргает
+// gost-rag /retrieve, подмешивает выдержки стандартов в системный промпт и инструктирует модель
+// отвечать ТОЛЬКО по ним и цитировать пункты — это повышает точность и даёт проверяемые источники.
+function groundingEnabled(agent: string | undefined): boolean {
+  return config.GOST_RAG_ENABLED || agent === "gost"
+}
+
+function groundingSystemPrompt(context: string): string {
+  return [
+    "Ты — инженерный ассистент. Отвечай СТРОГО на основе приведённых ниже выдержек из нормативных",
+    "документов (ГОСТ/СП/СанПиН/ТР ТС) и только на них.",
+    "Правила:",
+    "- Опирайся ТОЛЬКО на факты из выдержек; не достраивай по памяти и не обобщай за пределы текста.",
+    "- Каждое утверждение подкрепляй ссылкой на пункт в формате [ГОСТ NNNN-ГГГГ, п. X.Y], как в выдержках.",
+    "- Если в выдержках нет ответа — прямо скажи, что в базе ГОСТ это не найдено, и не выдумывай.",
+    "- Отвечай на русском, кратко и по существу.",
+    "",
+    "=== Выдержки из стандартов ===",
+    context,
+    "=== Конец выдержек ===",
+  ].join("\n")
+}
+
+const GOST_ABSTAIN =
+  "В базе знаний ГОСТ не нашлось релевантных пунктов по этому запросу. " +
+  "Уточните вопрос (укажите стандарт, материал или область) — возможно, он вне покрытия текущей базы."
 
 // Заголовок сессии. После первого обмена генерируем краткий заголовок дешёвой моделью.
 // Запрос идёт через gateway-app (как и основной чат) — там же маскирование.
@@ -115,6 +144,11 @@ export async function runPrompt(input: PromptInput): Promise<{ info: StoredMessa
   const { userId, sessionID } = input
   const now = Date.now()
   const agent = input.agent ?? "build"
+  const query = input.parts
+    .filter((p) => p.type === "text" && p.text)
+    .map((p) => p.text)
+    .join(" ")
+    .trim()
 
   // 1. Сообщение юзера + его текстовые части.
   const userMsg: StoredMessage = {
@@ -171,76 +205,97 @@ export async function runPrompt(input: PromptInput): Promise<{ info: StoredMessa
     const key = await getLitellmKey(input.token)
     if (!key) throw new Error("Нет доступа к моделям (litellm-ключ не найден). Проверьте подписку.")
 
-    const messages = await historyForGateway(userId, sessionID)
-    const res = await fetch(`${config.ANSWER_URL}/answer`, {
-      method: "POST",
-      headers: answerHeaders(),
-      body: JSON.stringify({
-        model: input.model.modelID,
-        variant: input.variant,
-        userKey: key,
-        messages,
-        stream: true,
-        sessionID,
-        attachments: extractAttachments(input.parts),
-      }),
-    })
-    if (!res.ok || !res.body) {
-      const detail = await res.text().catch(() => "")
-      throw new Error(`gateway вернул ${res.status}: ${detail.slice(0, 200)}`)
-    }
+    // Заземление в ГОСТ: ретрив выдержек под запрос. null ⇒ сервис недоступен → отвечаем БЕЗ
+    // заземления (не падаем). Пусто/ниже порога ⇒ честный abstain, без выдуманных пунктов.
+    const gost = groundingEnabled(agent) ? await retrieveGost(query, config.GOST_TOP_K) : null
+    const grounded = !!gost && gost.chunks.length > 0 && gost.top_score >= config.GOST_MIN_SCORE
+    const abstain = !!gost && !grounded // успешно искали в базе, но релевантного нет
 
-    await consumeAnswerStream(res.body, {
-      // gateway сообщает выбранную модель (важно для «Авто»: input.model = "auto").
-      onModel: async (m, p) => {
-        asstMsg.modelID = m
-        asstMsg.providerID = p
-        await updateMessage(userId, asstMsg)
-        publish(userId, { type: "message.updated", properties: { info: asstMsg } })
-      },
-      // Распознанный gateway'ем документ (OCR скана) — сохраняем как часть СООБЩЕНИЯ
-      // ПОЛЬЗОВАТЕЛЯ, чтобы он попал в историю (многоходовые диалоги о документе).
-      onDoc: async (docText) => {
-        const docPart: StoredPart = { id: newId("prt"), sessionID, messageID: userMsg.id, type: "text", text: docText }
-        await insertPart(userId, idx++, docPart)
-        publish(userId, { type: "message.part.updated", properties: { part: docPart } })
-      },
-      onText: async (delta) => {
-        asstPart.text = (asstPart.text as string) + delta
-        await updatePart(userId, asstPart)
-        publish(userId, { type: "message.part.updated", properties: { part: asstPart, delta } })
-      },
-      onReasoning: async (delta) => {
-        if (!reasoningPart) {
-          reasoningPart = {
-            id: reasoningPartId,
-            sessionID,
-            messageID: asstMsg.id,
-            type: "reasoning",
-            text: "",
-            time: { start: Date.now() },
+    if (abstain) {
+      asstPart.text = GOST_ABSTAIN
+      await updatePart(userId, asstPart)
+      publish(userId, { type: "message.part.updated", properties: { part: asstPart } })
+    } else {
+      // grounded ⇒ системный промпт с выдержками впереди истории; иначе обычная история.
+      const history = await historyForGateway(userId, sessionID)
+      const messages = grounded
+        ? [{ role: "system", content: groundingSystemPrompt(gost!.context) }, ...history]
+        : history
+      const res = await fetch(`${config.ANSWER_URL}/answer`, {
+        method: "POST",
+        headers: answerHeaders(),
+        body: JSON.stringify({
+          model: input.model.modelID,
+          variant: input.variant,
+          userKey: key,
+          messages,
+          stream: true,
+          sessionID,
+          attachments: extractAttachments(input.parts),
+        }),
+      })
+      if (!res.ok || !res.body) {
+        const detail = await res.text().catch(() => "")
+        throw new Error(`gateway вернул ${res.status}: ${detail.slice(0, 200)}`)
+      }
+
+      await consumeAnswerStream(res.body, {
+        // gateway сообщает выбранную модель (важно для «Авто»: input.model = "auto").
+        onModel: async (m, p) => {
+          asstMsg.modelID = m
+          asstMsg.providerID = p
+          await updateMessage(userId, asstMsg)
+          publish(userId, { type: "message.updated", properties: { info: asstMsg } })
+        },
+        // Распознанный gateway'ем документ (OCR скана) — сохраняем как часть СООБЩЕНИЯ
+        // ПОЛЬЗОВАТЕЛЯ, чтобы он попал в историю (многоходовые диалоги о документе).
+        onDoc: async (docText) => {
+          const docPart: StoredPart = { id: newId("prt"), sessionID, messageID: userMsg.id, type: "text", text: docText }
+          await insertPart(userId, idx++, docPart)
+          publish(userId, { type: "message.part.updated", properties: { part: docPart } })
+        },
+        onText: async (delta) => {
+          asstPart.text = (asstPart.text as string) + delta
+          await updatePart(userId, asstPart)
+          publish(userId, { type: "message.part.updated", properties: { part: asstPart, delta } })
+        },
+        onReasoning: async (delta) => {
+          if (!reasoningPart) {
+            reasoningPart = {
+              id: reasoningPartId,
+              sessionID,
+              messageID: asstMsg.id,
+              type: "reasoning",
+              text: "",
+              time: { start: Date.now() },
+            }
+            await insertPart(userId, 0, reasoningPart)
           }
-          await insertPart(userId, 0, reasoningPart)
-        }
-        reasoningPart.text = (reasoningPart.text as string) + delta
+          reasoningPart.text = (reasoningPart.text as string) + delta
+          await updatePart(userId, reasoningPart)
+          publish(userId, { type: "message.part.updated", properties: { part: reasoningPart, delta } })
+        },
+      })
+
+      // Закрываем reasoning-часть (time.end) — рендерер перестаёт считать её «в процессе».
+      if (reasoningPart) {
+        reasoningPart.time = { start: (reasoningPart.time as { start: number }).start, end: Date.now() }
         await updatePart(userId, reasoningPart)
-        publish(userId, { type: "message.part.updated", properties: { part: reasoningPart, delta } })
-      },
-    })
+        publish(userId, { type: "message.part.updated", properties: { part: reasoningPart } })
+      }
 
-    // Закрываем reasoning-часть (time.end) — рендерер перестаёт считать её «в процессе».
-    if (reasoningPart) {
-      reasoningPart.time = { start: (reasoningPart.time as { start: number }).start, end: Date.now() }
-      await updatePart(userId, reasoningPart)
-      publish(userId, { type: "message.part.updated", properties: { part: reasoningPart } })
+      // Заземлённый ответ: вешаем источники в metadata text-части — web SourceViewer читает их
+      // авторитетно (вместо регулярки по тексту). Поле уезжает в parts.data (jsonb) и доходит до
+      // рендерера через listMessages/SSE без изменений контракта.
+      if (grounded) {
+        asstPart.metadata = { sources: gost!.sources, grounding: { top_score: gost!.top_score, grounded: true } }
+        await updatePart(userId, asstPart)
+        publish(userId, { type: "message.part.updated", properties: { part: asstPart } })
+      }
+
+      // Заголовок сессии (только первый обмен) — fire-and-forget, чтобы не задерживать idle.
+      void maybeGenerateTitle(userId, sessionID, key, query, asstPart.text as string).catch(() => {})
     }
-
-    // Заголовок сессии (только первый обмен) — fire-and-forget, чтобы не задерживать idle.
-    const userText = input.parts
-      .filter((p) => p.type === "text" && p.text)
-      .map((p) => p.text)
-      .join(" ")
-    void maybeGenerateTitle(userId, sessionID, key, userText, asstPart.text as string).catch(() => {})
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     asstPart.text = (asstPart.text as string) + (asstPart.text ? "\n\n" : "") + `⚠️ ${msg}`
