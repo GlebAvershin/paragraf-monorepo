@@ -18,7 +18,6 @@ import { AboutModal } from "./about-modal"
 import "./about-modal.css"
 import "./pii.css"
 import { useLanguage } from "@/context/language"
-import { PiiSettingsSection } from "./pii-settings"
 
 export const SettingsPage: Component<{ onClose?: () => void }> = (props) => {
   const theme = useTheme()
@@ -167,8 +166,6 @@ export const SettingsPage: Component<{ onClose?: () => void }> = (props) => {
             </button>
           </div>
         </section>
-
-        <PiiSettingsSection />
 
         <section class="ourapp-settings__card">
           <div class="ourapp-settings__label">О приложении</div>

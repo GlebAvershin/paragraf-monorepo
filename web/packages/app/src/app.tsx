@@ -2,8 +2,6 @@ import "@/index.css"
 import "@/ourapp/register-doc-tools"
 // Регистрирует window.ourappDocExport для кнопки "Скачать .docx" в UI-пакете
 import "@/ourapp/doc-export"
-// Регистрирует window.ourappUnmask для демаскирования ПДн при рендере (ТЗ-04)
-import "@/ourapp/pii/global"
 import * as Sentry from "@sentry/solid"
 import { I18nProvider } from "@opencode-ai/ui/context"
 import { DialogProvider } from "@opencode-ai/ui/context/dialog"
