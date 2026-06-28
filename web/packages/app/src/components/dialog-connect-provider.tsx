@@ -54,8 +54,10 @@ export function DialogConnectProvider(props: { provider: string }) {
     async () => {
       const cached = globalSync.data.provider_auth[props.provider]
       if (cached) return cached
-      const res = await globalSDK.client.provider.auth()
-      if (!alive.value) return fallback()
+      // Наш engine реализует ПОДМНОЖЕСТВО opencode-API — /provider/auth может вернуть 404.
+      // Это не ошибка приложения: деградируем на ввод API-ключа, а не роняем UI в ErrorPage.
+      const res = await globalSDK.client.provider.auth().catch(() => null)
+      if (!alive.value || !res) return fallback()
       globalSync.set("provider_auth", res.data ?? {})
       return res.data?.[props.provider] ?? fallback()
     },
