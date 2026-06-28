@@ -7,8 +7,9 @@ SHELL := bash
 UV ?= uv
 SRC ?= data/pdfs              # реальный корпус (домен «арматура»); фикстуры — только для `make test`
 GATEWAY_DIR ?= ../../paragraf-gateway   # сосед-репо со шлюзом (для `make gateway`)
+PORT ?= 8000                 # HTTP-сервис grounding (engine ходит сюда на /retrieve)
 
-.PHONY: help up down index hybrid ask eval test dash logs gateway env-check fetch diagnose
+.PHONY: help up down index hybrid ask eval test dash logs gateway env-check fetch diagnose serve
 
 help: ## показать команды
 	@echo "gost-rag — команды:"
@@ -57,6 +58,9 @@ ask: ## спросить (дефолт = конфиг-победитель):  ma
 eval: ## бенчмарк → eval/results.md  [model=..] [strategy=rag] [limit=8] (дешёвый срез)
 	@$(UV) run python eval/run_eval.py --corpus "$(SRC)" \
 	  $(if $(model),--model "$(model)",) $(if $(strategy),--strategy "$(strategy)",) $(if $(limit),--limit "$(limit)",)
+
+serve: ## поднять grounding HTTP-сервис (engine→/retrieve,/ask) на :$(PORT); нужен поднятый `make up`
+	@$(UV) run --extra serve uvicorn gost_rag.server:app --host 0.0.0.0 --port $(PORT)
 
 test: ## юнит-тесты
 	@$(UV) run --extra dev pytest -q
