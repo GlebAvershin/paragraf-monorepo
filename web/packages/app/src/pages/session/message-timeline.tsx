@@ -47,7 +47,7 @@ import { shouldMarkBoundaryGesture, normalizeWheelDelta } from "@/pages/session/
 import { SessionContextUsage } from "@/components/session-context-usage"
 import { isDocxSession } from "@/ourapp/scenarios/docx-result-tracker"
 import { downloadMarkdownAsPdf } from "@/ourapp/pdf-export"
-import { SourceViewer, extractSources } from "@/ourapp/source-viewer"
+import { SourceViewer, extractSources, type Source } from "@/ourapp/source-viewer"
 import { useDialog } from "@opencode-ai/ui/context/dialog"
 import { createResizeObserver } from "@solid-primitives/resize-observer"
 import { useLanguage } from "@/context/language"
@@ -1178,18 +1178,27 @@ export function MessageTimeline(props: {
   }
 
   // OurApp: источники под ответом ассистента — открыть процитированный ГОСТ/СП для проверки.
-  // Стопгап: тянем стандарты из текста ответа (extractSources). Когда engine начнёт класть структурный
-  // Source[] в metadata части — заменить на чтение metadata, компонент SourceViewer не меняется.
+  // Авторитетно: engine кладёт резолвленный Source[] в metadata text-части (заземление в ГОСТ),
+  // читаем их. Фолбэк (не-ГОСТ ответ / старые сообщения без metadata): извлекаем стандарты из текста
+  // (extractSources). Компонент SourceViewer от способа получения не зависит.
   function OurAppSources(props: { userMessageID: string }) {
-    const sources = createMemo(() => {
+    const sources = createMemo<Source[]>(() => {
       const msgs = assistantMessagesByParent().get(props.userMessageID) ?? emptyAssistantMessages
-      const text = msgs
+      const parts = msgs
         .flatMap((m) => getMsgParts(m.id))
-        .filter((p): p is TextPart => p.type === "text")
-        .filter((p) => !p.synthetic)
-        .map((p) => p.text ?? "")
-        .join("\n\n")
-      return extractSources(text)
+        .filter((p): p is TextPart => p.type === "text" && !p.synthetic)
+      // 1) авторитетный путь — Source[] из metadata, дедуп по doc_id
+      const seen = new Set<string>()
+      const fromMeta: Source[] = []
+      for (const p of parts)
+        for (const s of (p.metadata?.sources as Source[] | undefined) ?? []) {
+          if (!s?.doc_id || seen.has(s.doc_id)) continue
+          seen.add(s.doc_id)
+          fromMeta.push(s)
+        }
+      if (fromMeta.length > 0) return fromMeta
+      // 2) стопгап — извлечь упоминания стандартов из текста ответа
+      return extractSources(parts.map((p) => p.text ?? "").join("\n\n"))
     })
     return <SourceViewer sources={sources()} />
   }
