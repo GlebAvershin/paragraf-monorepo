@@ -1,22 +1,16 @@
 ---
 /**
- * Главная страница лендинга Isaak.
- * Структура: шапка → hero с двумя дверями → как работает → выгоды по вертикалям
- * → скачивание → waitlist менеджеров → footer.
+ * Главная страница лендинга Isaak (MVP 2026-07: технолог).
+ * Структура: шапка → hero с одной дверью «Технолог» → как работает →
+ * выгоды для технолога → скачивание → waitlist юрист/бухгалтер → footer.
  */
 import "../styles/global.css"
 
-const lawyerScenarios = [
-  "Проверка договора на риски",
-  "Составление договора по параметрам",
-  "Подготовка претензии и искового",
-  "Сравнение двух редакций",
-]
-const accountantScenarios = [
-  "Проверка первичного документа",
-  "Ответ на требование ФНС",
-  "Объяснение нормы НК на пальцах",
-  "Пояснительная записка к отчёту",
+const technologistScenarios = [
+  "Разбор требования ГОСТа простым языком",
+  "Проверка документа на соответствие стандарту",
+  "Поиск нужного стандарта по теме",
+  "Сравнение редакций ГОСТа",
 ]
 ---
 
@@ -25,13 +19,13 @@ const accountantScenarios = [
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Isaak — ИИ-агент для юристов и бухгалтеров</title>
+    <title>Isaak — ИИ-агент для инженеров-технологов</title>
     <meta
       name="description"
-      content="Прочитает договор, найдёт риски, ответит на требование ФНС, подготовит претензию. Готовые сценарии под профессию — не пустой чат. Работа с документами на современных ИИ-моделях."
+      content="Найдёт нужный ГОСТ, разъяснит требование стандарта, проверит документ на соответствие. Готовые сценарии под профессию — не пустой чат. Работа с документами на современных ИИ-моделях."
     />
-    <meta property="og:title" content="Isaak — ИИ для юристов и бухгалтеров" />
-    <meta property="og:description" content="Готовые сценарии под профессию. Работа с документами на ИИ." />
+    <meta property="og:title" content="Isaak — ИИ для инженеров-технологов" />
+    <meta property="og:description" content="Готовые сценарии под профессию. Работа с ГОСТами и документами на ИИ." />
     <meta property="og:type" content="website" />
   </head>
   <body>
@@ -50,25 +44,25 @@ const accountantScenarios = [
     <!-- ===== Hero ===== -->
     <section class="hero">
       <div class="container">
-        <span class="eyebrow">ИИ для документоёмких профессий</span>
+        <span class="eyebrow">ИИ для инженеров-технологов</span>
         <h1 class="hero__title serif">
           Серьёзный инструмент<br /><em>с тёплой подачей.</em>
         </h1>
         <p class="hero__lede">
-          Прочитает договор, найдёт риски, ответит на требование ФНС, подготовит претензию.
-          Не пустой чат — пошаговые сценарии под вашу профессию.
+          Найдёт нужный ГОСТ, разъяснит требование стандарта, проверит документ
+          на соответствие. Не пустой чат — пошаговые сценарии под вашу профессию.
         </p>
 
         <div class="doors">
-          <a href="#lawyer" class="door card">
-            <div class="door__role serif">Я юрист</div>
-            <div class="door__lede">Договоры, претензии, иски, проверка рисков, сравнение редакций.</div>
+          <a href="#technologist" class="door card">
+            <div class="door__role serif">Я технолог</div>
+            <div class="door__lede">ГОСТы, стандарты, техпроцессы, нормоконтроль, сравнение редакций.</div>
             <div class="door__cta">Смотреть сценарии →</div>
           </a>
-          <a href="#accountant" class="door card">
-            <div class="door__role serif">Я бухгалтер</div>
-            <div class="door__lede">Первичка, требования ФНС, нормы НК, пояснительные записки.</div>
-            <div class="door__cta">Смотреть сценарии →</div>
+          <a href="#waitlist" class="door card door--soon">
+            <div class="door__role serif">Юрист или бухгалтер?</div>
+            <div class="door__lede">Эти профессии скоро. Оставьте email — позовём первыми.</div>
+            <div class="door__cta">Записаться в лист ожидания →</div>
           </a>
         </div>
       </div>
@@ -83,7 +77,7 @@ const accountantScenarios = [
           <div class="step card">
             <div class="step__n">01</div>
             <div class="step__t serif">Выберите сценарий</div>
-            <p class="step__d">Готовый мастер под задачу: «проверка договора», «ответ ФНС». Не пустой чат.</p>
+            <p class="step__d">Готовый мастер под задачу: «разобрать ГОСТ», «проверить на соответствие». Не пустой чат.</p>
           </div>
           <div class="step card">
             <div class="step__n">02</div>
@@ -99,36 +93,20 @@ const accountantScenarios = [
       </div>
     </section>
 
-    <!-- ===== Vertical: lawyer ===== -->
-    <section id="lawyer" class="vert">
+    <!-- ===== Vertical: technologist ===== -->
+    <section id="technologist" class="vert">
       <div class="container vert__inner">
         <div>
-          <span class="eyebrow">Для юристов и адвокатов</span>
-          <h2 class="section-title">Рутина с документами — за минуты</h2>
+          <span class="eyebrow">Для инженеров-технологов</span>
+          <h2 class="section-title">ГОСТы и стандарты — без поиска по архиву</h2>
           <p class="section-lede">
-            Анализ договоров, подготовка процессуальных документов, сравнение редакций.
-            Со ссылками на статьи ГК и кодексов.
+            Разбор требований простым языком, нормоконтроль документации,
+            поиск нужного стандарта по теме. С привязкой к производственному
+            процессу — не сухое цитирование.
           </p>
         </div>
         <ul class="scen-list">
-          {lawyerScenarios.map((s) => <li class="scen card">{s}</li>)}
-        </ul>
-      </div>
-    </section>
-
-    <!-- ===== Vertical: accountant ===== -->
-    <section id="accountant" class="vert vert--alt">
-      <div class="container vert__inner">
-        <div>
-          <span class="eyebrow">Для бухгалтеров</span>
-          <h2 class="section-title">Меньше переписки с ФНС и ошибок в первичке</h2>
-          <p class="section-lede">
-            Проверка документов, ответы на требования, разбор норм НК простым языком,
-            пояснительные записки.
-          </p>
-        </div>
-        <ul class="scen-list">
-          {accountantScenarios.map((s) => <li class="scen card">{s}</li>)}
+          {technologistScenarios.map((s) => <li class="scen card">{s}</li>)}
         </ul>
       </div>
     </section>
@@ -137,7 +115,7 @@ const accountantScenarios = [
     <section class="privacy">
       <div class="container">
         <div class="card privacy__card">
-          <div class="privacy__mark serif">§</div>
+          <div class="privacy__mark serif">I</div>
           <div>
             <h3 class="privacy__t serif">Ваши данные под защитой</h3>
             <p class="privacy__d">
@@ -165,16 +143,16 @@ const accountantScenarios = [
       </div>
     </section>
 
-    <!-- ===== Waitlist (managers) ===== -->
+    <!-- ===== Waitlist (lawyers / accountants) ===== -->
     <section id="waitlist" class="waitlist">
       <div class="container">
         <div class="card waitlist__card">
           <div>
-            <span class="eyebrow">Скоро — третья профессия</span>
-            <h3 class="waitlist__t serif">Вы менеджер?</h3>
+            <span class="eyebrow">Скоро — юристы и бухгалтеры</span>
+            <h3 class="waitlist__t serif">Вы юрист или бухгалтер?</h3>
             <p class="waitlist__d">
-              Саммари совещаний, e-mail-ассистент, презентации. Оставьте email — позовём
-              первыми, когда откроем.
+              Договоры, претензии, требования ФНС, нормы НК. Эти сценарии уже
+              готовы, открываем по очереди — оставьте email, позовём первыми.
             </p>
           </div>
           <form class="waitlist__form" id="waitlist-form">
