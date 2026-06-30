@@ -69,13 +69,13 @@ export type DesktopMenu = {
   platforms?: DesktopMenuPlatform[]
 }
 
-// OurApp: меню переведено и очищено под продукт «Параграф». Убраны dev-пункты
+// OurApp: меню переведено и очищено под продукт Isaak. Убраны dev-пункты
 // opencode (терминал, дерево файлов, открыть/переключить проект, навигация «Go»)
-// и ссылки на opencode (docs/discord/github). Бренд — «Параграф».
+// и ссылки на opencode (docs/discord/github). Бренд — Isaak.
 export const DESKTOP_MENU: DesktopMenu[] = [
   {
     id: "app",
-    label: "Параграф",
+    label: "Isaak",
     platforms: ["macos"],
     items: [
       { type: "item", role: "about" },
@@ -178,7 +178,7 @@ export const DESKTOP_MENU: DesktopMenu[] = [
     items: [
       { type: "item", label: "Экспорт логов…", command: "logs.export" },
       { type: "separator" },
-      { type: "item", label: "Написать в поддержку", href: "mailto:support@paragraf.app" },
+      { type: "item", label: "Написать в поддержку", href: "mailto:support@isaac-ai.ru" },
     ],
   },
 ]

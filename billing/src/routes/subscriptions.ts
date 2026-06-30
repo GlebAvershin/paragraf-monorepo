@@ -241,7 +241,7 @@ subscriptionRoutes.post(
           token: card.cloudpaymentsToken,
           accountId: userId,
           invoiceId,
-          description: `Смена тарифа «Параграф»: ${currentPlan.titleRu} → ${newPlan.titleRu}`,
+          description: `Смена тарифа Isaak: ${currentPlan.titleRu} → ${newPlan.titleRu}`,
           email: userEmail ?? undefined,
           jsonData: { kind: "upgrade", planCode: newPlan.code, subscriptionId: sub.id },
         })

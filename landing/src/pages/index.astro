@@ -1,6 +1,6 @@
 ---
 /**
- * Главная страница лендинга «Параграф».
+ * Главная страница лендинга Isaak.
  * Структура: шапка → hero с двумя дверями → как работает → выгоды по вертикалям
  * → скачивание → waitlist менеджеров → footer.
  */
@@ -25,12 +25,12 @@ const accountantScenarios = [
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Параграф — ИИ-агент для юристов и бухгалтеров</title>
+    <title>Isaak — ИИ-агент для юристов и бухгалтеров</title>
     <meta
       name="description"
       content="Прочитает договор, найдёт риски, ответит на требование ФНС, подготовит претензию. Готовые сценарии под профессию — не пустой чат. Работа с документами на современных ИИ-моделях."
     />
-    <meta property="og:title" content="Параграф — ИИ для юристов и бухгалтеров" />
+    <meta property="og:title" content="Isaak — ИИ для юристов и бухгалтеров" />
     <meta property="og:description" content="Готовые сценарии под профессию. Работа с документами на ИИ." />
     <meta property="og:type" content="website" />
   </head>
@@ -38,7 +38,7 @@ const accountantScenarios = [
     <!-- ===== Header ===== -->
     <header class="hdr">
       <div class="container hdr__inner">
-        <a href="/" class="hdr__brand serif">Параграф</a>
+        <a href="/" class="hdr__brand serif">Isaak</a>
         <nav class="hdr__nav">
           <a href="#how">Как работает</a>
           <a href="#pricing">Тарифы</a>
@@ -195,13 +195,13 @@ const accountantScenarios = [
     <!-- ===== Footer ===== -->
     <footer class="ftr">
       <div class="container ftr__inner">
-        <div class="ftr__brand serif">Параграф</div>
+        <div class="ftr__brand serif">Isaak</div>
         <div class="ftr__links">
           <a href="/offer">Оферта</a>
           <a href="/privacy">Политика конфиденциальности</a>
-          <a href="mailto:support@paragraf.app">support@paragraf.app</a>
+          <a href="mailto:support@isaac-ai.ru">support@isaac-ai.ru</a>
         </div>
-        <div class="ftr__copy">© 2026 «Параграф»</div>
+        <div class="ftr__copy">© 2026 Isaak</div>
       </div>
     </footer>
 
@@ -210,11 +210,11 @@ const accountantScenarios = [
       // идемпотентно по email, таблица waitlist_signups). Проверено рабочим.
       const form = document.getElementById("waitlist-form")
       const msg = document.getElementById("waitlist-msg")
-      // Billing API: dev → localhost:3000, prod → api.paragraf.app.
+      // Billing API: dev → localhost:3000, prod → api.isaac-ai.ru.
       const BILLING_URL =
         location.hostname === "localhost" || location.hostname === "127.0.0.1"
           ? "http://localhost:3000"
-          : "https://api.paragraf.app"
+          : "https://api.isaac-ai.ru"
       form?.addEventListener("submit", async (e) => {
         e.preventDefault()
         const email = new FormData(form as HTMLFormElement).get("email") as string
@@ -234,7 +234,7 @@ const accountantScenarios = [
           ;(form as HTMLFormElement).reset()
         } catch {
           if (msg) {
-            msg.textContent = "Не удалось записать. Попробуйте позже или напишите на support@paragraf.app"
+            msg.textContent = "Не удалось записать. Попробуйте позже или напишите на support@isaac-ai.ru"
             msg.hidden = false
           }
         } finally {

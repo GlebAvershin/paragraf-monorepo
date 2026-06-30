@@ -125,7 +125,7 @@ export async function runRecurrentRetryPass(): Promise<{ processed: number }> {
         token: card.cloudpaymentsToken,
         accountId: sub.userId,
         invoiceId,
-        description: `Продление подписки «Параграф» — ${plan.titleRu}`,
+        description: `Продление подписки Isaak — ${plan.titleRu}`,
         email: email ?? undefined,
         jsonData: { kind: "subscription", planCode: plan.code, subscriptionId: sub.id },
       })

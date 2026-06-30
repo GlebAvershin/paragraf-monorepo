@@ -102,7 +102,7 @@ export const OnboardingPage: Component<{ onDone: () => void }> = (props) => {
   return (
     <div class="ourapp-onboarding">
       <header class="ourapp-onboarding__topbar">
-        <span class="ourapp-onboarding__brand">Параграф</span>
+        <span class="ourapp-onboarding__brand">Isaak</span>
         <Show when={step() !== "welcome"}>
           <button
             type="button"
@@ -123,8 +123,8 @@ export const OnboardingPage: Component<{ onDone: () => void }> = (props) => {
               ИИ-агент <em>для&nbsp;вашей&nbsp;работы</em>
             </h1>
             <p class="ourapp-onboarding__lede">
-              Прочитает договор, найдёт риски, ответит на&nbsp;требование ФНС, объяснит норму
-              НК. Сценарии собраны под профессию&nbsp;— чтобы не&nbsp;было пустого чата.
+              Найдёт нужный ГОСТ, разъяснит требование стандарта, проверит документ
+              на&nbsp;соответствие. Сценарии собраны под профессию&nbsp;— чтобы не&nbsp;было пустого чата.
             </p>
             <div class="ourapp-onboarding__doors">
               <For each={VERTICAL_ORDER}>

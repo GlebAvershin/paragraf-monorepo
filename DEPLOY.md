@@ -1,4 +1,6 @@
-# Параграф — деплой веб-версии (передача коллеге)
+# Isaak — деплой веб-версии (передача коллеге)
+
+> Бренд: **Isaak** (домен https://isaac-ai.ru). Раньше было «Параграф».
 
 > Статус кода: веб-миграция завершена и проверена e2e. typecheck зелёный во всех пакетах,
 > тесты: app 388/388, doc-tools 10/10, PII 33/33; lint 0 errors; прод-сборка web собирается.
@@ -48,12 +50,12 @@ PATH="…/.bun/bin:$PATH" bun run build      # → dist/
 В проде рендерер берёт адреса так:
 - **engine:** `location.origin` по умолчанию (ожидается reverse-proxy: статика + API движка
   на одном домене → без CORS). Иначе задать на этапе сборки **`VITE_OURAPP_ENGINE_URL`**
-  (напр. `https://api.paragraf.app`).
+  (напр. `https://api.isaac-ai.ru`).
 - **billing:** **`VITE_OURAPP_BILLING_URL`** — задать ОБЯЗАТЕЛЬНО (дефолт `127.0.0.1:3000`
-  только для dev). Напр. `https://api.paragraf.app` (если billing на том же домене — путём)
+  только для dev). Напр. `https://api.isaac-ai.ru` (если billing на том же домене — путём)
   или отдельный домен.
 
-**Рекомендуемая топология (проще всего):** один домен `app.paragraf.app` + reverse-proxy
+**Рекомендуемая топология (проще всего):** один домен `app.isaac-ai.ru` + reverse-proxy
 (nginx/Caddy): `/` → статика `dist/`; `/session*`, `/global/*`, `/provider*`, `/config*`,
 `/project*`, `/path`, `/agent`, `/app/*`, `/command`, `/mcp`, `/lsp`, `/vcs`, `/question`,
 `/permission`, `/health/*` → **engine:4096**; пути billing (`/auth/*`, `/me`, `/limits`,

@@ -1,5 +1,5 @@
 /**
- * OurApp — модалка «О Параграфе».
+ * OurApp — модалка «О Isaak».
  *
  * Показывает название продукта, версию, назначение, юридические ссылки
  * (152-ФЗ обязателен), контакты поддержки. Открывается из Settings.
@@ -13,10 +13,10 @@ const APP_VERSION =
     (import.meta as { env?: Record<string, string> }).env?.VITE_OURAPP_VERSION) ||
   "0.1.0"
 
-const SUPPORT_EMAIL = "support@paragraf.app"
-const SITE_URL = "https://paragraf.app"
-const OFFER_URL = "https://paragraf.app/offer"
-const PRIVACY_URL = "https://paragraf.app/privacy"
+const SUPPORT_EMAIL = "support@isaac-ai.ru"
+const SITE_URL = "https://isaac-ai.ru"
+const OFFER_URL = "https://isaac-ai.ru/offer"
+const PRIVACY_URL = "https://isaac-ai.ru/privacy"
 
 export interface AboutModalProps {
   open: boolean
@@ -45,7 +45,7 @@ export const AboutModal: Component<AboutModalProps> = (props) => {
           class="ourapp-about-modal"
           role="dialog"
           aria-modal="true"
-          aria-label="О Параграфе"
+          aria-label="О Isaak"
           onClick={(e) => e.stopPropagation()}
         >
           <button
@@ -59,7 +59,7 @@ export const AboutModal: Component<AboutModalProps> = (props) => {
 
           <div class="ourapp-about-modal__brand">
             <span class="ourapp-about-modal__mark">§</span>
-            <h2 class="ourapp-about-modal__title">Параграф</h2>
+            <h2 class="ourapp-about-modal__title">Isaak</h2>
             <p class="ourapp-about-modal__version">Версия {APP_VERSION}</p>
           </div>
 
@@ -91,7 +91,7 @@ export const AboutModal: Component<AboutModalProps> = (props) => {
             </button>
           </div>
 
-          <p class="ourapp-about-modal__copyright">© {new Date().getFullYear()} «Параграф». Все права защищены.</p>
+          <p class="ourapp-about-modal__copyright">© {new Date().getFullYear()} Isaak. Все права защищены.</p>
         </div>
       </div>
     </Show>

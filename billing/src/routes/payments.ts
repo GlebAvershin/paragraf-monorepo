@@ -81,7 +81,7 @@ paymentRoutes.post("/method", requireSession, zValidator("json", attachCardInput
       amountRub: 1,
       cryptogram,
       accountId: userId,
-      description: "Привязка карты для «Параграфа»",
+      description: "Привязка карты для Isaak",
       invoiceId,
       ipAddress: clientIp(c),
       email,
@@ -215,7 +215,7 @@ paymentRoutes.post("/topup", requireSession, zValidator("json", topupInput), asy
       token: card.cloudpaymentsToken,
       accountId: userId,
       invoiceId,
-      description: `Докупка кредитов «Параграф» — ${pkg.titleRu}`,
+      description: `Докупка кредитов Isaak — ${pkg.titleRu}`,
       email,
       jsonData: { kind: "topup", package: pkg.code, subscriptionId: sub.id },
     })

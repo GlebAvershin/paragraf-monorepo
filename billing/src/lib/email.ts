@@ -78,7 +78,7 @@ export function magicLinkEmail(email: string, otp: string): EmailMessage {
     text: [
       "Здравствуйте!",
       "",
-      "Код для входа в приложение «Параграф»:",
+      "Код для входа в приложение Isaak:",
       "",
       `  ${otpPretty}`,
       "",
@@ -93,7 +93,7 @@ export function magicLinkEmail(email: string, otp: string): EmailMessage {
 <body style="font-family: -apple-system, system-ui, sans-serif; background:#FBF9F4; color:#2A2723; padding:32px;">
   <div style="max-width:480px; margin:0 auto; background:#fff; border:1px solid #D8D2C5; border-radius:8px; padding:32px;">
     <h1 style="font-family:'IBM Plex Serif',Georgia,serif; font-weight:500; font-size:22px; margin:0 0 16px;">
-      Вход в «Параграф»
+      Вход в Isaak
     </h1>
     <p style="color:#5C5852; line-height:1.6; margin:0 0 24px;">
       Введите этот код в&nbsp;окне «Проверьте почту» в&nbsp;приложении на&nbsp;компьютере:
@@ -114,7 +114,7 @@ export function magicLinkEmail(email: string, otp: string): EmailMessage {
 
 // ===== Платёжные уведомления (ТЗ-02) =====
 
-/** Базовая HTML-обёртка письма в фирменном стиле «Параграфа». */
+/** Базовая HTML-обёртка письма в фирменном стиле Isaak. */
 function brandedHtml(title: string, bodyHtml: string): string {
   return `
 <!DOCTYPE html>
@@ -164,7 +164,7 @@ export function paymentSucceededEmail(params: {
       creditsLine,
       balanceLine,
       "",
-      "Спасибо, что пользуетесь «Параграфом».",
+      "Спасибо, что пользуетесь Isaak.",
     ]
       .filter(Boolean)
       .join("\n"),
@@ -201,7 +201,7 @@ export function paymentFailedEmail(params: {
       `Причина: ${params.reason}.`,
       attemptLine,
       "",
-      "Проверьте карту в приложении «Параграф» на странице «Кредиты и подписка».",
+      "Проверьте карту в приложении Isaak на странице «Кредиты и подписка».",
       "Если в течение 7 дней оплата не пройдёт — подписка приостановится.",
     ]
       .filter(Boolean)
@@ -226,7 +226,7 @@ export function paymentFailedEmail(params: {
 export function subscriptionExpiredEmail(params: { to: string; planTitleRu: string }): EmailMessage {
   return {
     to: params.to,
-    subject: "Подписка «Параграфа» приостановлена",
+    subject: "Подписка Isaak приостановлена",
     text: [
       "Здравствуйте!",
       "",

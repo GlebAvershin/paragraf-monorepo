@@ -94,7 +94,7 @@ export async function openCardBindingWidget(): Promise<CardBindingResult | null>
     widget.charge(
       {
         publicId,
-        description: "Привязка карты для «Параграфа»",
+        description: "Привязка карты для Isaak",
         amount: 1, // тестовое списание 1 ₽ (backend сразу делает void)
         currency: "RUB",
         requireEmail: false,

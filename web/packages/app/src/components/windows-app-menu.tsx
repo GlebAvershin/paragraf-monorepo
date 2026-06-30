@@ -8,7 +8,7 @@ import { useCommand } from "@/context/command"
 import { type DesktopMenuAction, type DesktopMenuEntry } from "@/desktop-menu"
 import { usePlatform } from "@/context/platform"
 
-// OurApp: плоское упрощённое меню «Параграф» (вместо вложенных File/Edit/View/…
+// OurApp: плоское упрощённое меню Isaak (вместо вложенных File/Edit/View/…
 // от opencode). Только то, что реально нужно нашей аудитории. «Настройки» ведёт
 // на нашу страницу /settings (см. settings.open в layout.tsx). Стандартные действия
 // (копировать/вставить, свернуть/закрыть) убраны — они есть в горячих клавишах и
@@ -25,7 +25,7 @@ const HAMBURGER_ITEMS: DesktopMenuEntry[] = [
   { type: "item", label: "Перезагрузить", action: "view.reload" },
   { type: "separator" },
   { type: "item", label: "Экспорт логов…", command: "logs.export" },
-  { type: "item", label: "Написать в поддержку", href: "mailto:support@paragraf.app" },
+  { type: "item", label: "Написать в поддержку", href: "mailto:support@isaac-ai.ru" },
 ]
 
 export function WindowsAppMenu(props: {
@@ -77,7 +77,7 @@ export function WindowsAppMenu(props: {
             variant="ghost-muted"
             size="large"
             icon={<IconV2 name="menu" />}
-            aria-label="Меню Параграф"
+            aria-label="Меню Isaak"
             onPointerDown={rememberFocus}
             onKeyDown={rememberFocus}
           />
@@ -88,7 +88,7 @@ export function WindowsAppMenu(props: {
           icon="menu"
           variant="ghost"
           class="titlebar-icon rounded-md shrink-0"
-          aria-label="Меню Параграф"
+          aria-label="Меню Isaak"
           onPointerDown={rememberFocus}
           onKeyDown={rememberFocus}
         />
@@ -96,7 +96,7 @@ export function WindowsAppMenu(props: {
       <DropdownMenu.Portal>
         <DropdownMenu.Content class="desktop-app-menu">
           <DropdownMenu.Group>
-            <DropdownMenu.GroupLabel class="desktop-app-menu-heading">Параграф</DropdownMenu.GroupLabel>
+            <DropdownMenu.GroupLabel class="desktop-app-menu-heading">Isaak</DropdownMenu.GroupLabel>
             {HAMBURGER_ITEMS.map((entry) =>
               entry.type === "separator" ? (
                 <DropdownMenu.Separator />

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Иконка приложения «Параграф». Знак § (символ параграфа) — ключевой
-  узнаваемый элемент названия. Emerald-squircle фон + кремовый символ.
+  Иконка приложения Isaak. Серифная заглавная «I» — первая буква названия,
+  читается одинаково в кириллице и латинице. Emerald-squircle фон + кремовая буква.
   Источник для генерации .ico/.icns/png (scripts/generate-icons.ts).
 -->
 <svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
@@ -19,8 +19,8 @@
   <rect x="40" y="40" width="944" height="944" rx="190" ry="190"
         fill="none" stroke="#FBF9F4" stroke-opacity="0.10" stroke-width="2"/>
 
-  <!-- Символ параграфа § кремовым серифом по центру -->
+  <!-- Заглавная I кремовым серифом по центру -->
   <text x="512" y="512" text-anchor="middle" dominant-baseline="central"
         font-family="Georgia, 'IBM Plex Serif', 'Times New Roman', serif"
-        font-size="660" font-weight="500" fill="#FBF9F4">§</text>
+        font-size="720" font-weight="500" fill="#FBF9F4">I</text>
 </svg>
