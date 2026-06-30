@@ -88,6 +88,16 @@
   border-color: light-dark(#1A1614, #EDE8DF);
 }
 
+/* Закрашенный pill (вертикаль временно отключена, MVP-2026-07). */
+.ourapp-pill--disabled,
+.ourapp-pill--disabled:hover {
+  cursor: not-allowed;
+  opacity: 0.45;
+  background: light-dark(#F5F1EA, #1A1714);
+  color: light-dark(#5C5852, #B5AFA4);
+  border-color: light-dark(#E8E3DB, #2E2924);
+}
+
 .ourapp-library__grid {
   display: grid;
   grid-template-columns: 2fr 1fr 1fr;

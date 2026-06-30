@@ -11,8 +11,8 @@
  * Цель: дать «дом» с одним очевидным действием. Библиотека сценариев — на /session.
  */
 import { For, Show, type Component } from "solid-js"
-import type { Vertical } from "./scenario-library"
 import type { Scenario } from "./scenarios"
+import { VERTICALS, verticalLabel, type Vertical } from "./verticals"
 
 export interface HomeRecentSession {
   id: string
@@ -43,21 +43,20 @@ export interface HomeWelcomeProps {
 
 export const HomeWelcome: Component<HomeWelcomeProps> = (props) => {
   const recentVisible = () => props.recent.slice(0, 4)
-  const verticalLabel = () => (props.vertical === "lawyer" ? "Юрист" : "Бухгалтер")
+  const currentLabel = () => verticalLabel(props.vertical)
+  const heroLede = () => VERTICALS[props.vertical]?.heroLede ?? ""
 
   return (
     <div class="ourapp-landing">
       <header class="ourapp-landing__topbar">
         <div class="ourapp-landing__brand">
           <span class="ourapp-landing__brandname">Параграф</span>
-          <button
-            type="button"
+          <span
             class="ourapp-landing__vertical"
-            onClick={() => props.onVerticalChange(props.vertical === "lawyer" ? "accountant" : "lawyer")}
-            title="Сменить профессию"
+            title="Сейчас доступен только Технолог"
           >
-            {verticalLabel()}
-          </button>
+            {currentLabel()}
+          </span>
         </div>
         <div class="ourapp-landing__nav">
           <button type="button" class="ourapp-landing__navbtn" onClick={props.onOpenCredits}>
@@ -87,18 +86,14 @@ export const HomeWelcome: Component<HomeWelcomeProps> = (props) => {
           <div class="ourapp-landing__eyebrow">
             Добро пожаловать в&nbsp;Параграф
             <span class="ourapp-landing__eyebrowdot" aria-hidden="true">·</span>
-            <span class="ourapp-landing__eyebrowrole">{verticalLabel()}</span>
+            <span class="ourapp-landing__eyebrowrole">{currentLabel()}</span>
           </div>
           <h1 class="ourapp-landing__title">
             Серьёзный инструмент
             <br />
             <em>с тёплой подачей.</em>
           </h1>
-          <p class="ourapp-landing__lede">
-            {props.vertical === "lawyer"
-              ? "Прочитает договор, найдёт риски, подготовит претензию. Не пустой чат — пошаговые сценарии под юриста."
-              : "Проверит первичку, ответит на требование ФНС, объяснит норму НК. Не пустой чат — пошаговые сценарии под бухгалтера."}
-          </p>
+          <p class="ourapp-landing__lede">{heroLede()}</p>
 
           <div class="ourapp-landing__actions">
             <button

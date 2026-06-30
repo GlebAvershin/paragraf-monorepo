@@ -9,11 +9,11 @@
  *
  * Layout — как credits-page (mockup-style + cream paper-grain).
  */
-import { createResource, createSignal, type Component } from "solid-js"
+import { createResource, createSignal, For, type Component } from "solid-js"
 import { useTheme, type ColorScheme } from "@opencode-ai/ui/theme"
 import { billingApi } from "./billing-api"
 import { clearSession } from "./auth-storage"
-import type { Vertical } from "./scenario-library"
+import { loadVertical, saveVertical, VERTICAL_ORDER, VERTICALS, type Vertical } from "./verticals"
 import { AboutModal } from "./about-modal"
 import "./about-modal.css"
 import "./pii.css"
@@ -25,21 +25,12 @@ export const SettingsPage: Component<{ onClose?: () => void }> = (props) => {
   const [me] = createResource(() => billingApi.me().then((r) => (r.ok ? r.data : null)))
   const [aboutOpen, setAboutOpen] = createSignal(false)
 
-  const initialVertical: Vertical = (() => {
-    try {
-      const v = localStorage.getItem("ourapp.primaryVertical")
-      return v === "accountant" ? "accountant" : "lawyer"
-    } catch {
-      return "lawyer"
-    }
-  })()
-  const [vertical, setVertical] = createSignal<Vertical>(initialVertical)
+  const [vertical, setVertical] = createSignal<Vertical>(loadVertical())
 
   const updateVertical = (v: Vertical) => {
+    if (!VERTICALS[v].enabled) return
     setVertical(v)
-    try {
-      localStorage.setItem("ourapp.primaryVertical", v)
-    } catch {}
+    saveVertical(v)
   }
 
   const updateScheme = (scheme: ColorScheme) => {
@@ -90,22 +81,27 @@ export const SettingsPage: Component<{ onClose?: () => void }> = (props) => {
             Под выбранную профессию подбираются сценарии и подсказки. Можно поменять в любой момент.
           </p>
           <div class="ourapp-settings__pills">
-            <button
-              type="button"
-              class="ourapp-pill"
-              classList={{ "ourapp-pill--active": vertical() === "lawyer" }}
-              onClick={() => updateVertical("lawyer")}
-            >
-              Юрист
-            </button>
-            <button
-              type="button"
-              class="ourapp-pill"
-              classList={{ "ourapp-pill--active": vertical() === "accountant" }}
-              onClick={() => updateVertical("accountant")}
-            >
-              Бухгалтер
-            </button>
+            <For each={VERTICAL_ORDER}>
+              {(id) => {
+                const meta = VERTICALS[id]
+                return (
+                  <button
+                    type="button"
+                    class="ourapp-pill"
+                    classList={{
+                      "ourapp-pill--active": vertical() === id && meta.enabled,
+                      "ourapp-pill--disabled": !meta.enabled,
+                    }}
+                    disabled={!meta.enabled}
+                    aria-disabled={!meta.enabled}
+                    title={meta.enabled ? undefined : "Скоро. Сейчас доступен только Технолог."}
+                    onClick={() => updateVertical(id)}
+                  >
+                    {meta.label}
+                  </button>
+                )
+              }}
+            </For>
           </div>
         </section>
 

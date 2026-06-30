@@ -6,11 +6,16 @@
 import type { Scenario, Vertical } from "./types"
 import { LAWYER_SCENARIOS } from "./library/lawyer"
 import { ACCOUNTANT_SCENARIOS } from "./library/accountant"
+import { TECHNOLOGIST_SCENARIOS } from "./library/technologist"
 
 export * from "./types"
 export { renderTemplate, findMissingPlaceholders } from "./render-template"
 
-export const SCENARIOS: Scenario[] = [...LAWYER_SCENARIOS, ...ACCOUNTANT_SCENARIOS]
+export const SCENARIOS: Scenario[] = [
+  ...TECHNOLOGIST_SCENARIOS,
+  ...LAWYER_SCENARIOS,
+  ...ACCOUNTANT_SCENARIOS,
+]
 
 /** Сценарии конкретной вертикали (двухдверный UX). */
 export function scenariosFor(vertical: Vertical): Scenario[] {

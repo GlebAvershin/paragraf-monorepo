@@ -10,7 +10,7 @@
  * полноценных pre-fill через composer-context.
  */
 
-export type Vertical = "lawyer" | "accountant"
+export type Vertical = "lawyer" | "accountant" | "technologist"
 
 export interface Scenario {
   /** Уникальный id для аналитики и preset-роутов. */
@@ -32,6 +32,20 @@ export interface Scenario {
 }
 
 export const SCENARIOS: Scenario[] = [
+  // ===== Технологи (MVP — первая активная вертикаль) =====
+  {
+    id: "tech.gost.lookup",
+    vertical: "technologist",
+    title: "Разобрать требование ГОСТа",
+    lede:
+      "Укажите номер ГОСТа и вопрос — получите разбор требования простым языком: что нормирует, на что влияет, как применять на производстве.",
+    steps: 2,
+    recommendedModel: "mid",
+    feature: true,
+    prompt:
+      "Я укажу номер ГОСТа и вопрос по нему. Разъясни требование стандарта простым языком: что именно нормируется, к чему применяется, типовые ошибки при соблюдении и как проверить соответствие на производстве.",
+  },
+
   // ===== Юристы (MVP) =====
   {
     id: "law.contract.review",

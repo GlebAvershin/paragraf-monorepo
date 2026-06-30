@@ -141,6 +141,7 @@
 }
 
 .ourapp-onboarding__door {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -161,6 +162,31 @@
   transform: translateY(-2px);
   box-shadow:
     0 8px 20px light-dark(rgba(11, 83, 69, 0.12), rgba(0, 0, 0, 0.5));
+}
+
+/* Закрашенная дверь (вертикаль временно отключена, MVP-2026-07). */
+.ourapp-onboarding__door--disabled,
+.ourapp-onboarding__door--disabled:hover {
+  cursor: not-allowed;
+  opacity: 0.45;
+  transform: none;
+  background: light-dark(#F5F1EA, #1A1714);
+  border-color: light-dark(#E8E3DB, #2E2924);
+  box-shadow: none;
+}
+
+.ourapp-onboarding__doorBadge {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: light-dark(#5C5852, #B5AFA4);
+  background: light-dark(#EDE8DF, #2E2924);
+  border-radius: var(--ourapp-radius-full, 9999px);
 }
 
 .ourapp-onboarding__doorTitle {

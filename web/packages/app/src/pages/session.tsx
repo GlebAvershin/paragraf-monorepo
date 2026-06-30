@@ -62,7 +62,8 @@ import { useSessionCommands } from "@/pages/session/use-session-commands"
 import { useSessionHashScroll } from "@/pages/session/use-session-hash-scroll"
 import { shouldUseV2NewSessionPage } from "@/pages/session/new-session-layout"
 import { WelcomeSidebar, type WelcomeSidebarRecentSession } from "@/ourapp/welcome-sidebar"
-import { type Scenario, type Vertical } from "@/ourapp/scenario-library"
+import { type Scenario } from "@/ourapp/scenario-library"
+import { loadVertical } from "@/ourapp/verticals"
 import { sortedRootSessions } from "@/pages/layout/helpers"
 import { ArtifactPreviewPanel, useArtifactPanel } from "@/ourapp/artifact-preview"
 import { ScenarioWizardHost } from "@/ourapp/scenarios/scenario-wizard-host"
@@ -1765,14 +1766,7 @@ export default function Page() {
         {/* OurApp WelcomeSidebar — наш левый сайдбар для обоих режимов сессии. */}
         <Show when={isDesktop()}>
           <WelcomeSidebar
-            vertical={(() => {
-              try {
-                const v = localStorage.getItem("ourapp.primaryVertical")
-                return (v === "accountant" ? "accountant" : "lawyer") as Vertical
-              } catch {
-                return "lawyer"
-              }
-            })()}
+            vertical={loadVertical()}
             onPickScenario={(s: Scenario) => {
               // OurApp: открываем мастер сценария (multi-step wizard). Если у
               // сценария нет конфига с шагами — фоллбек на старое пред-заполнение.

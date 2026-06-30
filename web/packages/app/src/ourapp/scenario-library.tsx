@@ -11,6 +11,7 @@
  */
 import { For, type Component } from "solid-js"
 import { SCENARIOS, scenariosFor, type Scenario, type Vertical } from "./scenarios"
+import { VERTICAL_ORDER, VERTICALS } from "./verticals"
 
 export interface ScenarioLibraryProps {
   /** Текущая вертикаль (controlled). */
@@ -36,26 +37,29 @@ export const ScenarioLibrary: Component<ScenarioLibraryProps> = (props) => {
           </p>
         </div>
         <div class="ourapp-library__filters" role="tablist" aria-label="Профессия">
-          <button
-            type="button"
-            class="ourapp-pill"
-            classList={{ "ourapp-pill--active": props.vertical === "lawyer" }}
-            role="tab"
-            aria-selected={props.vertical === "lawyer"}
-            onClick={() => props.onVerticalChange("lawyer")}
-          >
-            Юрист
-          </button>
-          <button
-            type="button"
-            class="ourapp-pill"
-            classList={{ "ourapp-pill--active": props.vertical === "accountant" }}
-            role="tab"
-            aria-selected={props.vertical === "accountant"}
-            onClick={() => props.onVerticalChange("accountant")}
-          >
-            Бухгалтер
-          </button>
+          <For each={VERTICAL_ORDER}>
+            {(id) => {
+              const meta = VERTICALS[id]
+              return (
+                <button
+                  type="button"
+                  class="ourapp-pill"
+                  classList={{
+                    "ourapp-pill--active": props.vertical === id && meta.enabled,
+                    "ourapp-pill--disabled": !meta.enabled,
+                  }}
+                  role="tab"
+                  aria-selected={props.vertical === id && meta.enabled}
+                  aria-disabled={!meta.enabled}
+                  disabled={!meta.enabled}
+                  title={meta.enabled ? undefined : "Скоро. Сейчас доступен только Технолог."}
+                  onClick={() => meta.enabled && props.onVerticalChange(id)}
+                >
+                  {meta.label}
+                </button>
+              )
+            }}
+          </For>
         </div>
       </header>
 

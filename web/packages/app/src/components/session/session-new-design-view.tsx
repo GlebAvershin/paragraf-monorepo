@@ -2,16 +2,7 @@ import { createSignal, type JSX } from "solid-js"
 import { useNavigate } from "@solidjs/router"
 import { ScenarioLibrary, type Scenario, type Vertical } from "@/ourapp/scenario-library"
 import { openScenarioWizard } from "@/ourapp/scenarios/wizard-controller"
-
-const STORAGE_KEY_VERTICAL = "ourapp.primaryVertical"
-
-function loadVertical(): Vertical {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY_VERTICAL)
-    if (stored === "lawyer" || stored === "accountant") return stored
-  } catch {}
-  return "lawyer"
-}
+import { loadVertical, saveVertical } from "@/ourapp/verticals"
 
 /**
  * OurApp empty-state новой сессии.
@@ -34,9 +25,7 @@ export function NewSessionDesignView(props: { worktree: string; children: JSX.El
 
   const onVerticalChange = (v: Vertical) => {
     setVertical(v)
-    try {
-      localStorage.setItem(STORAGE_KEY_VERTICAL, v)
-    } catch {}
+    saveVertical(v)
   }
 
   const handlePick = (scenario: Scenario) => {

@@ -41,10 +41,17 @@ describe("scenarios library", () => {
     expect(out).toBe("нет")
   })
 
-  test("не менее 5 сценариев на вертикаль (MVP-объём)", () => {
+  test("не менее 5 сценариев в каждой полноценной вертикали (юрист/бухгалтер)", () => {
     const lawyer = SCENARIOS.filter((s) => s.verticals.includes("lawyer"))
     const accountant = SCENARIOS.filter((s) => s.verticals.includes("accountant"))
     expect(lawyer.length).toBeGreaterThanOrEqual(5)
     expect(accountant.length).toBeGreaterThanOrEqual(5)
+  })
+
+  // Технолог — новая активная вертикаль (MVP 2026-07, заводы). Пока 1 тестовый
+  // ГОСТ-сценарий; объём вырастет, когда ML-загрузчик заполнит базу ГОСТов.
+  test("у технолога есть хотя бы 1 сценарий (тестовый ГОСТ)", () => {
+    const technologist = SCENARIOS.filter((s) => s.verticals.includes("technologist"))
+    expect(technologist.length).toBeGreaterThanOrEqual(1)
   })
 })

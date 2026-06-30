@@ -9,18 +9,24 @@
  * После успешной verify — сохраняем JWT в localStorage и закрываем онбординг
  * через callback.
  */
-import { createSignal, Show, type Component } from "solid-js"
+import { createSignal, For, Show, type Component } from "solid-js"
 import { billingApi } from "./billing-api"
 import { setSessionToken } from "./auth-storage"
 import { usePlatform } from "@/context/platform"
-import type { Vertical } from "./scenario-library"
+import {
+  DEFAULT_VERTICAL,
+  VERTICAL_ORDER,
+  VERTICALS,
+  verticalLabel,
+  type Vertical,
+} from "./verticals"
 
 type Step = "welcome" | "email" | "verify" | "done"
 
 export const OnboardingPage: Component<{ onDone: () => void }> = (props) => {
   const platform = usePlatform()
   const [step, setStep] = createSignal<Step>("welcome")
-  const [vertical, setVertical] = createSignal<Vertical>("lawyer")
+  const [vertical, setVertical] = createSignal<Vertical>(DEFAULT_VERTICAL)
   const [email, setEmail] = createSignal("")
   // Поле кода: только цифры, до 6. Пробелы и любое нецифровое — игнорим.
   const [codeInput, setCodeInput] = createSignal("")
@@ -35,6 +41,7 @@ export const OnboardingPage: Component<{ onDone: () => void }> = (props) => {
   }
 
   const pickVertical = (v: Vertical) => {
+    if (!VERTICALS[v].enabled) return
     setVertical(v)
     try {
       localStorage.setItem("ourapp.primaryVertical", v)
@@ -120,29 +127,31 @@ export const OnboardingPage: Component<{ onDone: () => void }> = (props) => {
               НК. Сценарии собраны под профессию&nbsp;— чтобы не&nbsp;было пустого чата.
             </p>
             <div class="ourapp-onboarding__doors">
-              <button
-                type="button"
-                class="ourapp-onboarding__door"
-                onClick={() => pickVertical("lawyer")}
-              >
-                <span class="ourapp-onboarding__doorTitle">Я&nbsp;юрист</span>
-                <span class="ourapp-onboarding__doorLede">
-                  Договоры, претензии, иски, ДДУ, корп. право
-                </span>
-              </button>
-              <button
-                type="button"
-                class="ourapp-onboarding__door"
-                onClick={() => pickVertical("accountant")}
-              >
-                <span class="ourapp-onboarding__doorTitle">Я&nbsp;бухгалтер</span>
-                <span class="ourapp-onboarding__doorLede">
-                  Первичка, отчётность, ФНС, НК, контрагенты
-                </span>
-              </button>
+              <For each={VERTICAL_ORDER}>
+                {(id) => {
+                  const meta = VERTICALS[id]
+                  return (
+                    <button
+                      type="button"
+                      class="ourapp-onboarding__door"
+                      classList={{ "ourapp-onboarding__door--disabled": !meta.enabled }}
+                      disabled={!meta.enabled}
+                      aria-disabled={!meta.enabled}
+                      title={meta.enabled ? undefined : "Скоро. Сейчас доступен только Технолог."}
+                      onClick={() => pickVertical(id)}
+                    >
+                      <span class="ourapp-onboarding__doorTitle">Я&nbsp;{meta.label.toLowerCase()}</span>
+                      <span class="ourapp-onboarding__doorLede">{meta.doorLede}</span>
+                      <Show when={!meta.enabled}>
+                        <span class="ourapp-onboarding__doorBadge">Скоро</span>
+                      </Show>
+                    </button>
+                  )
+                }}
+              </For>
             </div>
             <div class="ourapp-onboarding__foot">
-              Можно сменить позже в&nbsp;настройках.
+              Сейчас доступен Технолог (ГОСТы). Юрист и бухгалтер&nbsp;— скоро.
             </div>
           </div>
         </Show>
@@ -151,7 +160,7 @@ export const OnboardingPage: Component<{ onDone: () => void }> = (props) => {
         <Show when={step() === "email"}>
           <form class="ourapp-onboarding__step" onSubmit={sendMagic}>
             <div class="ourapp-onboarding__eyebrow">
-              Шаг 2 из 3 · {vertical() === "lawyer" ? "Юрист" : "Бухгалтер"}
+              Шаг 2 из 3 · {verticalLabel(vertical())}
             </div>
             <h1 class="ourapp-onboarding__title">
               Ваш <em>email</em>

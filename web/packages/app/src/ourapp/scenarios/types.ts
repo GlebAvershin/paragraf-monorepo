@@ -6,7 +6,7 @@
  * через обычный sendFollowupDraft (реюз streaming/guard/billing).
  */
 
-export type Vertical = "lawyer" | "accountant"
+export type Vertical = "lawyer" | "accountant" | "technologist"
 
 export type RecommendedModel = "claude-sonnet" | "claude-opus" | "gigachat-pro" | "gigachat-max"
 

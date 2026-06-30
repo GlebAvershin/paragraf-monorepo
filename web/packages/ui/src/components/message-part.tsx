@@ -1131,16 +1131,10 @@ export function UserMessageDisplay(props: { message: UserMessage; parts: PartTyp
     () => props.parts?.find((p) => p.type === "text" && !(p as TextPart).synthetic) as TextPart | undefined,
   )
 
-  // OurApp: демаскируем текст сообщения ЮЗЕРА так же, как в ответах ассистента
-  // (window.ourappUnmask). После перезагрузки text part приходит из БД движка с
-  // плейсхолдерами (__PII_FIO_1__) — без этого юзер видел бы метки в своих же вопросах.
-  // Демаск до извлечения [Документ:…]-блоков, чтобы и они работали по реальному тексту.
-  const rawText = createMemo(() => {
-    const raw = textPart()?.text || ""
-    if (!raw) return raw
-    const fn = (typeof window !== "undefined" ? window : undefined)?.ourappUnmask
-    return typeof fn === "function" ? fn(raw, props.message.sessionID) : raw
-  })
+  // OurApp: с 2026-06-27 маскирование/демаск делает gateway (server-side, РФ) —
+  // в БД движка сообщения хранятся СЫРЫМИ, в браузер тоже приходят сырые, поэтому
+  // никакого клиентского window.ourappUnmask больше нет (см. arch-migration.md).
+  const rawText = createMemo(() => textPart()?.text || "")
 
   // OurApp: text может содержать inline-блоки документов из локального парсера:
   //   [Документ: имя.docx]\n\n<содержимое>\n\n[Конец документа]\n
@@ -1630,16 +1624,9 @@ PART_MAPPING["text"] = function TextPartDisplay(props) {
   const streaming = createMemo(
     () => props.message.role === "assistant" && typeof (props.message as AssistantMessage).time.completed !== "number",
   )
-  // OurApp: автоматическое демаскирование ПДн при рендере. Если ourapp/pii
-  // зарегистрировал window.ourappUnmask и для сессии есть vault — заменяем
-  // плейсхолдеры (__PII_FIO_1__) обратно на реальные значения. UI-пакет не
-  // должен импортировать из @/ourapp напрямую, поэтому используем глобал-хук.
-  const text = () => {
-    const raw = readPartText(data.store.part_text_accum_delta, part())
-    if (!raw) return raw
-    const fn = (typeof window !== "undefined" ? window : undefined)?.ourappUnmask
-    return typeof fn === "function" ? fn(raw, props.message.sessionID) : raw
-  }
+  // OurApp: демаскирование переехало в gateway (server-side, 2026-06-27) — в
+  // браузер приходит уже демаскированный текст. См. arch-migration.md.
+  const text = () => readPartText(data.store.part_text_accum_delta, part())
   const isLastTextPart = createMemo(() => {
     const last = (data.store.part?.[props.message.id] ?? [])
       .filter((item): item is TextPart => item?.type === "text" && !!item.text?.trim())
@@ -1705,14 +1692,8 @@ PART_MAPPING["reasoning"] = function ReasoningPartDisplay(props) {
   const streaming = createMemo(
     () => props.message.role === "assistant" && typeof (props.message as AssistantMessage).time.completed !== "number",
   )
-  // OurApp: демаскирование reasoning-вывода — модель может цитировать ПДн
-  // в своих рассуждениях.
-  const text = () => {
-    const raw = readPartText(data.store.part_text_accum_delta, part())
-    if (!raw) return raw
-    const fn = (typeof window !== "undefined" ? window : undefined)?.ourappUnmask
-    return typeof fn === "function" ? fn(raw, props.message.sessionID) : raw
-  }
+  // OurApp: демаскирование переехало в gateway (server-side, 2026-06-27).
+  const text = () => readPartText(data.store.part_text_accum_delta, part())
 
   return (
     <Show when={text()}>

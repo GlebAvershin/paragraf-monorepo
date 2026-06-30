@@ -12,6 +12,7 @@
  */
 import { createMemo, createResource, For, type Component } from "solid-js"
 import { scenariosFor, type Scenario } from "./scenarios"
+import { verticalLabel, type Vertical } from "./verticals"
 import { billingApi, daysUntil } from "./billing-api"
 
 export interface WelcomeSidebarRecentSession {
@@ -23,7 +24,7 @@ export interface WelcomeSidebarRecentSession {
 
 export interface WelcomeSidebarProps {
   /** Текущая вертикаль для подбора сценариев в списке. */
-  vertical: "lawyer" | "accountant"
+  vertical: Vertical
   /** Колбэк при клике на сценарий — диспатчит scenario-pick. */
   onPickScenario?: (s: Scenario) => void
   /** Стат кредитов (если не передано — показывается -/-, без падения). */
@@ -55,7 +56,7 @@ export interface WelcomeSidebarProps {
 export const WelcomeSidebar: Component<WelcomeSidebarProps> = (props) => {
   // Показываем все сценарии вертикали (их 7) — лимит .slice(0,5) скрывал новые.
   const list = createMemo(() => scenariosFor(props.vertical))
-  const verticalLabel = () => (props.vertical === "lawyer" ? "Юрист" : "Бухгалтер")
+  const currentLabel = () => verticalLabel(props.vertical)
 
   // Авто-fetch /limits если props.credits не передан явно.
   // Грейсфул: если billing-сервер недоступен — fallback на «— / —».
@@ -88,7 +89,7 @@ export const WelcomeSidebar: Component<WelcomeSidebarProps> = (props) => {
     <aside class="ourapp-sidebar">
       <div class="ourapp-sidebar__header">
         <div class="ourapp-sidebar__brand">Параграф</div>
-        <div class="ourapp-sidebar__role">{verticalLabel()}</div>
+        <div class="ourapp-sidebar__role">{currentLabel()}</div>
       </div>
 
       <div class="ourapp-sidebar__section">

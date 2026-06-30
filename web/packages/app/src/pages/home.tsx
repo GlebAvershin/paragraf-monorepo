@@ -2,6 +2,7 @@ import type { Session } from "@opencode-ai/sdk/v2/client"
 import { createMemo, createSignal, For, Match, Show, Switch } from "solid-js"
 import { createStore } from "solid-js/store"
 import { type Vertical } from "@/ourapp/scenario-library"
+import { loadVertical, saveVertical } from "@/ourapp/verticals"
 import { HomeWelcome, type HomeRecentSession } from "@/ourapp/home-welcome"
 import { openScenarioWizard } from "@/ourapp/scenarios/wizard-controller"
 import { useQuery } from "@tanstack/solid-query"
@@ -67,16 +68,10 @@ function HomeDesign() {
   const language = useLanguage()
   const [state, setState] = createStore({ search: "", project: undefined as string | undefined })
 
-  // OurApp: вертикаль (юрист/бухгалтер) для двухдверного welcome.
-  // Хранится в localStorage, синхронизируется с ScenarioLibrary.
-  const initialVertical: Vertical = (() => {
-    try {
-      const stored = localStorage.getItem("ourapp.primaryVertical")
-      if (stored === "lawyer" || stored === "accountant") return stored
-    } catch {}
-    return "lawyer"
-  })()
-  const [vertical, setVertical] = createSignal<Vertical>(initialVertical)
+  // OurApp: текущая вертикаль (профессия). Источник правды — ourapp/verticals.ts
+  // (там же список включённых и дефолт). loadVertical() автоматически вернёт
+  // дефолт, если в localStorage лежит ВЫКЛЮЧЕННАЯ вертикаль (lawyer/accountant).
+  const [vertical, setVertical] = createSignal<Vertical>(loadVertical())
 
   const projects = createMemo(() => layout.projects.list())
   const selectedProject = createMemo(
@@ -212,9 +207,7 @@ function HomeDesign() {
 
   const onVerticalChange = (v: Vertical) => {
     setVertical(v)
-    try {
-      localStorage.setItem("ourapp.primaryVertical", v)
-    } catch {}
+    saveVertical(v)
   }
 
   // Преобразуем opencode-сессии в формат для HomeWelcome.
