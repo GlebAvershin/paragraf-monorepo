@@ -19,7 +19,25 @@ import { meta } from "./meta.ts"
 type Env = { Variables: { session: Auth; token: string } }
 
 const app = new Hono<Env>()
-app.use("*", cors())
+// CORS allowlist — было `cors()` (wildcard, любой origin). Движок хранит СЫРУЮ
+// историю чатов (ПДн, 152-ФЗ) за JWT-авторизацией; wildcard ослаблял защиту
+// (при утечке JWT — напр. XSS — любой сторонний origin мог читать ответы).
+// Тот же паттерн, что в billing/index.ts: localhost/127.0.0.1 на любом порту
+// (dev/vite) + same-origin/file:// + опциональный прод-домен WEB_PUBLIC_URL.
+app.use(
+  "*",
+  cors({
+    origin: (origin) => {
+      if (!origin) return origin
+      if (config.WEB_PUBLIC_URL && origin === config.WEB_PUBLIC_URL) return origin
+      if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) return origin
+      return null
+    },
+    credentials: true,
+    allowMethods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+    allowHeaders: ["Content-Type", "Authorization"],
+  }),
+)
 
 app.get("/health/readiness", (c) => c.json({ status: "ok" }))
 app.get("/health/liveliness", (c) => c.text("alive"))

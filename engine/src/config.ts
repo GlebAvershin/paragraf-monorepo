@@ -34,6 +34,11 @@ export const config = {
 
   // Хранилище сессий/сообщений (РФ-хостинг по 152-ФЗ). Своя БД, как у billing.
   DATABASE_URL: process.env.DATABASE_URL ?? "postgres://engine:engine@localhost:5434/engine",
+
+  // Публичный домен веб-фронта (прод CORS-allowlist) — тот же паттерн, что
+  // billing/config.ts APP_PUBLIC_URL. Пусто в dev (localhost/127.0.0.1 разрешены
+  // всегда через regex ниже в index.ts).
+  WEB_PUBLIC_URL: process.env.WEB_PUBLIC_URL ?? "",
 } as const
 
 export const isProd = process.env.NODE_ENV === "production"
