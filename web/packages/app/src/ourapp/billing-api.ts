@@ -259,6 +259,16 @@ export const billingApi = {
       skipCache: true,
     }),
 
+  /** Вход email+паролем (демо/тест-период — см. auth.ts /auth/login). */
+  login: (email: string, password: string) =>
+    request<VerifyResponse>(`/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+      timeoutMs: 10_000,
+      skipCache: true,
+    }),
+
   // ===== Payments (ТЗ-02) =====
 
   /** Привязать карту по cryptogram из CloudPayments Widget. */

@@ -1,97 +1,53 @@
 /**
- * OurApp двухдверный онбординг с magic-link входом.
+ * OurApp вход — email + пароль (демо/тест-период, 2026-07-01).
  *
- * Шаги:
- *   1. Welcome — выбор вертикали (юрист/бухгалтер)
- *   2. Email — ввод email + POST /auth/magic-link
- *   3. Verify — «Проверь почту» + (dev) форма прямого ввода token
- *
- * После успешной verify — сохраняем JWT в localStorage и закрываем онбординг
- * через callback.
+ * Раньше здесь был двухдверный онбординг (выбор вертикали → OTP-код на email).
+ * На тест-период вертикаль всегда одна (Технолог, см. verticals.ts), а вместо
+ * рассылки OTP на каждый вход — общий тестовый аккаунт с паролем
+ * (billing /auth/login, параллельный OTP способ входа). Backend-код OTP не
+ * тронут — просто эта страница его больше не вызывает.
  */
-import { createSignal, For, Show, type Component } from "solid-js"
+import { createSignal, Show, type Component } from "solid-js"
 import { billingApi } from "./billing-api"
 import { setSessionToken } from "./auth-storage"
 import { usePlatform } from "@/context/platform"
-import {
-  DEFAULT_VERTICAL,
-  VERTICAL_ORDER,
-  VERTICALS,
-  verticalLabel,
-  type Vertical,
-} from "./verticals"
-
-type Step = "welcome" | "email" | "verify" | "done"
 
 export const OnboardingPage: Component<{ onDone: () => void }> = (props) => {
   const platform = usePlatform()
-  const [step, setStep] = createSignal<Step>("welcome")
-  const [vertical, setVertical] = createSignal<Vertical>(DEFAULT_VERTICAL)
   const [email, setEmail] = createSignal("")
-  // Поле кода: только цифры, до 6. Пробелы и любое нецифровое — игнорим.
-  const [codeInput, setCodeInput] = createSignal("")
+  const [password, setPassword] = createSignal("")
   const [busy, setBusy] = createSignal(false)
   const [error, setError] = createSignal<string | null>(null)
 
-  const onCodeInput = (e: InputEvent & { currentTarget: HTMLInputElement }) => {
-    const raw = e.currentTarget.value
-    const cleaned = raw.replace(/\D/g, "").slice(0, 6)
-    setCodeInput(cleaned)
-    e.currentTarget.value = cleaned
-  }
-
-  const pickVertical = (v: Vertical) => {
-    if (!VERTICALS[v].enabled) return
-    setVertical(v)
-    try {
-      localStorage.setItem("ourapp.primaryVertical", v)
-    } catch {}
-    setStep("email")
-  }
-
-  const sendMagic = async (e: Event) => {
+  const login = async (e: Event) => {
     e.preventDefault()
     setError(null)
-    const value = email().trim()
-    if (!value.includes("@")) {
+    const emailValue = email().trim()
+    const passwordValue = password()
+    if (!emailValue.includes("@")) {
       setError("Введите корректный email")
       return
     }
-    setBusy(true)
-    const res = await billingApi.requestMagicLink(value)
-    setBusy(false)
-    if (!res.ok) {
-      setError(`Не удалось отправить ссылку: ${res.error}`)
-      return
-    }
-    setStep("verify")
-  }
-
-  const verifyCode = async (e: Event) => {
-    e.preventDefault()
-    setError(null)
-    const code = codeInput()
-    if (code.length !== 6) {
-      setError("Код должен состоять из 6 цифр")
+    if (!passwordValue) {
+      setError("Введите пароль")
       return
     }
     setBusy(true)
-    const res = await billingApi.verifyOtp(email().trim(), code)
+    const res = await billingApi.login(emailValue, passwordValue)
     setBusy(false)
     if (!res.ok) {
       setError(
-        res.error === "invalid_or_expired_code"
-          ? "Неверный или истёкший код. Запросите новый."
+        res.error === "invalid_credentials"
+          ? "Неверный email или пароль"
           : `Не удалось войти: ${res.error}`,
       )
       return
     }
     setSessionToken(res.data.token)
-    setStep("done")
     // На вебе пароль соединения с движком берётся из сохранённого JWT при
     // bootstrap (entry.tsx). Соединение уже создано без пароля → перезагружаем,
-    // чтобы entry.tsx пересобрал его с JWT. Гейт онбординга не покажется снова
-    // (isLoggedIn=true). На desktop (sidecar-auth) — обычный callback без reload.
+    // чтобы entry.tsx пересобрал его с JWT. На desktop (sidecar-auth) — обычный
+    // callback без reload.
     if (platform.platform === "web") {
       window.location.reload()
       return
@@ -103,159 +59,69 @@ export const OnboardingPage: Component<{ onDone: () => void }> = (props) => {
     <div class="ourapp-onboarding">
       <header class="ourapp-onboarding__topbar">
         <span class="ourapp-onboarding__brand">Isaak</span>
-        <Show when={step() !== "welcome"}>
-          <button
-            type="button"
-            class="ourapp-onboarding__back"
-            onClick={() => setStep(step() === "verify" ? "email" : "welcome")}
-          >
-            ← Назад
-          </button>
-        </Show>
       </header>
 
       <main class="ourapp-onboarding__main">
-        {/* ===== Step 1: Welcome ===== */}
-        <Show when={step() === "welcome"}>
-          <div class="ourapp-onboarding__step">
-            <div class="ourapp-onboarding__eyebrow">Добро пожаловать</div>
-            <h1 class="ourapp-onboarding__title">
-              ИИ-агент <em>для&nbsp;вашей&nbsp;работы</em>
-            </h1>
-            <p class="ourapp-onboarding__lede">
-              Найдёт нужный ГОСТ, разъяснит требование стандарта, проверит документ
-              на&nbsp;соответствие. Сценарии собраны под профессию&nbsp;— чтобы не&nbsp;было пустого чата.
-            </p>
-            <div class="ourapp-onboarding__doors">
-              <For each={VERTICAL_ORDER}>
-                {(id) => {
-                  const meta = VERTICALS[id]
-                  return (
-                    <button
-                      type="button"
-                      class="ourapp-onboarding__door"
-                      classList={{ "ourapp-onboarding__door--disabled": !meta.enabled }}
-                      disabled={!meta.enabled}
-                      aria-disabled={!meta.enabled}
-                      title={meta.enabled ? undefined : "Скоро. Сейчас доступен только Технолог."}
-                      onClick={() => pickVertical(id)}
-                    >
-                      <span class="ourapp-onboarding__doorTitle">Я&nbsp;{meta.label.toLowerCase()}</span>
-                      <span class="ourapp-onboarding__doorLede">{meta.doorLede}</span>
-                      <Show when={!meta.enabled}>
-                        <span class="ourapp-onboarding__doorBadge">Скоро</span>
-                      </Show>
-                    </button>
-                  )
-                }}
-              </For>
-            </div>
-            <div class="ourapp-onboarding__foot">
-              Сейчас доступен Технолог (ГОСТы). Юрист и бухгалтер&nbsp;— скоро.
-            </div>
+        <form class="ourapp-onboarding__step" onSubmit={login}>
+          <div class="ourapp-onboarding__eyebrow">Добро пожаловать</div>
+          <h1 class="ourapp-onboarding__title">
+            ИИ-агент <em>для&nbsp;вашей&nbsp;работы</em>
+          </h1>
+          <p class="ourapp-onboarding__lede">
+            Найдёт нужный ГОСТ, разъяснит требование стандарта, проверит документ
+            на&nbsp;соответствие. Сценарии собраны под профессию&nbsp;— чтобы не&nbsp;было пустого чата.
+          </p>
+
+          <div class="ourapp-onboarding__field">
+            <label class="ourapp-onboarding__label" for="onb-email">
+              Email
+            </label>
+            <input
+              id="onb-email"
+              type="email"
+              class="ourapp-onboarding__input"
+              placeholder="isaac@test.test"
+              value={email()}
+              onInput={(e) => setEmail(e.currentTarget.value)}
+              ref={(el) => setTimeout(() => el?.focus(), 50)}
+              disabled={busy()}
+              autocomplete="username"
+            />
           </div>
-        </Show>
+          <div class="ourapp-onboarding__field">
+            <label class="ourapp-onboarding__label" for="onb-password">
+              Пароль
+            </label>
+            <input
+              id="onb-password"
+              type="password"
+              class="ourapp-onboarding__input"
+              placeholder="••••••••"
+              value={password()}
+              onInput={(e) => setPassword(e.currentTarget.value)}
+              disabled={busy()}
+              autocomplete="current-password"
+            />
+          </div>
 
-        {/* ===== Step 2: Email ===== */}
-        <Show when={step() === "email"}>
-          <form class="ourapp-onboarding__step" onSubmit={sendMagic}>
-            <div class="ourapp-onboarding__eyebrow">
-              Шаг 2 из 3 · {verticalLabel(vertical())}
-            </div>
-            <h1 class="ourapp-onboarding__title">
-              Ваш <em>email</em>
-            </h1>
-            <p class="ourapp-onboarding__lede">
-              Отправим 6-значный код для&nbsp;входа. Пароли не&nbsp;нужны&nbsp;— ввели код
-              и&nbsp;вы&nbsp;внутри.
-            </p>
-            <div class="ourapp-onboarding__field">
-              <label class="ourapp-onboarding__label" for="onb-email">
-                Email
-              </label>
-              <input
-                id="onb-email"
-                type="email"
-                class="ourapp-onboarding__input"
-                placeholder="anna.petrova@yur-firma.ru"
-                value={email()}
-                onInput={(e) => setEmail(e.currentTarget.value)}
-                ref={(el) => setTimeout(() => el?.focus(), 50)}
-                disabled={busy()}
-              />
-            </div>
-            <Show when={error()}>
-              <div class="ourapp-onboarding__error">{error()}</div>
-            </Show>
-            <div class="ourapp-onboarding__actions">
-              <button
-                type="submit"
-                class="ourapp-btn ourapp-btn--primary"
-                disabled={busy() || !email().includes("@")}
-              >
-                {busy() ? "Отправляем…" : "Получить код →"}
-              </button>
-            </div>
-            <div class="ourapp-onboarding__foot">
-              Нажимая, вы соглашаетесь с&nbsp;офертой и&nbsp;обработкой персональных данных (152-ФЗ).
-            </div>
-          </form>
-        </Show>
+          <Show when={error()}>
+            <div class="ourapp-onboarding__error">{error()}</div>
+          </Show>
 
-        {/* ===== Step 3: Verify OTP ===== */}
-        <Show when={step() === "verify"}>
-          <form class="ourapp-onboarding__step" onSubmit={verifyCode}>
-            <div class="ourapp-onboarding__eyebrow">Шаг 3 из 3</div>
-            <h1 class="ourapp-onboarding__title">
-              Проверьте <em>почту</em>
-            </h1>
-            <p class="ourapp-onboarding__lede">
-              Отправили 6-значный код на&nbsp;<strong>{email()}</strong>. Введите его ниже.
-              Письмо не&nbsp;пришло через&nbsp;2&nbsp;минуты — проверьте папку «Спам».
-            </p>
+          <div class="ourapp-onboarding__actions">
+            <button
+              type="submit"
+              class="ourapp-btn ourapp-btn--primary"
+              disabled={busy() || !email().includes("@") || !password()}
+            >
+              {busy() ? "Входим…" : "Войти →"}
+            </button>
+          </div>
 
-            <div class="ourapp-onboarding__field">
-              <input
-                type="text"
-                inputmode="numeric"
-                autocomplete="one-time-code"
-                class="ourapp-onboarding__input ourapp-onboarding__input--mono"
-                placeholder="000 000"
-                value={codeInput()}
-                onInput={onCodeInput}
-                disabled={busy()}
-                style={{
-                  "letter-spacing": "0.4em",
-                  "text-align": "center",
-                  "font-size": "24px",
-                  "max-width": "240px",
-                  margin: "0 auto",
-                }}
-                autofocus
-                maxLength={6}
-              />
-            </div>
-            <Show when={error()}>
-              <div class="ourapp-onboarding__error">{error()}</div>
-            </Show>
-            <div class="ourapp-onboarding__actions">
-              <button
-                type="submit"
-                class="ourapp-btn ourapp-btn--primary"
-                disabled={busy() || codeInput().length !== 6}
-              >
-                {busy() ? "Проверяем…" : "Войти →"}
-              </button>
-            </div>
-
-            <div class="ourapp-onboarding__foot">
-              Не пришло письмо?{" "}
-              <button type="button" class="ourapp-onboarding__link" onClick={() => setStep("email")}>
-                Сменить email или запросить заново
-              </button>
-            </div>
-          </form>
-        </Show>
+          <div class="ourapp-onboarding__foot">
+            Нажимая, вы соглашаетесь с&nbsp;офертой и&nbsp;обработкой персональных данных (152-ФЗ).
+          </div>
+        </form>
       </main>
     </div>
   )

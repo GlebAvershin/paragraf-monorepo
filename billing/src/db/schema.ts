@@ -119,6 +119,9 @@ export const users = pgTable(
     email: text("email").notNull(),
     emailVerifiedAt: timestamp("email_verified_at", { withTimezone: true }),
     name: text("name"),
+    // Опциональный пароль — параллельный OTP способ входа (демо/тест-период,
+    // 2026-07-01). NULL у обычных пользователей (они входят по OTP).
+    passwordHash: text("password_hash"),
     primaryVertical: verticalEnum("primary_vertical"),
     status: userStatusEnum("status").notNull().default("active"),
     metadata: jsonb("metadata").$type<Record<string, unknown>>().default({}),

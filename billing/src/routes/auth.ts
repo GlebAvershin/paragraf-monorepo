@@ -144,3 +144,36 @@ authRoutes.post("/verify-otp", zValidator("json", verifyOtpInput), async (c) => 
   const jwt = await issueSession({ sub: user.id, email: user.email })
   return c.json({ token: jwt, user: { id: user.id, email: user.email } })
 })
+
+const loginInput = z.object({
+  email: z.string().email(),
+  password: z.string().min(1),
+})
+
+/**
+ * Email+пароль вход — параллельный способ для демо/тест-периода (2026-07-01),
+ * когда несколько человек временно сидят под одним аккаунтом без рассылки OTP
+ * на каждый вход. Работает только для юзеров с заданным password_hash (обычные
+ * пользователи его не имеют — им остаётся OTP). Allowlist та же: только active.
+ */
+authRoutes.post("/login", zValidator("json", loginInput), async (c) => {
+  const { email, password } = c.req.valid("json")
+
+  const user = await findActiveUser(email)
+  if (!user || !user.passwordHash) {
+    return c.json({ error: "invalid_credentials" }, 400)
+  }
+
+  const valid = await Bun.password.verify(password, user.passwordHash)
+  if (!valid) {
+    return c.json({ error: "invalid_credentials" }, 400)
+  }
+
+  await db
+    .update(schema.users)
+    .set({ lastLoginAt: new Date(), emailVerifiedAt: user.emailVerifiedAt ?? new Date() })
+    .where(eq(schema.users.id, user.id))
+
+  const jwt = await issueSession({ sub: user.id, email: user.email })
+  return c.json({ token: jwt, user: { id: user.id, email: user.email } })
+})

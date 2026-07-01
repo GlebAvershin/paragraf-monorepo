@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "desktop-renderer",
-      "runtimeExecutable": "cmd",
-      "runtimeArgs": ["/c", "echo already-running"],
+      "runtimeExecutable": "bun",
+      "runtimeArgs": ["--cwd", "web/packages/app", "dev"],
       "port": 5173
     }
   ]

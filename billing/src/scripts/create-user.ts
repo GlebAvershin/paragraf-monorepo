@@ -7,10 +7,15 @@
  * initSubscription заводит триал-подписку + виртуальный ключ LiteLLM + кредиты.
  *
  * Использование (из каталога billing/, с поднятым LiteLLM-шлюзом):
- *   bun run create-user <email> ["Имя Фамилия"]
+ *   bun run create-user <email> ["Имя Фамилия"] [пароль]
+ *
+ * Необязательный [пароль] — заводит password_hash (email+пароль вход,
+ * /auth/login) в дополнение к OTP. Для обычных клиентов не передавать —
+ * у них остаётся только OTP.
  *
  * Идемпотентно: если юзер уже есть — не дублирует, при отсутствии подписки
- * дозаводит её. Требует ту же .env, что и billing (JWT/DATABASE_URL/LITELLM_*).
+ * дозаводит её; пароль (если передан) перезаписывается. Требует ту же .env,
+ * что и billing (JWT/DATABASE_URL/LITELLM_*).
  */
 import { and, eq } from "drizzle-orm"
 import { db, schema } from "../db/client.ts"
@@ -19,9 +24,10 @@ import { initSubscription } from "../routes/subscriptions.ts"
 async function main() {
   const email = process.argv[2]?.trim().toLowerCase()
   const name = process.argv[3]?.trim() || null
+  const password = process.argv[4]?.trim() || null
 
   if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
-    console.error("Usage: bun run create-user <email> [\"Имя Фамилия\"]")
+    console.error("Usage: bun run create-user <email> [\"Имя Фамилия\"] [пароль]")
     console.error("  email обязателен и должен быть валидным.")
     process.exit(1)
   }
@@ -45,6 +51,12 @@ async function main() {
       .returning()
     user = inserted[0]!
     console.log(`Создан пользователь: ${user.email} (id=${user.id})`)
+  }
+
+  if (password) {
+    const passwordHash = await Bun.password.hash(password)
+    await db.update(schema.users).set({ passwordHash, updatedAt: now }).where(eq(schema.users.id, user.id))
+    console.log("  → пароль установлен (вход через email+пароль, /auth/login).")
   }
 
   // 2. Подписка есть?
