@@ -58,7 +58,7 @@ export const OnboardingPage: Component<{ onDone: () => void }> = (props) => {
   return (
     <div class="ourapp-onboarding">
       <header class="ourapp-onboarding__topbar">
-        <span class="ourapp-onboarding__brand">Isaak</span>
+        <span class="ourapp-onboarding__brand">Isaac</span>
       </header>
 
       <main class="ourapp-onboarding__main">

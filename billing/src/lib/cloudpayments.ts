@@ -6,7 +6,7 @@
  * Auth: HTTP Basic — username = Public ID, password = API Secret.
  * Base URL: https://api.cloudpayments.ru (configurable for test mode).
  *
- * Поток платежей в Isaak:
+ * Поток платежей в Isaac:
  *   1. Первичная привязка карты — виджет на фронте генерирует cryptogram
  *      (с 3DS-подтверждением). Backend делает cards/auth на 1 ₽ + void
  *      (валидация карты без реального списания).

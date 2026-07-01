@@ -2,7 +2,7 @@
  * OurApp welcome-сайдбар (левая колонка в новой сессии).
  *
  * Соответствует mockup 01 в design/preview.html:
- *   <Brand>           ← Isaak серифом + роль («Юрист»)
+ *   <Brand>           ← Isaac серифом + роль («Юрист»)
  *   <Section> Сценарии  ← список с активным
  *   <Section> История   ← последние сессии
  *   <UsageCard>       ← кредиты в этом месяце (главный индикатор)
@@ -88,7 +88,7 @@ export const WelcomeSidebar: Component<WelcomeSidebarProps> = (props) => {
   return (
     <aside class="ourapp-sidebar">
       <div class="ourapp-sidebar__header">
-        <div class="ourapp-sidebar__brand">Isaak</div>
+        <div class="ourapp-sidebar__brand">Isaac</div>
         <div class="ourapp-sidebar__role">{currentLabel()}</div>
       </div>
 

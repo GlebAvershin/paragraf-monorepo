@@ -131,7 +131,7 @@ export function createMainWindow() {
     height: state.height,
     show: false,
     autoHideMenuBar: true,
-    title: "Isaak",
+    title: "Isaac",
     icon: iconPath(),
     backgroundColor: backgroundColor ?? defaultBackgroundColor(),
     ...(process.platform === "darwin"

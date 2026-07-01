@@ -1,5 +1,5 @@
 /**
- * Генерация иконок приложения Isaak из SVG-исходника.
+ * Генерация иконок приложения Isaac из SVG-исходника.
  *
  * Вход:  icons/paragraf-source.svg (§ на emerald-squircle)
  * Выход: раскладывается в icons/dev, icons/prod, icons/beta (copy-icons.ts
@@ -79,7 +79,7 @@ async function main() {
     console.log(`  ✓ ${dir.replace(join(__dirname, ".."), ".")}`)
   }
 
-  console.log("\nИконки Isaak сгенерированы и разложены по каналам.")
+  console.log("\nИконки Isaac сгенерированы и разложены по каналам.")
 }
 
 main().catch((err) => {

@@ -50,7 +50,7 @@ export const HomeWelcome: Component<HomeWelcomeProps> = (props) => {
     <div class="ourapp-landing">
       <header class="ourapp-landing__topbar">
         <div class="ourapp-landing__brand">
-          <span class="ourapp-landing__brandname">Isaak</span>
+          <span class="ourapp-landing__brandname">Isaac</span>
           <span
             class="ourapp-landing__vertical"
             title="Сейчас доступен только Технолог"
@@ -84,7 +84,7 @@ export const HomeWelcome: Component<HomeWelcomeProps> = (props) => {
       <main class="ourapp-landing__main">
         <div class="ourapp-landing__hero">
           <div class="ourapp-landing__eyebrow">
-            Добро пожаловать в&nbsp;Isaak
+            Добро пожаловать в&nbsp;Isaac
             <span class="ourapp-landing__eyebrowdot" aria-hidden="true">·</span>
             <span class="ourapp-landing__eyebrowrole">{currentLabel()}</span>
           </div>

@@ -175,7 +175,7 @@ export const SettingsPage: Component<{ onClose?: () => void }> = (props) => {
           </div>
           <div class="ourapp-settings__rowActions">
             <button type="button" class="ourapp-btn" onClick={() => setAboutOpen(true)}>
-              О Isaak
+              О Isaac
             </button>
           </div>
         </section>

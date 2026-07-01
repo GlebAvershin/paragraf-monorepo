@@ -24,7 +24,7 @@ const ConfigSchema = z.object({
   SMTP_USER: z.string().optional(),
   SMTP_PASSWORD: z.string().optional(),
   // Принимает и голый email ("noreply@x.ru"), и RFC5322 display-name форму
-  // ("Isaak <noreply@x.ru>") — nodemailer поддерживает оба, .email() отсекал
+  // ("Isaac <noreply@x.ru>") — nodemailer поддерживает оба, .email() отсекал
   // второй вариант, хотя это и есть реальный intent (имя бренда в письме).
   SMTP_FROM: z
     .string()

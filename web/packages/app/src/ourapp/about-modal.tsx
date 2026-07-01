@@ -1,5 +1,5 @@
 /**
- * OurApp — модалка «О Isaak».
+ * OurApp — модалка «О Isaac».
  *
  * Показывает название продукта, версию, назначение, юридические ссылки
  * (152-ФЗ обязателен), контакты поддержки. Открывается из Settings.
@@ -45,7 +45,7 @@ export const AboutModal: Component<AboutModalProps> = (props) => {
           class="ourapp-about-modal"
           role="dialog"
           aria-modal="true"
-          aria-label="О Isaak"
+          aria-label="О Isaac"
           onClick={(e) => e.stopPropagation()}
         >
           <button
@@ -59,7 +59,7 @@ export const AboutModal: Component<AboutModalProps> = (props) => {
 
           <div class="ourapp-about-modal__brand">
             <span class="ourapp-about-modal__mark">§</span>
-            <h2 class="ourapp-about-modal__title">Isaak</h2>
+            <h2 class="ourapp-about-modal__title">Isaac</h2>
             <p class="ourapp-about-modal__version">Версия {APP_VERSION}</p>
           </div>
 
@@ -91,7 +91,7 @@ export const AboutModal: Component<AboutModalProps> = (props) => {
             </button>
           </div>
 
-          <p class="ourapp-about-modal__copyright">© {new Date().getFullYear()} Isaak. Все права защищены.</p>
+          <p class="ourapp-about-modal__copyright">© {new Date().getFullYear()} Isaac. Все права защищены.</p>
         </div>
       </div>
     </Show>

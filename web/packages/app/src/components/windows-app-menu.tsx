@@ -8,7 +8,7 @@ import { useCommand } from "@/context/command"
 import { type DesktopMenuAction, type DesktopMenuEntry } from "@/desktop-menu"
 import { usePlatform } from "@/context/platform"
 
-// OurApp: плоское упрощённое меню Isaak (вместо вложенных File/Edit/View/…
+// OurApp: плоское упрощённое меню Isaac (вместо вложенных File/Edit/View/…
 // от opencode). Только то, что реально нужно нашей аудитории. «Настройки» ведёт
 // на нашу страницу /settings (см. settings.open в layout.tsx). Стандартные действия
 // (копировать/вставить, свернуть/закрыть) убраны — они есть в горячих клавишах и
@@ -77,7 +77,7 @@ export function WindowsAppMenu(props: {
             variant="ghost-muted"
             size="large"
             icon={<IconV2 name="menu" />}
-            aria-label="Меню Isaak"
+            aria-label="Меню Isaac"
             onPointerDown={rememberFocus}
             onKeyDown={rememberFocus}
           />
@@ -88,7 +88,7 @@ export function WindowsAppMenu(props: {
           icon="menu"
           variant="ghost"
           class="titlebar-icon rounded-md shrink-0"
-          aria-label="Меню Isaak"
+          aria-label="Меню Isaac"
           onPointerDown={rememberFocus}
           onKeyDown={rememberFocus}
         />
@@ -96,7 +96,7 @@ export function WindowsAppMenu(props: {
       <DropdownMenu.Portal>
         <DropdownMenu.Content class="desktop-app-menu">
           <DropdownMenu.Group>
-            <DropdownMenu.GroupLabel class="desktop-app-menu-heading">Isaak</DropdownMenu.GroupLabel>
+            <DropdownMenu.GroupLabel class="desktop-app-menu-heading">Isaac</DropdownMenu.GroupLabel>
             {HAMBURGER_ITEMS.map((entry) =>
               entry.type === "separator" ? (
                 <DropdownMenu.Separator />

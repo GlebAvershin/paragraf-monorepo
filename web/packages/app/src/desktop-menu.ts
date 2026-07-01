@@ -69,13 +69,13 @@ export type DesktopMenu = {
   platforms?: DesktopMenuPlatform[]
 }
 
-// OurApp: меню переведено и очищено под продукт Isaak. Убраны dev-пункты
+// OurApp: меню переведено и очищено под продукт Isaac. Убраны dev-пункты
 // opencode (терминал, дерево файлов, открыть/переключить проект, навигация «Go»)
-// и ссылки на opencode (docs/discord/github). Бренд — Isaak.
+// и ссылки на opencode (docs/discord/github). Бренд — Isaac.
 export const DESKTOP_MENU: DesktopMenu[] = [
   {
     id: "app",
-    label: "Isaak",
+    label: "Isaac",
     platforms: ["macos"],
     items: [
       { type: "item", role: "about" },

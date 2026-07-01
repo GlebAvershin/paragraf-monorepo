@@ -51,7 +51,7 @@ export async function downloadMarkdownAsDocx(
     const cleaned = stripMetaBlocks(trimmed)
     const blocks = markdownToDocxBlocks(cleaned, docx)
     const doc = new docx.Document({
-      creator: "Isaak",
+      creator: "Isaac",
       title,
       styles: {
         default: {
