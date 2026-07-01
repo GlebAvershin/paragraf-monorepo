@@ -2,11 +2,11 @@
 
 > Бренд: **Isaak** (домен https://isaac-ai.ru). Раньше было «Параграф».
 
-> Статус кода: typecheck зелёный во всех 5 пакетов (billing/engine/doc-tools/web/gateway-app),
-> известные CVE в зависимостях пропатчены (`bun audit`), auth/CORS/gateway-секрет — security-
-> аудит пройден (см. CLAUDE.md). CI/CD написан и валидирован синтаксически (`docker compose
-> config`), но **живой прогон на реальном сервере ещё не делался** — ждём доступ к YC.
-> Подробный контекст решений — в `CLAUDE.md`.
+> **Статус (2026-07-01): прод ЖИВОЙ.** https://isaac-ai.ru отвечает, полный e2e проверен
+> вживую (OTP-логин → сессия → сообщение → реальный ответ Claude через OpenRouter). CI/CD
+> настроен и активен (push в `main` → тесты → автодеплой на сервер по SSH). typecheck зелёный
+> во всех 5 пакетов, известные CVE пропатчены, auth/CORS/gateway-секрет — security-аудит
+> пройден (см. CLAUDE.md). Подробный контекст решений — в `CLAUDE.md`.
 
 ## 1. Из чего состоит система
 
@@ -25,7 +25,11 @@ git-репозитория деплоятся туда СВОИМИ пайпла
 
 Поток: браузер → **Caddy** (один домен) → статика | **engine** (`/session*` и т.п.) |
 **billing** (`/auth/*`, `/me`, `/payments/*` и т.п.) → **engine**/**billing** ходят к
-**gateway-app** (:4100, loopback) → **litellm** (:4000, loopback) → провайдеры моделей.
+**gateway-app**/**litellm** через общую внешнюю docker-сеть `isaak_shared` (по имени
+контейнера, `http://gateway-app:4100`/`http://litellm:4000`) — **не через
+host.docker.internal**: на Linux порт, опубликованный как `127.0.0.1:PORT` на хосте,
+недоступен из контейнера через host-gateway route (соединение идёт с IP docker-бриджа,
+не с 127.0.0.1) — поймано на первом реальном деплое, см. §6.
 
 **Почему 3 отдельных Postgres, а не 1 инстанс с 3 БД:** репозитории (monorepo и gateway)
 деплоятся независимо разными пайплайнами — общее владение одной БД между ними усложнило бы
@@ -49,20 +53,23 @@ git-репозитория деплоятся туда СВОИМИ пайпла
 **CD** (`.github/workflows/deploy.yml` в каждом репо) — триггерится `workflow_run` после
 зелёного CI (гейт: деплой не стартует, если тесты не прошли). SSH на сервер → свой
 `scripts/deploy.sh` (git pull → docker build → up -d --force-recreate → миграции/health-check).
-Секреты деплоя (`DEPLOY_HOST`/`DEPLOY_USER`/`DEPLOY_KEY`/`APP_DOMAIN`) — в GitHub → Settings →
-Environments → `production`, задать когда появится доступ к серверу.
+**Секреты настроены и активны** (GitHub → Settings → Secrets and variables → Actions, оба
+репо): `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_KEY` (+ `APP_DOMAIN` только в monorepo — для
+smoke-check). `DEPLOY_KEY` — отдельный ключ, сгенерированный специально для CI (не тот, что
+используется для ручного SSH-администрирования) — можно ротировать/отозвать независимо.
 
-**Локальная проверка перед первым реальным деплоем** (можно сделать без доступа к серверу):
+**Локальная проверка синтаксиса** (без доступа к серверу):
 ```bash
 docker compose -f docker-compose.prod.yml --env-file .env.prod config   # синтаксис
 docker compose -f docker-compose.prod.yml --env-file .env.prod build    # реальная сборка образов
 ```
 
-## 3. Первый деплой на сервер (когда будет доступ)
+## 3. Первый деплой на сервер (уже сделан, для справки/повторного разворота)
 
 ```bash
 # на сервере:
 mkdir -p /opt/isaak /opt/gateway
+docker network create isaak_shared   # общая сеть между двумя стеками, см. §1/§6
 git clone https://github.com/GlebAvershin/paragraf-monorepo /opt/isaak
 git clone https://github.com/GlebAvershin/paragraf-gateway /opt/gateway
 
@@ -77,9 +84,15 @@ cp .env.prod.example .env.prod   # заполнить (см. §4-5); LITELLM_MAS
                                   # GATEWAY_API_SECRET ДОЛЖНЫ совпадать со значениями
                                   # из paragraf-gateway/.env.prod
 ./scripts/deploy.sh
+
+# billing — первичная инициализация схемы (ТОЛЬКО при первом разворачивании,
+# на пустой БД; scripts/migrate-prod.sh рассчитан на УЖЕ существующую схему,
+# db:push/db:seed нужно прогнать руками один раз):
+docker compose -f docker-compose.prod.yml --env-file .env.prod exec billing bunx drizzle-kit push --force
+docker compose -f docker-compose.prod.yml --env-file .env.prod exec billing bun run db:seed
 ```
-Дальше — обычный push в `main` → CI → CD (см. §2). Ручной прогон: `workflow_dispatch`
-в GitHub Actions или `./scripts/deploy.sh` по SSH.
+Дальше — обычный push в `main` → CI → CD (см. §2, уже настроено и активно). Ручной прогон:
+`workflow_dispatch` в GitHub Actions или `./scripts/deploy.sh` по SSH.
 
 ## 4. Сборка web (статика)
 
@@ -99,8 +112,8 @@ Caddy отдаёт `dist/` напрямую (volume-mount в `docker-compose.pro
 `docker-compose.prod.yml`. Ключевое:
 - `JWT_SECRET`/`JWT_ISSUER`/`JWT_AUDIENCE` — одно значение и для engine, и для billing
   (billing выпускает JWT, engine только verify'ит).
-- `LITELLM_BASE_URL`/`ANSWER_URL` — по умолчанию `http://host.docker.internal:4000`/`:4100`
-  (loopback на ТОТ ЖЕ сервер, где крутится `paragraf-gateway`).
+- `LITELLM_BASE_URL`/`ANSWER_URL` — по умолчанию `http://litellm:4000`/`http://gateway-app:4100`
+  (имена контейнеров через общую сеть `isaak_shared`, см. §1/§6 — НЕ `host.docker.internal`).
 - `LITELLM_MASTER_KEY` и `GATEWAY_API_SECRET` — ДОЛЖНЫ побайтово совпадать со значениями
   в `paragraf-gateway/.env.prod` (см. §6). Несовпадение = 401 от gateway-app/litellm.
 - `APP_DOMAIN`/`APP_PUBLIC_URL`, SMTP (§7), CloudPayments (без них `/payments/*` корректно
@@ -122,8 +135,12 @@ docker compose -f docker-compose.prod.yml exec billing bun run create-user clien
 
 Отдельный репозиторий `paragraf-gateway`, деплоится на **ТОТ ЖЕ YC-сервер** (`/opt/gateway`),
 свой `.env.prod` (шаблон — `paragraf-gateway/.env.prod.example`). **Публично не выставляется**
-(loopback-only, `127.0.0.1:4000`/`127.0.0.1:4100`) — engine/billing на этом же сервере ходят
-туда напрямую.
+— litellm/gateway-app подключены к общей внешней docker-сети `isaak_shared`
+(`docker network create isaak_shared`, создаётся идемпотентно в обоих `deploy.sh`),
+engine/billing из монорепо-стека достают их по имени контейнера. Порты `127.0.0.1:4000`/
+`127.0.0.1:4100` тоже открыты — удобно для health-check/отладки прямо с хоста, но НЕ основной
+путь связи (host.docker.internal + loopback-порт между независимыми compose-стеками на Linux
+не работает — соединение из контейнера идёт с IP docker-бриджа, хост его отклоняет).
 
 - **`OPENROUTER_API_KEY`** — Claude (Opus 4.8 / Sonnet 4.6 / Haiku 4.5) идут через
   **OpenRouter**, не напрямую в Anthropic (прямой `api.anthropic.com` с РФ-IP ненадёжен,
@@ -166,6 +183,9 @@ Tesseract/localStorage-vault, это устарело). Поток: браузе
 Storage, 152-ФЗ). Ретеншн 30 дней локально + S3 по политике.
 
 ## 9. Смоук-тест после деплоя
+
+**Пройден вживую 2026-07-01** на https://isaac-ai.ru (пп. 1-3, 6 — полностью; SMTP не
+настроен, OTP-код доставался из логов billing).
 
 1. `https://<домен>/health/liveliness` → `alive` (проверяет engine через Caddy).
 2. Открыть сайт → онбординг → ввести email заранее заведённого юзера → прийти OTP → войти.
