@@ -112,9 +112,16 @@ NODE_ENV=production bun run create-user client@zavod.ru "Имя Фамилия"
 
 ## 6. gateway (LiteLLM) + ключи провайдеров
 
-**Отдельный репозиторий:** `github.com/GlebAvershin/paragraf-gateway` (вынесен из монорепо —
-деплоится на зарубежный VPS). Docker Compose в корне. Нужны (в `.env` / `litellm-config.yaml`):
-- **`ANTHROPIC_API_KEY`** — Claude (Opus 4.8 / Sonnet 4.6 / Haiku 4.5). **Уже работает.**
+**Отдельный репозиторий:** `github.com/GlebAvershin/paragraf-gateway`. Прод — **Yandex Cloud**
+(один сервер, РФ; см. CLAUDE.md — весь стек, включая gateway, теперь на РФ-хостинге).
+Docker Compose в корне. Нужны (в `.env` / `litellm-config.yaml`):
+- **`OPENROUTER_API_KEY`** — Claude (Opus 4.8 / Sonnet 4.6 / Haiku 4.5) идут через
+  **OpenRouter**, не напрямую в Anthropic — прямой вызов `api.anthropic.com` с РФ-IP
+  ненадёжен, OpenRouter стабилен (проверено). **Уже работает.** `ANTHROPIC_API_KEY`
+  не обязателен (оставлен про запас в конфиге). **Грабли:** ключ в `.env` не значит,
+  что он попадёт в контейнер — в `docker-compose.yml` явный whitelist `environment:`
+  для сервиса litellm, забытая строка = 401 от OpenRouter при пустом ключе. После
+  правки `.env` — `docker compose up -d --force-recreate litellm`.
 - **GigaChat** (Sber) — `GIGACHAT_*` креды. **Нужно завести** (в dev не было → короткий запрос
   в авто-режиме падал). Модели РФ-хостинга — важно для 152-ФЗ.
 - **YandexGPT** — `YANDEX_API_KEY` / `YANDEX_FOLDER_ID`. Опционально.

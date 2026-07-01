@@ -497,10 +497,29 @@ Master-key — в `gateway/.env`. Кэш ключа в памяти LiteLLM — 
 
 ## Claude API + «Углублённое размышление» + Opus 4.8 (2026-06-13)
 
-- **Claude API подключён** — реальный `ANTHROPIC_API_KEY` в `gateway/.env`. Работают
-  `claude-sonnet`→Sonnet 4.6, `claude-opus`→**Opus 4.8** (обновлён с 4.7; 4.8 помечена
-  `reasoning:true` в models.dev), `claude-haiku`→Haiku 4.5. Подписи ставок в `seed.ts`
-  выровнены (Sonnet 4.6 / Opus 4.8 / Haiku 4.5). См. tpm/rpm-грабли выше (Operational notes).
+- **Claude API — через OpenRouter (2026-07-01, разворот с прямого Anthropic).**
+  Прод-сервер — Yandex Cloud (РФ); прямой вызов `api.anthropic.com` с РФ-IP ненадёжен
+  (часть запросов резалась). OpenRouter из РФ работает стабильно (проверено вживую
+  юзером + live-тестом всех трёх моделей). В `litellm-config.yaml` все `claude-*`
+  алиасы теперь `model: openrouter/anthropic/claude-<version>` (ключ
+  `OPENROUTER_API_KEY`, НЕ `ANTHROPIC_API_KEY`) — id модели берётся из каталога
+  OpenRouter (openrouter.ai/models), версия через **точку**, не дефис:
+  `anthropic/claude-sonnet-4.6`, `anthropic/claude-opus-4.8`, `anthropic/claude-haiku-4.5`
+  (сверено по факту на сайте OpenRouter). `claude-sonnet-4-5`/`claude-opus-4-7`
+  (старые пинованные версии) — по аналогии той же конвенции, вживую НЕ сверялись
+  (сеть на момент правки была недоступна) — если понадобятся, проверить точный id.
+  Работают: `claude-sonnet`→Sonnet 4.6, `claude-opus`→**Opus 4.8**, `claude-haiku`→
+  Haiku 4.5. **extended thinking (`reasoning_effort`) через OpenRouter работает
+  без регрессии** — проверено (`reasoning_content` в ответе). **`OPENROUTER_API_KEY`
+  нужно прописать в `paragraf-gateway/.env`** (и в docker-compose.yml пробросить в
+  контейнер litellm — грабли: env-переменная в `.env` НЕ означает, что она попадёт
+  в контейнер, у compose явный whitelist `environment:`, забытая строка = 401
+  «No cookie auth credentials found» от OpenRouter при пустом ключе).
+  `ANTHROPIC_API_KEY` оставлен в конфиге про запас (не обязателен, `:-` дефолт
+  пустой) — на случай не-РФ деплоя с прямым доступом к Anthropic. Подписи ставок в
+  `seed.ts` не менялись (Sonnet 4.6 / Opus 4.8 / Haiku 4.5) — биллинг видит те же
+  имена моделей, провайдер под капотом сменился прозрачно. См. tpm/rpm-грабли выше
+  (Operational notes) — актуальны независимо от провайдера (тот же LiteLLM-баг).
 - **«Углублённое размышление» (extended thinking)** — `app/src/ourapp/deep-thinking/`.
   Бинарный тумблер «Углублённо» (иконка glasses) в композере: ВКЛ → для Claude
   (sonnet/opus) submit выставляет `variant="high"` → opencode переводит его в нативный
