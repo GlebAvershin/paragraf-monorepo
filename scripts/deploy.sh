@@ -12,6 +12,12 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
+# Non-interactive SSH-сессии (в т.ч. `ssh host "cmd"` из GitHub Actions deploy.yml)
+# НЕ грузят ~/.bashrc → bun не резолвится в PATH ("command not found"), скрипт
+# падает на build-static.sh сразу после git pull (поймано на первом реальном
+# автодеплое — git pull прошёл, дальше тишина, контейнеры не пересоздались).
+export PATH="$HOME/.bun/bin:$PATH"
+
 echo "[deploy] $(date -Is) git pull"
 git pull --ff-only origin main
 

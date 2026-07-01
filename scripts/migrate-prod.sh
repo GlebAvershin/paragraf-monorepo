@@ -10,6 +10,11 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
+# Non-interactive SSH-сессии не грузят ~/.bashrc → bun не в PATH (см. deploy.sh).
+# Здесь bunx фактически не используется на хосте (запускается внутри контейнера
+# через docker compose exec), но держим для консистентности/автономного запуска.
+export PATH="$HOME/.bun/bin:$PATH"
+
 set -a; source .env.prod; set +a
 
 echo "[migrate] $(date -Is) start"
