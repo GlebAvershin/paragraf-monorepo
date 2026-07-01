@@ -15,6 +15,7 @@
     "db:studio": "drizzle-kit studio",
     "db:push": "drizzle-kit push --force",
     "db:seed": "bun run src/db/seed.ts",
+    "create-user": "bun run src/scripts/create-user.ts",
     "test": "bun test",
     "test:payments": "bun test test/payments-flow.test.ts",
     "test:e2e": "bun test test/e2e-golden.test.ts"

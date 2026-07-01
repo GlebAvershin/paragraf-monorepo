@@ -325,6 +325,9 @@ export const magicLinkTokens = pgTable(
     otpHash: text("otp_hash"),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
     consumedAt: timestamp("consumed_at", { withTimezone: true }),
+    // Счётчик неудачных попыток ввода кода. После MAX_OTP_ATTEMPTS (auth.ts)
+    // строка считается исчерпанной — защита от перебора 6-значного OTP.
+    attempts: integer("attempts").notNull().default(0),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => ({
