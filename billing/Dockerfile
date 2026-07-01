@@ -16,7 +16,12 @@ FROM deps AS build
 COPY . .
 # Bun сам резолвит TS — компиляция не нужна, но проверим типы.
 # tsc --noEmit запускаем вне Docker (на CI), здесь только bundle.
-RUN bun build src/index.ts --outdir dist --target bun --minify
+# Три entry-точки: сам сервис + 2 воркера (etl/recurrent-retry, см.
+# docker-compose.prod.yml — команды billing_etl_worker/billing_retry_worker
+# запускают dist/worker/*.js, раньше бандлился только index.ts → "Module not
+# found" сразу при старте воркеров).
+RUN bun build src/index.ts src/worker/etl.ts src/worker/recurrent-retry.ts \
+  --outdir dist --target bun --minify
 
 # === Stage 3: runtime ===
 FROM oven/bun:1.3-alpine AS runtime
