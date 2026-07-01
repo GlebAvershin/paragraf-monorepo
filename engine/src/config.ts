@@ -23,6 +23,10 @@ export const config = {
   // gateway-app (РФ) — движок шлёт СЫРОЙ текст сюда; маскирование/модель/ML — там.
   // Раньше движок ходил прямо в LiteLLM (:4000); теперь между ними app-слой (:4100).
   ANSWER_URL: process.env.ANSWER_URL ?? "http://localhost:4100",
+  // Общий секрет с gateway: движок шлёт его заголовком X-Internal-Key, gateway
+  // принимает только запросы с ним. Должен совпадать с GATEWAY_API_SECRET шлюза.
+  // Пусто → заголовок не шлём (gateway тогда тоже без проверки — dev).
+  ANSWER_SECRET: process.env.GATEWAY_API_SECRET ?? "",
 
   // Billing — движок берёт litellm-ключ юзера (для бюджета/кредитов per-user).
   // 127.0.0.1, НЕ localhost: Bun на Windows не резолвит localhost (как в billing/CLAUDE.md).

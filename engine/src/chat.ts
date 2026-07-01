@@ -51,6 +51,13 @@ function extractAttachments(
 
 const ZERO_TOKENS = { input: 0, output: 0, reasoning: 0, cache: { read: 0, write: 0 } }
 
+/** Заголовки к gateway /answer: JSON + общий секрет (если задан) для гейта на стороне шлюза. */
+function answerHeaders(): Record<string, string> {
+  const headers: Record<string, string> = { "content-type": "application/json" }
+  if (config.ANSWER_SECRET) headers["x-internal-key"] = config.ANSWER_SECRET
+  return headers
+}
+
 // Заголовок сессии. После первого обмена генерируем краткий заголовок дешёвой моделью.
 // Запрос идёт через gateway-app (как и основной чат) — там же маскирование.
 const TITLE_MODEL = "claude-haiku"
@@ -60,7 +67,7 @@ async function generateTitle(key: string, userText: string, assistantText: strin
   try {
     const res = await fetch(`${config.ANSWER_URL}/answer`, {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: answerHeaders(),
       body: JSON.stringify({
         model: TITLE_MODEL,
         userKey: key,
@@ -167,7 +174,7 @@ export async function runPrompt(input: PromptInput): Promise<{ info: StoredMessa
     const messages = await historyForGateway(userId, sessionID)
     const res = await fetch(`${config.ANSWER_URL}/answer`, {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: answerHeaders(),
       body: JSON.stringify({
         model: input.model.modelID,
         variant: input.variant,

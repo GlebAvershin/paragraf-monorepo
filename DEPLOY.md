@@ -125,6 +125,14 @@ NODE_ENV=production bun run create-user client@zavod.ru "Имя Фамилия"
 При добавлении/переименовании модели править 4 места (см. CLAUDE.md: litellm-config.yaml,
 billing/seed.ts, allowed-models тарифов/ключей, провайдер `ourapp-ru` в конфиге).
 
+**gateway-app (app-слой :4100) — общий секрет.** Ручка `/answer` наружу НЕ выставляется
+(только движок ходит на неё изнутри). Дополнительно — секрет `GATEWAY_API_SECRET`: движок
+шлёт его заголовком `X-Internal-Key`, шлюз middleware принимает только запросы с ним
+(health-ручки открыты для liveness). Секрет ДОЛЖЕН побайтово совпадать в двух местах:
+`paragraf-gateway/app/.env` и `engine/.env` (одно имя `GATEWAY_API_SECRET`). Сгенерировать:
+`bun -e 'console.log(Buffer.from(crypto.getRandomValues(new Uint8Array(32))).toString("hex"))'`.
+Пусто с обеих сторон → проверка отключена (только dev; в проде задать обязательно).
+
 ## 7. 152-ФЗ (юр./бух. данные)
 
 - **ПДн маскируются на клиенте** (в браузере) ДО отправки: на сервер/в зарубежные модели
