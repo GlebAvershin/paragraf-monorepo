@@ -108,6 +108,11 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       LOG_LEVEL: ${LOG_LEVEL:-info}
     networks: [default, isaak_shared]
+    # Наследует HEALTHCHECK образа billing (curl localhost:3000) — воркер не
+    # держит HTTP-порт, всегда был бы "unhealthy" косметически. Не влияет на
+    # restart: unless-stopped (тот срабатывает по выходу процесса, не по health).
+    healthcheck:
+      disable: true
 
   billing_retry_worker:
     image: isaak/billing:latest
@@ -127,6 +132,8 @@ services:
       CLOUDPAYMENTS_API_SECRET: ${CLOUDPAYMENTS_API_SECRET}
       LOG_LEVEL: ${LOG_LEVEL:-info}
     networks: [default, isaak_shared]
+    healthcheck:
+      disable: true
 
   engine:
     build:
