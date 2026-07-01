@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# scripts/deploy.sh — обновить и перезапустить весь прод-стек монорепо
+# (web-статика + engine + billing) на YC-сервере.
+#
+# Используется CI (deploy.yml) или вручную из SSH:
+#   cd /opt/isaak && ./scripts/deploy.sh
+#
+# Шаги: git pull → собрать web-статику → docker build → up -d --force-recreate
+# → миграции billing → health-check. Останавливается на первой ошибке (set -e).
+# Откат при failure: `git checkout <previous-sha> && ./scripts/deploy.sh`.
+
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+echo "[deploy] $(date -Is) git pull"
+git pull --ff-only origin main
+
+echo "[deploy] build web static"
+./scripts/build-static.sh
+
+echo "[deploy] docker compose build"
+docker compose -f docker-compose.prod.yml --env-file .env.prod build
+
+echo "[deploy] docker compose up -d --force-recreate"
+docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --force-recreate
+
+echo "[deploy] waiting 15s for warm-up..."
+sleep 15
+
+echo "[deploy] applying migrations + health-check..."
+./scripts/migrate-prod.sh
+
+echo "[deploy] OK"

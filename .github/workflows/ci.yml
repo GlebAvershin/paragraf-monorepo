@@ -1,15 +1,22 @@
-# CI — typecheck + tests на каждом PR (ТЗ-06 §6).
+# CI — typecheck + tests на каждом push/PR. Гейт для деплоя (см. deploy.yml — job
+# `deploy` requires `needs: [billing, engine, doc-tools, web-app]`, деплой не
+# стартует, пока все зелёные).
+#
+# Пути актуализированы под структуру после слияния glar → web/ (2026-06-26):
+# было desktop/packages/{app,doc-tools} — стало web/packages/app и doc-tools/
+# (отдельный пакет в корне). PII-тесты (app/src/ourapp/pii/pii.test.ts) удалены
+# при развороте архитектуры (маскирование ушло в gateway) — здесь их больше нет.
 name: CI
 
 on:
   pull_request:
-    branches: [dev, prod, main, master, "ourapp/main"]
+    branches: [main]
   push:
-    branches: [dev, prod, main, master, "ourapp/main"]
+    branches: [main]
 
 jobs:
   billing:
-    name: Billing — typecheck + tests
+    name: billing — typecheck + tests
     runs-on: ubuntu-24.04
     services:
       postgres:
@@ -35,11 +42,11 @@ jobs:
       - name: Install deps
         run: bun install --frozen-lockfile
       - name: Typecheck
-        run: bunx tsc --noEmit
+        run: bun run typecheck
       - name: Apply schema + seed (fresh CI DB)
         env:
           DATABASE_URL: postgres://billing:billing@localhost:5433/billing
-          JWT_SECRET: test-secret-${{ github.run_id }}-padding-to-32-chars
+          JWT_SECRET: test-secret-${{ github.run_id }}-padding-to-32-chars-min
           LITELLM_BASE_URL: http://localhost:4000
           LITELLM_MASTER_KEY: sk-test-master
         run: |
@@ -48,43 +55,61 @@ jobs:
       - name: Tests
         env:
           DATABASE_URL: postgres://billing:billing@localhost:5433/billing
-          JWT_SECRET: test-secret-${{ github.run_id }}
+          JWT_SECRET: test-secret-${{ github.run_id }}-padding-to-32-chars-min
           LITELLM_BASE_URL: http://localhost:4000
           LITELLM_MASTER_KEY: sk-test-master
         run: bun test
 
-  doc-tools:
-    name: doc-tools — tests
+  engine:
+    name: engine — typecheck
     runs-on: ubuntu-24.04
     defaults:
       run:
-        working-directory: desktop/packages/doc-tools
+        working-directory: engine
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.3.14
-      - name: Install workspace deps
-        working-directory: desktop
+      - name: Install deps
         run: bun install --frozen-lockfile
+      - name: Typecheck
+        run: bun run typecheck
+      # NB: engine не имеет юнит-тестов (тонкий store+forward слой, покрыт
+      # e2e-проверками вручную). Добавить `bun test`, когда появится сьют.
+
+  doc-tools:
+    name: doc-tools — typecheck + tests
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: doc-tools
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+      - name: Install deps
+        run: bun install --frozen-lockfile
+      - name: Typecheck
+        run: bun run typecheck
       - name: Tests
         run: bun test
 
-  app-tests:
-    name: desktop/app — scenarios + pii tests
+  web-app:
+    name: web/app — typecheck + tests
     runs-on: ubuntu-24.04
     defaults:
       run:
-        working-directory: desktop/packages/app
+        working-directory: web
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.3.14
       - name: Install workspace deps
-        working-directory: desktop
         run: bun install --frozen-lockfile
-      - name: Scenario tests
-        run: bun test src/ourapp/scenarios/scenarios.test.ts
-      - name: PII tests
-        run: bun test src/ourapp/pii/pii.test.ts
+      - name: Typecheck
+        run: bun run --cwd packages/app typecheck
+      - name: Tests
+        run: bun run --cwd packages/app test:unit

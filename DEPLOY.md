@@ -1,174 +1,189 @@
-# Isaak — деплой веб-версии (передача коллеге)
+# Isaak — деплой прод-стека (YC-сервер)
 
 > Бренд: **Isaak** (домен https://isaac-ai.ru). Раньше было «Параграф».
 
-> Статус кода: веб-миграция завершена и проверена e2e. typecheck зелёный во всех пакетах,
-> тесты: app 388/388, doc-tools 10/10, PII 33/33; lint 0 errors; прод-сборка web собирается.
-> Этот файл — что поднять и как связать на проде. Подробный контекст — в `CLAUDE.md`.
+> Статус кода: typecheck зелёный во всех 5 пакетов (billing/engine/doc-tools/web/gateway-app),
+> известные CVE в зависимостях пропатчены (`bun audit`), auth/CORS/gateway-секрет — security-
+> аудит пройден (см. CLAUDE.md). CI/CD написан и валидирован синтаксически (`docker compose
+> config`), но **живой прогон на реальном сервере ещё не делался** — ждём доступ к YC.
+> Подробный контекст решений — в `CLAUDE.md`.
 
 ## 1. Из чего состоит система
 
-| Компонент | Что это | Порт (dev) | Деплой |
+**АРХИТЕКТУРА (2026-07-01): весь стек — на ОДНОМ YC-сервере** (РФ). Два независимых
+git-репозитория деплоятся туда СВОИМИ пайплайнами, в соседние каталоги:
+
+| Компонент | Что это | Порт | Публично? |
 |---|---|---|---|
-| **web** (статика) | SolidJS-рендерер (`web/packages/app`) — сам сайт | 5173 (vite dev) | `vite build` → `dist/` на статик-хостинг/CDN |
-| **engine** | Наш бэкенд чата (Hono), контракт opencode (`engine/`) | 4096 | Node/Bun-процесс |
-| **billing** | Пользователи, OTP-вход, подписки, кредиты, платежи (`billing/`) | 3000 | Node/Bun-процесс |
-| **gateway** | LiteLLM Proxy — абстракция Claude/GPT/GigaChat/Yandex | 4000 | Docker — **отдельный репо `paragraf-gateway`** (зарубеж) |
-| **postgres × 3** | БД engine, billing, gateway(litellm) | 5434/5433/5432 | Managed Postgres ×3 (или 1 инстанс, 3 БД) |
-| **SMTP** | Отправка OTP-кодов и платёжных писем | — | Транзакционный сервис (см. §6) |
+| **web** (статика) | SolidJS-рендерер (`web/packages/app`) | — (файлы) | да, через Caddy |
+| **engine** | Бэкенд чата (Hono), контракт opencode (`engine/`) | 4096 | да, через Caddy (path-based) |
+| **billing** | Юзеры, OTP-вход, подписки, кредиты, платежи (`billing/`) | 3000 | да, через Caddy (path-based) |
+| **gateway-app** | Маскирование/auto-model/OCR/ML-гейт перед LiteLLM (`paragraf-gateway/app`) | 4100 | **нет** — loopback-only |
+| **litellm** | Proxy-абстракция Claude(via OpenRouter)/GigaChat/YandexGPT | 4000 | **нет** — loopback-only |
+| **postgres × 3** | Отдельные БД: billing, engine, litellm | 5432/5433/5434 | нет, внутри docker-сети |
+| **SMTP** | OTP-коды и платёжные письма | — | внешний транзакционный сервис |
 
-Поток: **web** → (API чата) **engine** → **gateway** → провайдеры моделей; **web** →
-(вход/кредиты/платежи) **billing**; **billing** ↔ **gateway** (sync ключей, ETL-списание).
+Поток: браузер → **Caddy** (один домен) → статика | **engine** (`/session*` и т.п.) |
+**billing** (`/auth/*`, `/me`, `/payments/*` и т.п.) → **engine**/**billing** ходят к
+**gateway-app** (:4100, loopback) → **litellm** (:4000, loopback) → провайдеры моделей.
 
-**Репозитории (2 + ML-коллеги):**
-- `paragraf-monorepo` (этот) — **РФ**: `web` (фронт, форк opencode → статика), `engine`, `billing`, `doc-tools`, `landing`, docs.
-- `paragraf-gateway` — **зарубеж**: LiteLLM (вынесен из монорепо).
-- (ML-коллега заводит свой репо отдельно — верификация ответов/аналитика, РФ.)
-Локальный дев: `gateway` клонировать соседней папкой `../paragraf-gateway`; `up.ps1` это учитывает.
+**Почему 3 отдельных Postgres, а не 1 инстанс с 3 БД:** репозитории (monorepo и gateway)
+деплоятся независимо разными пайплайнами — общее владение одной БД между ними усложнило бы
+миграции/рестарты без явной выгоды (сервер свой, не managed-DB-as-a-service — лишний
+контейнер Postgres ничего не стоит).
 
-## 2. Сборка web (статика)
+**Репозитории:**
+- `paragraf-monorepo` (этот) — `web`, `engine`, `billing`, `doc-tools`, `landing`, docs.
+  Деплой → `/opt/isaak` на сервере.
+- `paragraf-gateway` — LiteLLM + gateway-app (маскирование/auto-model/OCR/ML).
+  Деплой → `/opt/gateway` на ТОМ ЖЕ сервере. Здесь же работает ML-коллега.
+- Локальный дев: `paragraf-gateway` клонировать соседней папкой `../paragraf-gateway`;
+  `up.ps1`/`Makefile` это учитывают.
+
+## 2. CI/CD
+
+**CI** (`.github/workflows/ci.yml` в каждом репо) — typecheck + тесты на каждый push/PR
+в `main`: billing, engine (только typecheck — юнит-тестов пока нет), doc-tools, web/app
+(monorepo); app (gateway). Ветки `prod` нет — деплоим прямо с `main`.
+
+**CD** (`.github/workflows/deploy.yml` в каждом репо) — триггерится `workflow_run` после
+зелёного CI (гейт: деплой не стартует, если тесты не прошли). SSH на сервер → свой
+`scripts/deploy.sh` (git pull → docker build → up -d --force-recreate → миграции/health-check).
+Секреты деплоя (`DEPLOY_HOST`/`DEPLOY_USER`/`DEPLOY_KEY`/`APP_DOMAIN`) — в GitHub → Settings →
+Environments → `production`, задать когда появится доступ к серверу.
+
+**Локальная проверка перед первым реальным деплоем** (можно сделать без доступа к серверу):
+```bash
+docker compose -f docker-compose.prod.yml --env-file .env.prod config   # синтаксис
+docker compose -f docker-compose.prod.yml --env-file .env.prod build    # реальная сборка образов
+```
+
+## 3. Первый деплой на сервер (когда будет доступ)
 
 ```bash
-cd web/packages/app
-PATH="…/.bun/bin:$PATH" bun run build      # → dist/
+# на сервере:
+mkdir -p /opt/isaak /opt/gateway
+git clone https://github.com/GlebAvershin/paragraf-monorepo /opt/isaak
+git clone https://github.com/GlebAvershin/paragraf-gateway /opt/gateway
+
+# gateway — сначала (движок его использует)
+cd /opt/gateway
+cp .env.prod.example .env.prod   # заполнить (см. §6)
+./scripts/deploy.sh
+
+# monorepo
+cd /opt/isaak
+cp .env.prod.example .env.prod   # заполнить (см. §4-5); LITELLM_MASTER_KEY и
+                                  # GATEWAY_API_SECRET ДОЛЖНЫ совпадать со значениями
+                                  # из paragraf-gateway/.env.prod
+./scripts/deploy.sh
 ```
-`dist/` — готовая статика (index.html + assets/ + `tessdata/` + `tesseract/` для OCR).
-Залить на любой статик-хостинг (Cloudflare Pages / Netlify / nginx / S3+CDN).
+Дальше — обычный push в `main` → CI → CD (см. §2). Ручной прогон: `workflow_dispatch`
+в GitHub Actions или `./scripts/deploy.sh` по SSH.
 
-**SPA-fallback:** все неизвестные пути отдавать на `index.html` (клиентский роутинг).
+## 4. Сборка web (статика)
 
-**MIME-типы (важно для OCR!):** хост ДОЛЖЕН отдавать:
-- `/tesseract/*.wasm.js` → `text/javascript` (грузятся через `importScripts` в web-worker;
-  при неверном MIME OCR падает целиком). `dist/_headers` покрывает `*.js`, но вложенные
-  `*.wasm.js` нужно проверить — при необходимости добавить правило `/tesseract/*`.
-- `*.wasm` → `application/wasm`.
-- `/tessdata/*.traineddata.gz` — отдавать **как есть** (НЕ распаковывать на лету;
-  Content-Encoding не навешивать поверх уже-gz).
-
-## 3. Связка web → engine / billing (URL-и, CORS)
-
-В проде рендерер берёт адреса так:
-- **engine:** `location.origin` по умолчанию (ожидается reverse-proxy: статика + API движка
-  на одном домене → без CORS). Иначе задать на этапе сборки **`VITE_OURAPP_ENGINE_URL`**
-  (напр. `https://api.isaac-ai.ru`).
-- **billing:** **`VITE_OURAPP_BILLING_URL`** — задать ОБЯЗАТЕЛЬНО (дефолт `127.0.0.1:3000`
-  только для dev). Напр. `https://api.isaac-ai.ru` (если billing на том же домене — путём)
-  или отдельный домен.
-
-**Рекомендуемая топология (проще всего):** один домен `app.isaac-ai.ru` + reverse-proxy
-(nginx/Caddy): `/` → статика `dist/`; `/session*`, `/global/*`, `/provider*`, `/config*`,
-`/project*`, `/path`, `/agent`, `/app/*`, `/command`, `/mcp`, `/lsp`, `/vcs`, `/question`,
-`/permission`, `/health/*` → **engine:4096**; пути billing (`/auth/*`, `/me`, `/limits`,
-`/credits/*`, `/usage/*`, `/payments/*`, `/webhooks/*`, `/waitlist`) → **billing:3000**.
-Тогда `VITE_OURAPP_ENGINE_URL`/`VITE_OURAPP_BILLING_URL` можно не задавать (same-origin).
-
-Если домены разные — выставить оба env при сборке и разрешить CORS на engine/billing.
-
-## 4. engine (env)
-
-`engine/.env` (см. `engine/src/config.ts`):
-| Переменная | Назначение |
-|---|---|
-| `JWT_SECRET` | **ДОЛЖЕН совпадать с billing** (движок верифицирует billing-JWT) |
-| `JWT_ISSUER` / `JWT_AUDIENCE` | по умолчанию `billing.local` / `ourapp-desktop` — совпасть с billing |
-| `DATABASE_URL` | Postgres движка |
-| `GATEWAY_URL` | URL LiteLLM (gateway) |
-| `BILLING_URL` | URL billing (движок дёргает `/me` за litellm-ключом) |
-| `PORT` | 4096 |
-
-Запуск: `cd engine && bun run start`. Схема таблиц создаётся при старте (`initSchema`).
-
-## 5. billing (env)
-
-`billing/.env` (см. `billing/.env.example`):
-- `JWT_SECRET` (тот же, что у engine), `JWT_ISSUER`, `JWT_AUDIENCE`
-- `DATABASE_URL` (Postgres billing)
-- `LITELLM_BASE_URL` (gateway), `LITELLM_MASTER_KEY` (мастер-ключ LiteLLM)
-- `SMTP_HOST/PORT/USER/PASSWORD/SMTP_FROM` — транзакционный SMTP (см. §6)
-- `CLOUDPAYMENTS_PUBLIC_ID/API_SECRET/WEBHOOK_SECRET` — платежи (без них `/payments/*`
-  отдают 503 — это корректная деградация, не баг)
-- `APP_PUBLIC_URL` — публичный URL сайта (для писем), `MAGIC_LINK_TTL_MINUTES`, `PORT=3000`
-
-Перед первым стартом применить миграции:
+`scripts/build-static.sh` делает это автоматически (часть `deploy.sh`), вручную:
 ```bash
-cd billing
-bun run db:push       # схема из schema.ts
-bun run db:seed       # тарифы + ставки моделей (model_rates)
-# + ручные миграции: drizzle/manual/*.sql прогнать psql-ом по порядку
+bun install --cwd web --frozen-lockfile
+bun run --cwd web/packages/app build      # → web/packages/app/dist
 ```
-ETL-воркер (списание кредитов из spend-логов): `NODE_ENV=production bun run src/worker/etl.ts`
-запускать периодически (cron) ИЛИ как постоянный цикл — иначе кредиты не списываются.
+Caddy отдаёт `dist/` напрямую (volume-mount в `docker-compose.prod.yml`), SPA-fallback
+на `index.html` настроен в `Caddyfile`. **OCR/Tesseract больше НЕ в клиентском бандле**
+(распознавание сканов ушло на сервер, в gateway-app, см. CLAUDE.md «РАЗВОРОТ АРХИТЕКТУРЫ») —
+никаких особых MIME-правил для `*.wasm`/`tessdata` теперь не нужно.
+
+## 5. engine + billing (env)
+
+Единый `.env.prod` в корне монорепо (шаблон — `.env.prod.example`), читается
+`docker-compose.prod.yml`. Ключевое:
+- `JWT_SECRET`/`JWT_ISSUER`/`JWT_AUDIENCE` — одно значение и для engine, и для billing
+  (billing выпускает JWT, engine только verify'ит).
+- `LITELLM_BASE_URL`/`ANSWER_URL` — по умолчанию `http://host.docker.internal:4000`/`:4100`
+  (loopback на ТОТ ЖЕ сервер, где крутится `paragraf-gateway`).
+- `LITELLM_MASTER_KEY` и `GATEWAY_API_SECRET` — ДОЛЖНЫ побайтово совпадать со значениями
+  в `paragraf-gateway/.env.prod` (см. §6). Несовпадение = 401 от gateway-app/litellm.
+- `APP_DOMAIN`/`APP_PUBLIC_URL`, SMTP (§7), CloudPayments (без них `/payments/*` корректно
+  отдают 503 — не баг), `BACKUP_S3_*` (§8).
+
+Миграции billing применяются `scripts/migrate-prod.sh` (часть `deploy.sh`) — drizzle +
+manual SQL + health-check. Engine схему создаёт сам при старте (`initSchema`,
+`CREATE TABLE IF NOT EXISTS`) — отдельного шага не требует.
 
 ### Создание кабинетов (allowlist — вход только заранее заведённым)
 Самозапись закрыта: вход по OTP работает ТОЛЬКО для существующих active-юзеров
-(см. CLAUDE.md «Вход — ТОЛЬКО по allowlist»). Первым клиентам кабинеты заводим
-вручную (нужен поднятый LiteLLM-шлюз — скрипт создаёт виртуальный ключ):
+(см. CLAUDE.md «Вход — ТОЛЬКО по allowlist»). Кабинеты первым клиентам заводим вручную:
 ```bash
-cd billing
-NODE_ENV=production bun run create-user client@zavod.ru "Имя Фамилия"
+docker compose -f docker-compose.prod.yml exec billing bun run create-user client@zavod.ru "Имя Фамилия"
 ```
-Дальше клиент заходит на сайт, вводит этот email → приходит OTP-код → внутри.
-Скрипт идемпотентен (повторный запуск не дублирует, дозаводит подписку если её нет).
+Дальше клиент заходит на сайт, вводит этот email → приходит OTP-код → внутри. Идемпотентно.
 
-## 6. gateway (LiteLLM) + ключи провайдеров
+## 6. gateway (LiteLLM + gateway-app) + ключи провайдеров
 
-**Отдельный репозиторий:** `github.com/GlebAvershin/paragraf-gateway`. Прод — **Yandex Cloud**
-(один сервер, РФ; см. CLAUDE.md — весь стек, включая gateway, теперь на РФ-хостинге).
-Docker Compose в корне. Нужны (в `.env` / `litellm-config.yaml`):
+Отдельный репозиторий `paragraf-gateway`, деплоится на **ТОТ ЖЕ YC-сервер** (`/opt/gateway`),
+свой `.env.prod` (шаблон — `paragraf-gateway/.env.prod.example`). **Публично не выставляется**
+(loopback-only, `127.0.0.1:4000`/`127.0.0.1:4100`) — engine/billing на этом же сервере ходят
+туда напрямую.
+
 - **`OPENROUTER_API_KEY`** — Claude (Opus 4.8 / Sonnet 4.6 / Haiku 4.5) идут через
-  **OpenRouter**, не напрямую в Anthropic — прямой вызов `api.anthropic.com` с РФ-IP
-  ненадёжен, OpenRouter стабилен (проверено). **Уже работает.** `ANTHROPIC_API_KEY`
-  не обязателен (оставлен про запас в конфиге). **Грабли:** ключ в `.env` не значит,
-  что он попадёт в контейнер — в `docker-compose.yml` явный whitelist `environment:`
-  для сервиса litellm, забытая строка = 401 от OpenRouter при пустом ключе. После
-  правки `.env` — `docker compose up -d --force-recreate litellm`.
-- **GigaChat** (Sber) — `GIGACHAT_*` креды. **Нужно завести** (в dev не было → короткий запрос
-  в авто-режиме падал). Модели РФ-хостинга — важно для 152-ФЗ.
-- **YandexGPT** — `YANDEX_API_KEY` / `YANDEX_FOLDER_ID`. Опционально.
-- Мастер-ключ LiteLLM (тот же в billing `LITELLM_MASTER_KEY`).
-- Версия LiteLLM запиннена дайджестом (см. CLAUDE.md — НЕ ставить tpm/rpm на ключи без
-  перепроверки бага 1.85.1).
+  **OpenRouter**, не напрямую в Anthropic (прямой `api.anthropic.com` с РФ-IP ненадёжен,
+  проверено). `ANTHROPIC_API_KEY` не обязателен (про запас). **Грабли:** ключ в `.env.prod`
+  не значит, что попадёт в контейнер — `docker-compose.prod.yml` явно перечисляет
+  `environment:` для litellm, забытая строка = 401 «No cookie auth credentials found».
+- **`GATEWAY_API_SECRET`** — ДОЛЖЕН совпадать с тем же именем в `paragraf-monorepo/.env.prod`
+  (движок шлёт заголовком `X-Internal-Key`, gateway-app проверяет). Сгенерировать:
+  `bun -e 'console.log(Buffer.from(crypto.getRandomValues(new Uint8Array(32))).toString("hex"))'`.
+- **`LITELLM_MASTER_KEY`** — ДОЛЖЕН совпадать с тем же именем в `paragraf-monorepo/.env.prod`.
+- **GigaChat** (Sber) — `GIGACHAT_*` креды. Модели РФ-хостинга — важно для 152-ФЗ.
+- **YandexGPT** — `YANDEX_API_KEY`/`YANDEX_FOLDER_ID`. Опционально.
+- LiteLLM запиннен digest'ом (не floating-тегом) — см. CLAUDE.md, tpm/rpm-баг v3
+  rate-лимитера. НЕ ставить tpm/rpm на виртуальные ключи без перепроверки на новом digest.
 
 При добавлении/переименовании модели править 4 места (см. CLAUDE.md: litellm-config.yaml,
 billing/seed.ts, allowed-models тарифов/ключей, провайдер `ourapp-ru` в конфиге).
 
-**gateway-app (app-слой :4100) — общий секрет.** Ручка `/answer` наружу НЕ выставляется
-(только движок ходит на неё изнутри). Дополнительно — секрет `GATEWAY_API_SECRET`: движок
-шлёт его заголовком `X-Internal-Key`, шлюз middleware принимает только запросы с ним
-(health-ручки открыты для liveness). Секрет ДОЛЖЕН побайтово совпадать в двух местах:
-`paragraf-gateway/app/.env` и `engine/.env` (одно имя `GATEWAY_API_SECRET`). Сгенерировать:
-`bun -e 'console.log(Buffer.from(crypto.getRandomValues(new Uint8Array(32))).toString("hex"))'`.
-Пусто с обеих сторон → проверка отключена (только dev; в проде задать обязательно).
+## 7. 152-ФЗ (юр./бух. данные, ПДн)
 
-## 7. 152-ФЗ (юр./бух. данные)
+**Маскирование и OCR — server-side, в gateway-app (РФ)**, не в браузере (было наоборот
+до разворота архитектуры 2026-06-27 — если видите старые заметки про клиентский
+Tesseract/localStorage-vault, это устарело). Поток: браузер шлёт СЫРОЙ текст +
+картинки-сканы → engine (хранит сырым, РФ) → gateway-app маскирует ДО вызова модели →
+модель → демаск → обратно. За границу (к OpenRouter) уходит только уже обезличенный текст.
+РФ-модели (GigaChat/YandexGPT) — маскирование авто-выключается (данные и так не покидают РФ).
 
-- **ПДн маскируются на клиенте** (в браузере) ДО отправки: на сервер/в зарубежные модели
-  уходит обезличенный текст. Сканы распознаются локально (Tesseract) — картинка не уходит.
-  Это уже реализовано и проверено. Демаск-словарь хранится в localStorage браузера юзера.
-- РФ-данные направлять в РФ-модели (GigaChat) — для них маскирование авто-выключается.
-- **Gateway за рубежом + IP пользователя:** LiteLLM пишет `requester_ip_address` в spend-логи.
-  Настроить прод-прокси так, чтобы реальный IP РФ-юзера НЕ доходил до LiteLLM (не форвардить
-  `X-Forwarded-For`/`CF-Connecting-IP`, либо РФ-прокси перед шлюзом). Детали — CLAUDE.md
-  «Prod-харденинг».
+**ПДн в БД (РФ):** и billing (email/платежи), и engine (сырая история чатов) хранят ПДн.
+Требование к проду: **шифрование БД at-rest** — не настроено на уровне docker-compose,
+делается на уровне диска/managed-снапшотов YC при первом деплое.
 
-## 8. SMTP (OTP-вход)
+## 8. SMTP + бэкапы
 
-Вход — только по OTP-коду на email. Без SMTP код печатается в консоль billing (только dev).
-Прод — транзакционный сервис. Рекомендация (РФ-инфра, 152-ФЗ): **Yandex Cloud Postbox**
-(2000 писем/мес бесплатно). Альтернативы: Mailopost / SMTP.bz / Unisender Go. Заполнить
-`SMTP_*` в billing/.env. NB: код отправки проверен живьём (Mailpit).
+**SMTP** — вход только по OTP-коду на email. Без SMTP код печатается в консоль billing
+(только dev). Прод — **Yandex Cloud Postbox** (РФ-инфра, 2000 писем/мес бесплатно; НЕ личная
+Яндекс.Почта — её бесплатный SMTP отключают 29.06.2026). Настройка — см. `.env.prod.example`.
+
+**Бэкапы** — `scripts/backup.sh` (monorepo: billing+engine БД) и `paragraf-gateway/scripts/backup.sh`
+(litellm БД), из cron ежедневно. billing/engine — ТОЛЬКО РФ-S3 (Selectel/Yandex Object
+Storage, 152-ФЗ). Ретеншн 30 дней локально + S3 по политике.
 
 ## 9. Смоук-тест после деплоя
 
-1. Открыть сайт → онбординг (выбор профессии) → ввести email → прийти OTP → войти.
-2. «Начать новую задачу» → отправить вопрос → ответ стримится.
-3. Запустить сценарий (напр. «Составить договор») → документ генерится → кнопки DOCX/PDF/MD.
-4. Прикрепить картинку-скан → проверить, что текст распознался (OCR) и ушёл текстом.
+1. `https://<домен>/health/liveliness` → `alive` (проверяет engine через Caddy).
+2. Открыть сайт → онбординг → ввести email заранее заведённого юзера → прийти OTP → войти.
+3. «Начать новую задачу» → отправить вопрос → ответ стримится (проверяет весь путь
+   web→engine→gateway-app→litellm→OpenRouter→обратно).
+4. Прикрепить картинку-скан → текст распознаётся (server-side OCR в gateway) и уходит текстом.
 5. Открыть `/credits`, `/analytics`, `/history`, `/settings`, `/help` — рендерятся.
-6. Health: `engine /health/readiness`, `billing /health/readiness`, `gateway /health/liveliness` → 200.
+6. `docker compose -f docker-compose.prod.yml ps` (monorepo) и (gateway) — все `healthy`.
 
-## 10. Что ещё (опционально, не блокеры веба)
+## 10. Что ещё (опционально, не блокеры)
 
-- Удаление Electron-оболочки (`web/packages/desktop`) — веб не зависит от неё; чистка на потом.
-- Лендинг — отдельный Astro-проект `landing/` (своя сборка/деплой).
-- Прод NSIS-инсталлер десктопа — не нужен для веба.
+- YC Lockbox для секретов вместо файла `.env.prod` — заготовка `scripts/env-from-yc-lockbox.sh`
+  написана, но **не проверена живьём** (нет доступа к YC на момент написания). Прогнать
+  вручную и свериться построчно перед первым реальным использованием.
+- Удаление Electron-оболочки (`web/packages/desktop`) — веб не зависит от неё, продукт —
+  сайт, не приложение (см. CLAUDE.md).
+- `landing/` — отдельный Astro-проект, не входит в прод-пайплайн (см. CLAUDE.md — оставлен
+  по просьбе, публично не деплоится, онбординг самого сайта играет его роль).
+- Rate-limit на `/auth/magic-link` и `/waitlist` — сейчас отсутствует (найдено при
+  security-аудите). Невысокий риск при ручном allowlist-провижининге узкого круга юзеров,
+  но стоит решить перед публичным открытием регистрации.

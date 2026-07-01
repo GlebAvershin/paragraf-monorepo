@@ -1,0 +1,180 @@
+# Prod stack — весь монорепо (web-статика + engine + billing) на ОДНОМ сервере
+# (Yandex Cloud). Gateway (paragraf-gateway: litellm + gateway-app) — отдельный
+# git-репозиторий, деплоится СВОИМ docker-compose.prod.yml в соседний каталог
+# на ТОМ ЖЕ сервере; engine достаёт его по loopback (ANSWER_URL=http://127.0.0.1:4100),
+# публичного входа для gateway не нужно. См. DEPLOY.md.
+#
+# Redis не используется — идемпотентность/OTP-лок уже на Postgres (см. auth.ts,
+# webhooks.ts). Раньше был в спеке как заготовка, в коде не используется.
+#
+# Запуск:
+#   cp .env.prod.example .env.prod && заполнить
+#   ./scripts/build-static.sh          # web/packages/app → dist/ (нужен для Caddy)
+#   docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
+#   ./scripts/migrate-prod.sh          # применить billing-миграции + health-check
+
+services:
+  postgres_billing:
+    image: postgres:16-alpine
+    container_name: isaak_postgres_billing
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: billing
+      POSTGRES_USER: billing
+      POSTGRES_PASSWORD: ${BILLING_POSTGRES_PASSWORD}
+    volumes:
+      - billing_pg_data:/var/lib/postgresql/data
+      - ./backups/billing:/backups
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U billing -d billing"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    # Без публичных портов — только внутренняя docker-сеть.
+
+  postgres_engine:
+    image: postgres:16-alpine
+    container_name: isaak_postgres_engine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: engine
+      POSTGRES_USER: engine
+      POSTGRES_PASSWORD: ${ENGINE_POSTGRES_PASSWORD}
+    volumes:
+      - engine_pg_data:/var/lib/postgresql/data
+      - ./backups/engine:/backups
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U engine -d engine"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  billing:
+    build:
+      context: ./billing
+      dockerfile: Dockerfile
+    image: isaak/billing:latest
+    container_name: isaak_billing
+    restart: unless-stopped
+    depends_on:
+      postgres_billing:
+        condition: service_healthy
+    expose:
+      - "3000"
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      DATABASE_URL: postgresql://billing:${BILLING_POSTGRES_PASSWORD}@postgres_billing:5432/billing
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ISSUER: ${JWT_ISSUER:-billing.local}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-ourapp-desktop}
+      # Gateway (paragraf-gateway) — на этом же сервере, отдельный compose-стек,
+      # LiteLLM слушает 127.0.0.1:4000 (см. paragraf-gateway/docker-compose.prod.yml).
+      LITELLM_BASE_URL: ${LITELLM_BASE_URL:-http://host.docker.internal:4000}
+      LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY}
+      APP_PUBLIC_URL: ${APP_PUBLIC_URL}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      SMTP_FROM: ${SMTP_FROM}
+      CLOUDPAYMENTS_PUBLIC_ID: ${CLOUDPAYMENTS_PUBLIC_ID}
+      CLOUDPAYMENTS_API_SECRET: ${CLOUDPAYMENTS_API_SECRET}
+      CLOUDPAYMENTS_WEBHOOK_SECRET: ${CLOUDPAYMENTS_WEBHOOK_SECRET}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  billing_etl_worker:
+    image: isaak/billing:latest
+    container_name: isaak_billing_etl
+    restart: unless-stopped
+    depends_on:
+      billing:
+        condition: service_started
+    command: ["bun", "run", "dist/worker/etl.js", "--loop", "--interval=30"]
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://billing:${BILLING_POSTGRES_PASSWORD}@postgres_billing:5432/billing
+      LITELLM_BASE_URL: ${LITELLM_BASE_URL:-http://host.docker.internal:4000}
+      LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY}
+      JWT_SECRET: ${JWT_SECRET}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  billing_retry_worker:
+    image: isaak/billing:latest
+    container_name: isaak_billing_retry
+    restart: unless-stopped
+    depends_on:
+      billing:
+        condition: service_started
+    command: ["bun", "run", "dist/worker/recurrent-retry.js", "--loop", "--interval=3600"]
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://billing:${BILLING_POSTGRES_PASSWORD}@postgres_billing:5432/billing
+      LITELLM_BASE_URL: ${LITELLM_BASE_URL:-http://host.docker.internal:4000}
+      LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY}
+      JWT_SECRET: ${JWT_SECRET}
+      CLOUDPAYMENTS_PUBLIC_ID: ${CLOUDPAYMENTS_PUBLIC_ID}
+      CLOUDPAYMENTS_API_SECRET: ${CLOUDPAYMENTS_API_SECRET}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  engine:
+    build:
+      context: ./engine
+      dockerfile: Dockerfile
+    image: isaak/engine:latest
+    container_name: isaak_engine
+    restart: unless-stopped
+    depends_on:
+      postgres_engine:
+        condition: service_healthy
+    expose:
+      - "4096"
+    environment:
+      PORT: "4096"
+      DATABASE_URL: postgresql://engine:${ENGINE_POSTGRES_PASSWORD}@postgres_engine:5432/engine
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ISSUER: ${JWT_ISSUER:-billing.local}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-ourapp-desktop}
+      ANSWER_URL: ${ANSWER_URL:-http://host.docker.internal:4100}
+      GATEWAY_API_SECRET: ${GATEWAY_API_SECRET}
+      BILLING_URL: http://billing:3000
+      WEB_PUBLIC_URL: ${APP_PUBLIC_URL}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: isaak_caddy
+    restart: unless-stopped
+    depends_on:
+      - billing
+      - engine
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./web/packages/app/dist:/srv/web:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL}
+
+volumes:
+  billing_pg_data:
+    driver: local
+  engine_pg_data:
+    driver: local
+  caddy_data:
+    driver: local
+  caddy_config:
+    driver: local

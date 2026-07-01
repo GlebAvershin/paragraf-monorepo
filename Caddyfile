@@ -1,0 +1,63 @@
+# Единый reverse-proxy для web-статики + engine + billing на одном домене
+# (см. DEPLOY.md §3 "Рекомендуемая топология"). Один домен → без CORS между
+# фронтом и API. Порядок правил важен: статика/API — explicit match, всё
+# остальное — SPA-фолбэк на index.html (клиентский роутинг).
+
+{
+	email {$ACME_EMAIL}
+}
+
+{$APP_DOMAIN} {
+	# ---- billing API (auth/кредиты/платежи) ----
+	@billing path /auth/* /me /limits /credits/* /usage/* /payments/* /webhooks/* /waitlist
+	handle @billing {
+		reverse_proxy billing:3000 {
+			transport http {
+				dial_timeout 5s
+				response_header_timeout 30s
+				read_timeout 60s
+			}
+		}
+	}
+
+	# ---- engine API (контракт opencode: сессии/сообщения/SSE) ----
+	@engine path /session* /global/* /provider* /config* /project* /path /agent /app/* /command /mcp /lsp /vcs /question /permission
+	handle @engine {
+		reverse_proxy engine:4096 {
+			# SSE (/global/event) держит соединение открытым долго — без таймаута чтения.
+			transport http {
+				dial_timeout 5s
+				response_header_timeout 30s
+				read_timeout 0
+			}
+		}
+	}
+
+	# ---- health (публично, для аптайм-мониторинга; отвечает engine) ----
+	handle /health/* {
+		reverse_proxy engine:4096
+	}
+
+	# ---- статика (web/packages/app dist) ----
+	handle {
+		root * /srv/web
+		encode gzip
+		# tessdata/tesseract больше не отдаём — OCR теперь server-side в gateway
+		# (клиентский Tesseract удалён при развороте архитектуры, 2026-06-27).
+		try_files {path} /index.html
+		file_server
+	}
+
+	log {
+		output stdout
+		format json
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "no-referrer"
+		X-Frame-Options "DENY"
+		-Server
+	}
+}

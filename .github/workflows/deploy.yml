@@ -1,0 +1,70 @@
+# Deploy — весь монорепо-стек (web-статика + engine + billing) на YC-сервер.
+#
+# Гейт: `needs: [ci]` — деплой стартует ТОЛЬКО если весь CI (typecheck+тесты по
+# всем 4 пакетам) прошёл зелёным. Это тот самый "пайплайн авто-тестов при
+# деплое". Триггер — push в main (единственная существующая ветка; отдельной
+# prod-ветки нет и не заводим, чтобы не плодить лишний шаг ручного мержа).
+#
+# Схема: SSH на YC-сервер → scripts/deploy.sh (git pull → собрать web-статику →
+# docker compose build/up → миграции billing → health-check). Сам скрипт
+# идемпотентен и содержит health-check — отдельный smoke-test здесь не дублируем.
+#
+# Секреты (GitHub → Settings → Environments → production, задать при появлении
+# доступа к серверу):
+#   DEPLOY_HOST   — IP или DNS YC-сервера
+#   DEPLOY_USER   — SSH-пользователь (deploy)
+#   DEPLOY_KEY    — приватный SSH-ключ (PEM)
+#   APP_DOMAIN    — публичный домен (для smoke-check ниже)
+#
+# gateway (paragraf-gateway, отдельный репозиторий) деплоится СВОИМ workflow —
+# независимо, на тот же сервер, в соседний каталог. См. paragraf-gateway/.github.
+
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-isaak
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-24.04
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "${{ secrets.DEPLOY_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Deploy
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          ssh "$USER@$HOST" "cd /opt/isaak && ./scripts/deploy.sh"
+
+      - name: Smoke test (public health endpoint)
+        run: |
+          DOMAIN="${{ secrets.APP_DOMAIN }}"
+          for i in 1 2 3 4 5; do
+            if curl -fsSL --max-time 10 "https://$DOMAIN/health/liveliness" | grep -qi 'alive'; then
+              echo "isaak prod healthy"
+              exit 0
+            fi
+            echo "attempt $i failed, retry in 5s..."
+            sleep 5
+          done
+          echo "::error::isaak prod NOT healthy after 5 attempts"
+          exit 1
