@@ -36,9 +36,13 @@ COPY --from=build /app/dist ./dist
 COPY --from=build /app/drizzle ./drizzle
 COPY --from=build /app/drizzle.config.ts ./drizzle.config.ts
 COPY --from=build /app/package.json ./package.json
-# src/scripts — НЕ бандлится в dist/, но нужен в рантайме: `bun run create-user`
-# (провижн кабинетов, см. DEPLOY.md) запускает bun напрямую по TS-исходнику.
-COPY --from=build /app/src/scripts ./src/scripts
+# Весь src/ — НЕ бандлится в dist/, но нужен в рантайме: `bun run create-user`
+# (провижн кабинетов, см. DEPLOY.md) запускает bun напрямую по TS-исходнику
+# create-user.ts, который импортирует ../db/client.ts, ../routes/subscriptions.ts
+# и транзитивно почти весь остальной src/ — копировать только scripts/ было
+# недостаточно ("Cannot find module '../db/client.ts'"). Дешевле скопировать
+# весь src/ целиком (чистый TS, небольшой), чем поддерживать список файлов.
+COPY --from=build /app/src ./src
 
 # Драйверы Postgres bun-native.
 ENV NODE_ENV=production
