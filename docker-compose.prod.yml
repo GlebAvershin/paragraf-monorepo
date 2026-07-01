@@ -1,17 +1,25 @@
 # Prod stack — весь монорепо (web-статика + engine + billing) на ОДНОМ сервере
 # (Yandex Cloud). Gateway (paragraf-gateway: litellm + gateway-app) — отдельный
-# git-репозиторий, деплоится СВОИМ docker-compose.prod.yml в соседний каталог
-# на ТОМ ЖЕ сервере; engine достаёт его по loopback (ANSWER_URL=http://127.0.0.1:4100),
-# публичного входа для gateway не нужно. См. DEPLOY.md.
+# git-репозиторий, деплоится СВОИМ docker-compose.prod.yml в соседний каталог на
+# ТОМ ЖЕ сервере. Связь — через общую внешнюю docker-сеть `isaak_shared` (НЕ
+# host.docker.internal — на Linux порт, опубликованный как 127.0.0.1:PORT на
+# хосте, недоступен из контейнера через host-gateway route: соединение идёт с
+# IP docker-бриджа, не с 127.0.0.1, и хост его отклоняет — поймано на первом
+# реальном деплое). Публичного входа для gateway всё равно не нужно.
 #
 # Redis не используется — идемпотентность/OTP-лок уже на Postgres (см. auth.ts,
 # webhooks.ts). Раньше был в спеке как заготовка, в коде не используется.
 #
 # Запуск:
+#   docker network create isaak_shared   # один раз, до первого up (или см. deploy.sh)
 #   cp .env.prod.example .env.prod && заполнить
 #   ./scripts/build-static.sh          # web/packages/app → dist/ (нужен для Caddy)
 #   docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
 #   ./scripts/migrate-prod.sh          # применить billing-миграции + health-check
+
+networks:
+  isaak_shared:
+    external: true
 
 services:
   postgres_billing:
@@ -69,8 +77,8 @@ services:
       JWT_ISSUER: ${JWT_ISSUER:-billing.local}
       JWT_AUDIENCE: ${JWT_AUDIENCE:-ourapp-desktop}
       # Gateway (paragraf-gateway) — на этом же сервере, отдельный compose-стек,
-      # LiteLLM слушает 127.0.0.1:4000 (см. paragraf-gateway/docker-compose.prod.yml).
-      LITELLM_BASE_URL: ${LITELLM_BASE_URL:-http://host.docker.internal:4000}
+      # достаём по имени контейнера через общую сеть isaak_shared (см. шапку файла).
+      LITELLM_BASE_URL: ${LITELLM_BASE_URL:-http://litellm:4000}
       LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY}
       APP_PUBLIC_URL: ${APP_PUBLIC_URL}
       SMTP_HOST: ${SMTP_HOST}
@@ -82,8 +90,7 @@ services:
       CLOUDPAYMENTS_API_SECRET: ${CLOUDPAYMENTS_API_SECRET}
       CLOUDPAYMENTS_WEBHOOK_SECRET: ${CLOUDPAYMENTS_WEBHOOK_SECRET}
       LOG_LEVEL: ${LOG_LEVEL:-info}
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+    networks: [default, isaak_shared]
 
   billing_etl_worker:
     image: isaak/billing:latest
@@ -96,12 +103,11 @@ services:
     environment:
       NODE_ENV: production
       DATABASE_URL: postgresql://billing:${BILLING_POSTGRES_PASSWORD}@postgres_billing:5432/billing
-      LITELLM_BASE_URL: ${LITELLM_BASE_URL:-http://host.docker.internal:4000}
+      LITELLM_BASE_URL: ${LITELLM_BASE_URL:-http://litellm:4000}
       LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY}
       JWT_SECRET: ${JWT_SECRET}
       LOG_LEVEL: ${LOG_LEVEL:-info}
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+    networks: [default, isaak_shared]
 
   billing_retry_worker:
     image: isaak/billing:latest
@@ -114,14 +120,13 @@ services:
     environment:
       NODE_ENV: production
       DATABASE_URL: postgresql://billing:${BILLING_POSTGRES_PASSWORD}@postgres_billing:5432/billing
-      LITELLM_BASE_URL: ${LITELLM_BASE_URL:-http://host.docker.internal:4000}
+      LITELLM_BASE_URL: ${LITELLM_BASE_URL:-http://litellm:4000}
       LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY}
       JWT_SECRET: ${JWT_SECRET}
       CLOUDPAYMENTS_PUBLIC_ID: ${CLOUDPAYMENTS_PUBLIC_ID}
       CLOUDPAYMENTS_API_SECRET: ${CLOUDPAYMENTS_API_SECRET}
       LOG_LEVEL: ${LOG_LEVEL:-info}
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+    networks: [default, isaak_shared]
 
   engine:
     build:
@@ -141,13 +146,12 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       JWT_ISSUER: ${JWT_ISSUER:-billing.local}
       JWT_AUDIENCE: ${JWT_AUDIENCE:-ourapp-desktop}
-      ANSWER_URL: ${ANSWER_URL:-http://host.docker.internal:4100}
+      ANSWER_URL: ${ANSWER_URL:-http://gateway-app:4100}
       GATEWAY_API_SECRET: ${GATEWAY_API_SECRET}
       BILLING_URL: http://billing:3000
       WEB_PUBLIC_URL: ${APP_PUBLIC_URL}
       LOG_LEVEL: ${LOG_LEVEL:-info}
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+    networks: [default, isaak_shared]
 
   caddy:
     image: caddy:2-alpine

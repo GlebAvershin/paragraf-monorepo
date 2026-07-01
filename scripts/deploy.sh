@@ -15,6 +15,9 @@ cd "$(dirname "$0")/.."
 echo "[deploy] $(date -Is) git pull"
 git pull --ff-only origin main
 
+echo "[deploy] ensure shared docker network exists (idempotent)"
+docker network create isaak_shared 2>/dev/null || true
+
 echo "[deploy] build web static"
 ./scripts/build-static.sh
 
