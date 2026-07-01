@@ -13,9 +13,16 @@ import { getSessionToken } from "./auth-storage"
 // 127.0.0.1, не localhost — Electron renderer на Windows иногда резолвит
 // localhost в IPv6 (::1), а node-fetch/Hono слушают только IPv4. Жёстко привязываем
 // к IPv4 чтобы избежать "Failed to fetch" на этой почве.
+//
+// Прод веб-деплой: same-origin (location.origin) — Caddy проксирует billing-пути
+// (/auth/*, /me, /limits, ...) на том же домене, без CORS. Без этого фолбэка
+// прод-сборка слала запросы на 127.0.0.1:3000 браузера ПОСЕТИТЕЛЯ сайта, а не
+// сервера — "Failed to fetch" у любого юзера (пойман вживую 2026-07-01).
 const BILLING_BASE_URL =
   (typeof import.meta !== "undefined" && (import.meta as { env?: Record<string, string> }).env?.VITE_OURAPP_BILLING_URL) ||
-  "http://127.0.0.1:3000"
+  (typeof import.meta !== "undefined" && !(import.meta as { env?: { DEV?: boolean } }).env?.DEV && typeof window !== "undefined"
+    ? window.location.origin
+    : "http://127.0.0.1:3000")
 
 export type ApiResult<T> = { ok: true; data: T } | { ok: false; error: string; status?: number }
 

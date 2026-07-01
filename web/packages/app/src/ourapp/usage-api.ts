@@ -6,10 +6,13 @@
  */
 import { getSessionToken } from "./auth-storage"
 
+// Прод веб-деплой: same-origin (location.origin) — см. пояснение в billing-api.ts.
 const BASE_URL =
   (typeof import.meta !== "undefined" &&
     (import.meta as { env?: Record<string, string> }).env?.VITE_OURAPP_BILLING_URL) ||
-  "http://127.0.0.1:3000"
+  (typeof import.meta !== "undefined" && !(import.meta as { env?: { DEV?: boolean } }).env?.DEV && typeof window !== "undefined"
+    ? window.location.origin
+    : "http://127.0.0.1:3000")
 
 export interface UsageSummary {
   range: { from: string; to: string }
