@@ -11,8 +11,8 @@ BUN ?= bun
 GATEWAY_DIR ?= ../paragraf-gateway
 # WEB_DIR — каталог веб-рендерера (форк opencode, теперь внутри монорепо: ./web)
 WEB_DIR ?= web
-# GOST_RAG_DIR — ML-проект (база знаний ГОСТ), внутри монорепо: ./gost-rag
-GOST_RAG_DIR ?= gost-rag
+# GOST_RAG_DIR — ML-проект (база знаний ГОСТ) вынесен в репо paragraf-gateway (соседней папкой)
+GOST_RAG_DIR ?= ../paragraf-gateway/gost-rag
 # RUN — каталог логов фоновых сервисов
 RUN := .run
 
