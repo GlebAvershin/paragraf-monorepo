@@ -38,16 +38,30 @@ dev: ## ⭐ поднять ВЕСЬ продукт ОДНОЙ командой: 
 	@echo "[dev] Ctrl-C останавливает только веб; бэкенд живёт (полный стоп — make down)"
 	@$(MAKE) -s web
 
-env-init: ## создать billing/.env + engine/.env из примеров с общим JWT_SECRET (если их нет)
-	@created=0; for d in billing engine; do \
-	  if [ ! -f $$d/.env ]; then cp $$d/.env.example $$d/.env && created=1 && echo "[env-init] создан $$d/.env"; fi; \
+env-init: ## создать billing/.env + engine/.env из примеров с общим JWT_SECRET (существующий секрет не трогаем)
+	@created=" "; \
+	for d in billing engine; do \
+	  if [ ! -f $$d/.env ]; then cp $$d/.env.example $$d/.env && created="$$created$$d " && echo "[env-init] создан $$d/.env"; fi; \
 	done; \
-	if [ "$$created" = 1 ]; then \
-	  jwt=$$(openssl rand -hex 32); \
-	  for d in billing engine; do \
-	    if grep -qE '^JWT_SECRET=' $$d/.env; then sed -i.bak -E "s|^JWT_SECRET=.*|JWT_SECRET=$$jwt|" $$d/.env && rm -f $$d/.env.bak; \
-	    else echo "JWT_SECRET=$$jwt" >> $$d/.env; fi; \
-	  done; \
+	shared=""; \
+	for d in billing engine; do \
+	  case "$$created" in *" $$d "*) continue;; esac; \
+	  v=$$(sed -n -E 's|^JWT_SECRET=(.+)$$|\1|p' $$d/.env 2>/dev/null | head -1); [ -n "$$v" ] && shared="$$v"; \
+	done; \
+	if [ -z "$$shared" ]; then shared=$$(openssl rand -hex 32); gen=1; else gen=0; fi; \
+	changed=0; \
+	for d in billing engine; do \
+	  [ -f $$d/.env ] || continue; \
+	  cur=$$(sed -n -E 's|^JWT_SECRET=(.+)$$|\1|p' $$d/.env | head -1); \
+	  case "$$created" in *" $$d "*) is_new=1;; *) is_new=0;; esac; \
+	  if [ "$$is_new" = 1 ] || [ -z "$$cur" ]; then \
+	    if grep -qE '^JWT_SECRET=' $$d/.env; then sed -i.bak -E "s|^JWT_SECRET=.*|JWT_SECRET=$$shared|" $$d/.env && rm -f $$d/.env.bak; \
+	    else printf 'JWT_SECRET=%s\n' "$$shared" >> $$d/.env; fi; \
+	    changed=1; \
+	  fi; \
+	done; \
+	if [ "$$changed" = 1 ]; then \
+	  [ "$$gen" = 1 ] && echo "[env-init] сгенерирован новый общий JWT_SECRET" || echo "[env-init] JWT_SECRET взят из существующего .env (не перезаписан)"; \
 	  echo "[env-init] JWT_SECRET синхронизирован (billing == engine)"; \
 	  echo "[env-init] ВАЖНО: впиши ключи моделей в $(GATEWAY_DIR)/.env (ANTHROPIC_API_KEY / OPENROUTER_API_KEY / GIGACHAT_CREDENTIALS)"; \
 	fi
