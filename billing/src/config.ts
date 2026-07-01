@@ -23,7 +23,16 @@ const ConfigSchema = z.object({
   SMTP_PORT: z.coerce.number().int().positive().default(587),
   SMTP_USER: z.string().optional(),
   SMTP_PASSWORD: z.string().optional(),
-  SMTP_FROM: z.string().email().default("noreply@ourapp.com"),
+  // Принимает и голый email ("noreply@x.ru"), и RFC5322 display-name форму
+  // ("Isaak <noreply@x.ru>") — nodemailer поддерживает оба, .email() отсекал
+  // второй вариант, хотя это и есть реальный intent (имя бренда в письме).
+  SMTP_FROM: z
+    .string()
+    .refine(
+      (v) => z.string().email().safeParse(v).success || /^.+<[^<>]+@[^<>]+>$/.test(v),
+      "SMTP_FROM must be an email or \"Name <email>\"",
+    )
+    .default("noreply@ourapp.com"),
 
   APP_PUBLIC_URL: z.string().url().default("http://localhost:3000"),
 
