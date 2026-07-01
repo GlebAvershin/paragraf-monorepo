@@ -293,9 +293,11 @@ export async function runPrompt(input: PromptInput): Promise<{ info: StoredMessa
         publish(userId, { type: "message.part.updated", properties: { part: asstPart } })
       }
 
-      // Заголовок сессии (только первый обмен) — fire-and-forget, чтобы не задерживать idle.
-      void maybeGenerateTitle(userId, sessionID, key, query, asstPart.text as string).catch(() => {})
     }
+
+    // Заголовок сессии (только первый обмен) — и для заземлённого/обычного ответа, и для abstain
+    // (сам запрос осмысленный, хоть в базе и не нашлось). fire-and-forget, чтобы не задерживать idle.
+    void maybeGenerateTitle(userId, sessionID, key, query, asstPart.text as string).catch(() => {})
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     asstPart.text = (asstPart.text as string) + (asstPart.text ? "\n\n" : "") + `⚠️ ${msg}`
