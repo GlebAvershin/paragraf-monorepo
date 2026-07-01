@@ -12,6 +12,26 @@
  */
 
 :root {
+  /* Цветовые токены DESIGN.md §4 (light) — используются в scenarios/, billing/,
+     onboarding/, history/analytics/pii/about-modal. Раньше эти переменные нигде
+     не были определены (только fallback-значения в var(--x, #hex) у потребителей),
+     поэтому эти экраны всегда рендерились в light-палитре независимо от темы —
+     баг «тема меняется при переходе на сценарий», пойман 2026-07-02. */
+  --ourapp-bg-page: #fbf9f4;
+  --ourapp-bg-surface: #ffffff;
+  --ourapp-bg-surface-alt: #f6f2eb;
+  --bg-inset: #f1ede3;
+  --hairline: #e8e3db;
+  --hairline-strong: #d8d2c5;
+  --text-primary: #1a1614;
+  --text-secondary: #5c5852;
+  --text-tertiary: #8b8680;
+  --ourapp-accent: #0b5345;
+  --accent-muted: rgba(11, 83, 69, 0.06);
+  --error: #991b1b;
+  --error-muted: rgba(153, 27, 27, 0.1);
+  --info: #475569;
+
   /* Highlight / премиум-золото (см. DESIGN.md §4) */
   --ourapp-highlight: #C8A85C;
   --ourapp-highlight-muted: #C8A85C1A;
@@ -40,12 +60,40 @@
   :root {
     --ourapp-highlight: #D4B872;
     --ourapp-highlight-muted: #D4B8722A;
+    --ourapp-bg-page: #15120f;
+    --ourapp-bg-surface: #1f1b17;
+    --ourapp-bg-surface-alt: #25201b;
+    --bg-inset: #2b251f;
+    --hairline: #2e2924;
+    --hairline-strong: #3a332b;
+    --text-primary: #ede8df;
+    --text-secondary: #b5afa4;
+    --text-tertiary: #847e72;
+    --ourapp-accent: #1a8a6b;
+    --accent-muted: rgba(26, 138, 107, 0.12);
+    --error: #dc2626;
+    --error-muted: rgba(220, 38, 38, 0.14);
+    --info: #94a3b8;
   }
 }
 
 html[data-color-scheme="dark"] {
   --ourapp-highlight: #D4B872;
   --ourapp-highlight-muted: #D4B8722A;
+  --ourapp-bg-page: #15120f;
+  --ourapp-bg-surface: #1f1b17;
+  --ourapp-bg-surface-alt: #25201b;
+  --bg-inset: #2b251f;
+  --hairline: #2e2924;
+  --hairline-strong: #3a332b;
+  --text-primary: #ede8df;
+  --text-secondary: #b5afa4;
+  --text-tertiary: #847e72;
+  --ourapp-accent: #1a8a6b;
+  --accent-muted: rgba(26, 138, 107, 0.12);
+  --error: #dc2626;
+  --error-muted: rgba(220, 38, 38, 0.14);
+  --info: #94a3b8;
 }
 
 /* Бумажная зернистость на фоне body — наш «премиум-рычаг» */
