@@ -25,6 +25,7 @@ import { messageAgentColor } from "@/utils/agent"
 import { decode64 } from "@/utils/base64"
 import { Persist, persisted } from "@/utils/persist"
 import { StatusPopover } from "../status-popover"
+import { SHOW_STATUS_POPOVER } from "@/ourapp/feature-flags"
 
 const OPEN_APPS = [
   "vscode",
@@ -426,7 +427,7 @@ export function SessionHeader() {
                 </div>
               </Show>
               <div class="flex items-center gap-1">
-                <Show when={status()}>
+                <Show when={SHOW_STATUS_POPOVER && status()}>
                   <Tooltip placement="bottom" value={language.t("status.popover.trigger")}>
                     <StatusPopover />
                   </Tooltip>

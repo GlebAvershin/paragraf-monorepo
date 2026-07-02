@@ -25,6 +25,7 @@ import { displayName, getProjectAvatarSource, projectForSession } from "@/pages/
 import { makeEventListener } from "@solid-primitives/event-listener"
 import { StatusPopover } from "./status-popover"
 import { SDKProvider } from "@/context/sdk"
+import { SHOW_STATUS_POPOVER } from "@/ourapp/feature-flags"
 
 type TauriDesktopWindow = {
   startDragging?: () => Promise<void>
@@ -465,14 +466,16 @@ export function Titlebar(props: { update?: TitlebarUpdate }) {
                   </Show>
                   <div class="min-w-0 flex-1" />
                 </div>
-                <Show when={currentSessionTab()?.dir} keyed>
-                  {(dir) => (
-                    <SDKProvider directory={dir}>
-                      <Tooltip placement="bottom" value={language.t("status.popover.trigger")}>
-                        <StatusPopover />
-                      </Tooltip>
-                    </SDKProvider>
-                  )}
+                <Show when={SHOW_STATUS_POPOVER}>
+                  <Show when={currentSessionTab()?.dir} keyed>
+                    {(dir) => (
+                      <SDKProvider directory={dir}>
+                        <Tooltip placement="bottom" value={language.t("status.popover.trigger")}>
+                          <StatusPopover />
+                        </Tooltip>
+                      </SDKProvider>
+                    )}
+                  </Show>
                 </Show>
                 <TitlebarUpdatePill update={props.update} />
                 <Show when={windows() && !electronWindows()}>
