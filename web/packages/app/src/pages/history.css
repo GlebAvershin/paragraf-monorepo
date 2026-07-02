@@ -1,9 +1,10 @@
 /* History page (ТЗ-05 §4) — стиль DESIGN.md. */
 
 .ourapp-history {
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  height: 100vh;
   background: var(--ourapp-bg-page, #fbf9f4);
   color: var(--text-primary, #1a1614);
 }

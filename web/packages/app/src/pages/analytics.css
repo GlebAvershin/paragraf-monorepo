@@ -1,9 +1,10 @@
 /* Analytics page (ТЗ-05 §6) — стиль DESIGN.md (cream paper, serif headings). */
 
 .ourapp-analytics {
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  height: 100vh;
   background: var(--ourapp-bg-page, #fbf9f4);
   color: var(--text-primary, #1a1614);
 }
