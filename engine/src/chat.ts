@@ -33,7 +33,17 @@ export interface PromptInput {
   agent?: string
   /** opencode-вариант (deep-thinking тумблер шлёт "high") — gateway-app транслирует в thinking. */
   variant?: string
-  parts: Array<{ type: string; text?: string; mime?: string; url?: string; filename?: string }>
+  parts: Array<{
+    type: string
+    text?: string
+    mime?: string
+    url?: string
+    filename?: string
+    /** OurApp: часть не должна показываться как основной текст сообщения в
+     *  транскрипте (напр. полный шаблон сценария) — но модель её всё равно
+     *  получает. См. web/.../build-request-parts.ts. */
+    synthetic?: boolean
+  }>
 }
 
 /** Извлечь картинки-сканы (file-части image/*) для server-side OCR в gateway. */
@@ -131,7 +141,14 @@ export async function runPrompt(input: PromptInput): Promise<{ info: StoredMessa
   let idx = 0
   for (const p of input.parts) {
     if (p.type !== "text" || !p.text) continue
-    const part: StoredPart = { id: newId("prt"), sessionID, messageID: userMsg.id, type: "text", text: p.text }
+    const part: StoredPart = {
+      id: newId("prt"),
+      sessionID,
+      messageID: userMsg.id,
+      type: "text",
+      text: p.text,
+      ...(p.synthetic ? { synthetic: true } : {}),
+    }
     await insertPart(userId, idx++, part)
     publish(userId, { type: "message.part.updated", properties: { part } })
   }
