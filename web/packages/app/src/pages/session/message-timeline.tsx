@@ -45,7 +45,7 @@ import { normalize } from "@opencode-ai/ui/session-diff"
 import { useFileComponent } from "@opencode-ai/ui/context/file"
 import { shouldMarkBoundaryGesture, normalizeWheelDelta } from "@/pages/session/message-gesture"
 import { SessionContextUsage } from "@/components/session-context-usage"
-import { isDocxSession } from "@/ourapp/scenarios/docx-result-tracker"
+import { isDocxSession, isChatOnlySession } from "@/ourapp/scenarios/docx-result-tracker"
 import { downloadMarkdownAsPdf } from "@/ourapp/pdf-export"
 import { useDialog } from "@opencode-ai/ui/context/dialog"
 import { createResizeObserver } from "@solid-primitives/resize-observer"
@@ -1070,9 +1070,14 @@ export function MessageTimeline(props: {
 
     // Кнопки показываем если: (а) ответ похож на документ по форме, ИЛИ
     // (б) сессия запущена из сценария с resultAction=generate_docx — там
-    // .docx нужен детерминированно, даже если текст короткий.
+    // .docx нужен детерминированно, даже если текст короткий. НО если сценарий
+    // явно сказал «это не документ» (show_in_chat) — эта пометка приоритетнее
+    // эвристики: некоторые аналитические промпты сами просят модель оформлять
+    // ответ заголовками для читаемости (см. tech.gost.lookup), из-за чего
+    // looksLikeDocument() ложно срабатывал бы на обычный текстовый ответ.
     const hasContent = createMemo(() => {
       if (markdown().trim().length < 60) return false
+      if (isChatOnlySession(sessionID() ?? "")) return false
       return looksLikeDocument() || isDocxSession(sessionID() ?? "")
     })
 

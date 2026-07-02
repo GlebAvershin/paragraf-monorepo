@@ -49,7 +49,7 @@ import { createSessionTabs } from "@/pages/session/helpers"
 import { createTextFragment, getCursorPosition, setCursorPosition, setRangeEdge } from "./prompt-input/editor-dom"
 import { createPromptAttachments } from "./prompt-input/attachments"
 import { ACCEPTED_FILE_TYPES } from "./prompt-input/files"
-import { markDocxSession } from "@/ourapp/scenarios/docx-result-tracker"
+import { markDocxSession, markChatOnlySession } from "@/ourapp/scenarios/docx-result-tracker"
 import { ModelTriggerLabel } from "@/ourapp/auto-model/model-trigger-label"
 import { DeepThinkingToggle } from "@/ourapp/deep-thinking/deep-thinking-toggle"
 import {
@@ -592,9 +592,17 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
       if (!parts || parts.length === 0) return
       // Если сценарий генерирует .docx — помечаем сессию, чтобы кнопки
       // «Скачать .docx / Предпросмотр» показались на ответе детерминированно,
-      // независимо от эвристики формы текста.
-      if (detail?.resultAction?.type === "generate_docx" && params.id) {
-        markDocxSession(params.id)
+      // независимо от эвристики формы текста. Если сценарий явно сказал «это
+      // не документ» (show_in_chat/generate_table) — помечаем наоборот, иначе
+      // эвристика (заголовки/длина) может всё равно показать кнопки, если
+      // промпт сам просит модель форматировать ответ заголовками (см.
+      // tech.gost.lookup — аналитический разбор с "используй заголовки").
+      if (params.id) {
+        if (detail?.resultAction?.type === "generate_docx") {
+          markDocxSession(params.id)
+        } else {
+          markChatOnlySession(params.id)
+        }
       }
       // Курсор — в конец последней текстовой части.
       const lastText = [...parts].reverse().find((p) => p.type === "text")
