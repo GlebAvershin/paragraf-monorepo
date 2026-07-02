@@ -96,6 +96,32 @@ html[data-color-scheme="dark"] {
   --info: #94a3b8;
 }
 
+/* Явный выбор светлой темы в приложении (data-color-scheme="light") должен
+   перебивать @media (prefers-color-scheme: dark) выше — та реагирует только
+   на ОС, не на выбор юзера в приложении. Без этого блока при тёмной ОС + явно
+   выбранной светлой теме страницы всё равно рендерились тёмными (пойман
+   2026-07-02, /history и /analytics). [data-color-scheme] на html даёт более
+   высокую специфичность, чем :root внутри @media — источник правды побеждает
+   независимо от порядка. */
+html[data-color-scheme="light"] {
+  --ourapp-highlight: #C8A85C;
+  --ourapp-highlight-muted: #C8A85C1A;
+  --ourapp-bg-page: #fbf9f4;
+  --ourapp-bg-surface: #ffffff;
+  --ourapp-bg-surface-alt: #f6f2eb;
+  --bg-inset: #f1ede3;
+  --hairline: #e8e3db;
+  --hairline-strong: #d8d2c5;
+  --text-primary: #1a1614;
+  --text-secondary: #5c5852;
+  --text-tertiary: #8b8680;
+  --ourapp-accent: #0b5345;
+  --accent-muted: rgba(11, 83, 69, 0.06);
+  --error: #991b1b;
+  --error-muted: rgba(153, 27, 27, 0.1);
+  --info: #475569;
+}
+
 /* Бумажная зернистость на фоне body — наш «премиум-рычаг» */
 body {
   background-image: var(--ourapp-grain-light);
@@ -110,6 +136,10 @@ body {
 
 html[data-color-scheme="dark"] body {
   background-image: var(--ourapp-grain-dark);
+}
+
+html[data-color-scheme="light"] body {
+  background-image: var(--ourapp-grain-light);
 }
 
 /* Утилитарный класс — серифный заголовок (используется в наших сценариях/билинге) */
