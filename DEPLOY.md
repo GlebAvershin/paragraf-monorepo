@@ -189,7 +189,48 @@ Tesseract/localStorage-vault, это устарело). Поток: браузе
 (litellm БД), из cron ежедневно. billing/engine — ТОЛЬКО РФ-S3 (Selectel/Yandex Object
 Storage, 152-ФЗ). Ретеншн 30 дней локально + S3 по политике.
 
-## 9. Смоук-тест после деплоя
+## 9. Секреты — YC Lockbox
+
+**Сделано и проверено вживую 2026-07-02.** Секреты живут в YC Lockbox, а не только
+в файле `.env.prod` на диске — `deploy.sh` (оба репо) при каждом деплое перезаписывает
+`.env.prod` свежей выгрузкой из Lockbox через `scripts/env-from-yc-lockbox.sh`. Старый
+`.env.prod` на диске — фолбэк: если Lockbox недоступен (сеть/`yc` не настроен), деплой
+не падает, а деградирует на уже лежащий файл (с warning в лог).
+
+**Секреты:**
+- `isaac-monorepo-env` (id `e6qivjcq5hr65l6qui8p`) — из `/opt/isaak/.env.prod`, 18 ключей
+  (пустые — SMTP_HOST/USER/PASSWORD, CLOUDPAYMENTS_PUBLIC_ID/API_SECRET, BACKUP_S3_ACCESS/SECRET_KEY —
+  сознательно не хранятся: Lockbox не принимает пустые значения, а отсутствие ключа
+  эквивалентно пустой строке для кода, который читает через `??`/дефолты).
+- `isaac-gateway-env` (id `e6qug4okfhvp8fvu5252`) — из `/opt/gateway/.env.prod`, 7 ключей.
+
+**Доступ:** сервис-аккаунт `isaac-deploy-lockbox` (id `aje3m9k472iauqth6bg2`) с ролью
+`lockbox.payloadViewer` **на каждый секрет отдельно** (`yc lockbox secret add-access-binding`,
+не folder-level грант — узкий доступ, только эти два секрета, не весь Lockbox в папке).
+Авторизованный ключ сервис-аккаунта лежит на сервере: `/home/deploy/.config/yc-lockbox-sa-key.json`
+(chmod 600). `yc` CLI установлен туда же (`/home/deploy/.yc/bin`, официальный установщик
+Yandex Cloud) и настроен: `yc config set service-account-key /home/deploy/.config/yc-lockbox-sa-key.json`.
+
+**Обновление секрета** (когда меняется какой-то ключ — напр. ротация пароля):
+```bash
+yc lockbox secret add-version --id <secret-id> \
+  --payload '[{"key":"KEY_NAME","text_value":"новое значение"}]'
+```
+Следующий деплой подхватит автоматически (перезаписывает `.env.prod` каждый раз).
+
+**Грабли, пойманные при настройке:**
+- `--payload file://D:/...` **не работает на Windows** — `yc` молча создаёт секрет с
+  ПУСТЫМ payload вместо ошибки (баг URI-парсинга пути с буквой диска). Рабочий вариант —
+  передавать содержимое JSON прямо в `--payload` (аргументом, не файлом), либо собирать
+  секрет с самого сервера/Linux-машины.
+- `payload.lockbox.api.cloud.yandex.net` (отдельный от основного `lockbox.api.cloud.yandex.net`
+  саб-домен, используется именно для `payload get`/`add-version`) периодически не резолвился/
+  не открывался с одной конкретной локальной сети — не проблема кода/аккаунта, ретраи или
+  запуск с другой сети/самого YC-сервера помогают.
+- Пустые значения (`KEY=`) в `.env.prod` отклоняются Lockbox с `InvalidArgument` — фильтруются
+  на этапе сборки payload (см. `env-from-yc-lockbox.sh`, тот же скрипт просто их не пишет).
+
+## 10. Смоук-тест после деплоя
 
 **Пройден вживую 2026-07-01** на https://isaac-ai.ru (пп. 1-3, 6 — полностью; SMTP не
 настроен, OTP-код доставался из логов billing).
@@ -202,11 +243,8 @@ Storage, 152-ФЗ). Ретеншн 30 дней локально + S3 по пол
 5. Открыть `/credits`, `/analytics`, `/history`, `/settings`, `/help` — рендерятся.
 6. `docker compose -f docker-compose.prod.yml ps` (monorepo) и (gateway) — все `healthy`.
 
-## 10. Что ещё (опционально, не блокеры)
+## 11. Что ещё (опционально, не блокеры)
 
-- YC Lockbox для секретов вместо файла `.env.prod` — заготовка `scripts/env-from-yc-lockbox.sh`
-  написана, но **не проверена живьём** (нет доступа к YC на момент написания). Прогнать
-  вручную и свериться построчно перед первым реальным использованием.
 - Удаление Electron-оболочки (`web/packages/desktop`) — веб не зависит от неё, продукт —
   сайт, не приложение (см. CLAUDE.md).
 - `landing/` — отдельный Astro-проект, не входит в прод-пайплайн (см. CLAUDE.md — оставлен

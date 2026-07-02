@@ -16,13 +16,27 @@ cd "$(dirname "$0")/.."
 # НЕ грузят ~/.bashrc → bun не резолвится в PATH ("command not found"), скрипт
 # падает на build-static.sh сразу после git pull (поймано на первом реальном
 # автодеплое — git pull прошёл, дальше тишина, контейнеры не пересоздались).
-export PATH="$HOME/.bun/bin:$PATH"
+export PATH="$HOME/.bun/bin:$HOME/.yc/bin:$PATH"
 
 echo "[deploy] $(date -Is) git pull"
 git pull --ff-only origin main
 
 echo "[deploy] ensure shared docker network exists (idempotent)"
 docker network create isaak_shared 2>/dev/null || true
+
+# Секреты — источник правды в YC Lockbox (см. DEPLOY.md §9), .env.prod на диске
+# лишь материализуется перед каждым деплоем. Если Lockbox недоступен (сеть/yc
+# не настроен) — деградируем на уже лежащий .env.prod, а не роняем деплой.
+echo "[deploy] fetching secrets from YC Lockbox"
+if ./scripts/env-from-yc-lockbox.sh e6qivjcq5hr65l6qui8p > .env.prod.new 2>/tmp/lockbox-fetch.err; then
+  mv .env.prod.new .env.prod
+  chmod 600 .env.prod
+  echo "[deploy] .env.prod refreshed from Lockbox"
+else
+  rm -f .env.prod.new
+  echo "[deploy] WARNING: Lockbox fetch failed, keeping existing .env.prod:"
+  cat /tmp/lockbox-fetch.err >&2 || true
+fi
 
 echo "[deploy] build web static"
 ./scripts/build-static.sh
