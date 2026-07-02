@@ -155,6 +155,15 @@ services:
       JWT_AUDIENCE: ${JWT_AUDIENCE:-ourapp-desktop}
       ANSWER_URL: ${ANSWER_URL:-http://gateway-app:4100}
       GATEWAY_API_SECRET: ${GATEWAY_API_SECRET}
+      # gost-rag (заземление «Технолога» в ГОСТ). Сервис gost-rag живёт в gateway-compose
+      # на общей сети isaak_shared → достаём по имени контейнера. Заземление включается,
+      # когда web шлёт agent="gost" (вертикаль «Технолог»); GOST_RAG_ENABLED оставляем false.
+      # GOST_TOP_K=16 — победная конфигурация ретрива (дефолт кода 8 занижает multi-doc recall).
+      # GOST_MIN_SCORE=0 — top_score это RRF-ранг, а не косинус: любой порог >0 ведёт себя
+      # непредсказуемо (см. ревью), поэтому abstain только на пустой выдаче.
+      GOST_RAG_URL: ${GOST_RAG_URL:-http://gost-rag:8000}
+      GOST_TOP_K: ${GOST_TOP_K:-16}
+      GOST_MIN_SCORE: ${GOST_MIN_SCORE:-0}
       BILLING_URL: http://billing:3000
       WEB_PUBLIC_URL: ${APP_PUBLIC_URL}
       LOG_LEVEL: ${LOG_LEVEL:-info}
