@@ -47,6 +47,12 @@ type FollowupSendInput = {
   messageID?: string
   optimisticBusy?: boolean
   before?: () => Promise<boolean> | boolean
+  /**
+   * Короткая версия текста для отображения в чате (напр. сводка ответов
+   * мастера сценария) — полный `draft`-текст всё равно уходит модели,
+   * просто synthetic-частью, не показывается юзеру. См. build-request-parts.ts.
+   */
+  displayText?: string
 }
 
 // OurApp: DOCX/XLSX-attachment'ы храним как image-part с MIME="ourapp/office" и
@@ -159,6 +165,7 @@ export async function sendFollowupDraft(input: FollowupSendInput) {
     context: input.draft.context,
     images,
     text,
+    displayText: input.displayText,
     sessionID: input.draft.sessionID,
     messageID,
     sessionDirectory: input.draft.sessionDirectory,
@@ -336,7 +343,7 @@ export function createPromptSubmit(input: PromptSubmitInput) {
     })
   }
 
-  const handleSubmit = async (event?: Event) => {
+  const handleSubmit = async (event?: Event, opts?: { displayText?: string }) => {
     // event отсутствует при программном вызове (авто-сабмит сценария) — гард, иначе краш.
     event?.preventDefault()
 
@@ -622,6 +629,7 @@ export function createPromptSubmit(input: PromptSubmitInput) {
       draft,
       messageID,
       optimisticBusy: sessionDirectory === projectDirectory,
+      displayText: opts?.displayText,
       // OurApp: guard кредитов (low/zero) → потом ожидание worktree
       before: async () => (await guardSendCredits()) && (await waitForWorktree()),
     }).catch((err) => {

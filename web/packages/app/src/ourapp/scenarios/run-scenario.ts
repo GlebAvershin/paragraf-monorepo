@@ -39,6 +39,37 @@ export interface BuiltScenarioPrompt {
   parts: ContentPart[]
   /** Сколько файлов прикреплено (для аналитики/UI). */
   attachmentCount: number
+  /**
+   * Короткая сводка «что юзер реально ввёл в шагах» (label: ответ) — это,
+   * а НЕ полный шаблон с инструкциями роли/структуры ответа, показывается
+   * в чате как сообщение юзера (см. build-request-parts.ts: полный текст
+   * уходит synthetic-частью в модель, эта сводка — обычной видимой частью).
+   * Иначе юзер видит в своём же сообщении «Ты — инженер-нормоконтролёр…» —
+   * запутывает (фидбэк 2026-07-02).
+   */
+  displayText: string
+}
+
+/** «Label: ответ» по каждому заполненному шагу — то, что видит юзер в чате. */
+function buildDisplayText(scenario: Scenario, answers: ScenarioAnswers): string {
+  const lines: string[] = []
+  for (const step of scenario.steps) {
+    const value = answers[step.id]
+    if (value === undefined || value === null) continue
+    let text: string
+    if (step.type === "file_upload") {
+      if (!Array.isArray(value) || value.length === 0) continue
+      text = value.map((f) => f.name).join(", ")
+    } else if (step.type === "boolean") {
+      if (typeof value !== "boolean") continue
+      text = value ? "да" : "нет"
+    } else {
+      if (typeof value !== "string" || value.trim().length === 0) continue
+      text = value.trim()
+    }
+    lines.push(`${step.label}: ${text}`)
+  }
+  return lines.join("\n")
 }
 
 /**
@@ -92,7 +123,7 @@ export async function buildScenarioPrompt(
     { type: "text", content: text, start: 0, end: text.length },
   ]
 
-  return { parts, attachmentCount: attachments.length }
+  return { parts, attachmentCount: attachments.length, displayText: buildDisplayText(scenario, answers) }
 }
 
 /**

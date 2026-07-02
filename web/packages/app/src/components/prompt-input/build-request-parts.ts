@@ -27,6 +27,15 @@ type BuildRequestPartsInput = {
   messageID: string
   sessionID: string
   sessionDirectory: string
+  /**
+   * OurApp: если задано — `text` (полный текст, напр. шаблон сценария с
+   * инструкциями роли) помечается synthetic и уходит модели скрыто от чата,
+   * а эта короткая строка становится видимой частью сообщения юзера (см.
+   * UserMessageDisplay в ui/message-part.tsx — берёт первую non-synthetic
+   * text-часть). Модель по-прежнему получает ВЕСЬ текст — synthetic влияет
+   * только на отображение в транскрипте, не на то, что видит LLM.
+   */
+  displayText?: string
 }
 
 const absolute = (directory: string, path: string) => {
@@ -89,13 +98,23 @@ const toOptimisticPart = (part: PromptRequestPart, sessionID: string, messageID:
 }
 
 export function buildRequestParts(input: BuildRequestPartsInput) {
+  const hasDisplayText = !!input.displayText?.trim()
   const requestParts: PromptRequestPart[] = [
     {
       id: Identifier.ascending("part"),
       type: "text",
       text: input.text,
+      // См. displayText в BuildRequestPartsInput.
+      synthetic: hasDisplayText || undefined,
     },
   ]
+  if (hasDisplayText) {
+    requestParts.push({
+      id: Identifier.ascending("part"),
+      type: "text",
+      text: input.displayText!,
+    })
+  }
 
   const files = input.prompt.filter(isFileAttachment).map((attachment) => {
     const path = absolute(input.sessionDirectory, attachment.path)

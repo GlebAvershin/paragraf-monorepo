@@ -583,6 +583,7 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
       const detail = (
         event as CustomEvent<{
           parts?: ContentPart[]
+          displayText?: string
           autoSubmit?: boolean
           resultAction?: { type?: string }
         }>
@@ -601,7 +602,7 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
       prompt.set(parts, cursor)
       if (detail?.autoSubmit) {
         queueMicrotask(() => {
-          void handleSubmit()
+          void handleSubmit(undefined, { displayText: detail?.displayText })
         })
         return
       }

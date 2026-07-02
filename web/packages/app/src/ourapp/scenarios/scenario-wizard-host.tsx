@@ -21,6 +21,7 @@ export const ScenarioWizardHost: Component = () => {
         detail: {
           scenarioId: scenario.id,
           parts: built.parts,
+          displayText: built.displayText,
           preferredModel: scenario.preferredModel,
           resultAction: scenario.resultAction,
           autoSubmit: true,
