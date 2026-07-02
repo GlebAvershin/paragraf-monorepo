@@ -47,6 +47,7 @@ import { shouldMarkBoundaryGesture, normalizeWheelDelta } from "@/pages/session/
 import { SessionContextUsage } from "@/components/session-context-usage"
 import { isDocxSession, isChatOnlySession } from "@/ourapp/scenarios/docx-result-tracker"
 import { downloadMarkdownAsPdf } from "@/ourapp/pdf-export"
+import { SourceViewer, extractSources, type Source } from "@/ourapp/source-viewer"
 import { useDialog } from "@opencode-ai/ui/context/dialog"
 import { createResizeObserver } from "@solid-primitives/resize-observer"
 import { useLanguage } from "@/context/language"
@@ -1181,6 +1182,32 @@ export function MessageTimeline(props: {
     )
   }
 
+  // OurApp: источники под ответом ассистента — открыть процитированный ГОСТ/СП для проверки.
+  // Авторитетно: engine кладёт резолвленный Source[] в metadata text-части (заземление в ГОСТ),
+  // читаем их. Фолбэк (не-ГОСТ ответ / старые сообщения без metadata): извлекаем стандарты из текста
+  // (extractSources). Компонент SourceViewer от способа получения не зависит.
+  function OurAppSources(props: { userMessageID: string }) {
+    const sources = createMemo<Source[]>(() => {
+      const msgs = assistantMessagesByParent().get(props.userMessageID) ?? emptyAssistantMessages
+      const parts = msgs
+        .flatMap((m) => getMsgParts(m.id))
+        .filter((p): p is TextPart => p.type === "text" && !p.synthetic)
+      // 1) авторитетный путь — Source[] из metadata, дедуп по doc_id
+      const seen = new Set<string>()
+      const fromMeta: Source[] = []
+      for (const p of parts)
+        for (const s of (p.metadata?.sources as Source[] | undefined) ?? []) {
+          if (!s?.doc_id || seen.has(s.doc_id)) continue
+          seen.add(s.doc_id)
+          fromMeta.push(s)
+        }
+      if (fromMeta.length > 0) return fromMeta
+      // 2) стопгап — извлечь упоминания стандартов из текста ответа
+      return extractSources(parts.map((p) => p.text ?? "").join("\n\n"))
+    })
+    return <SourceViewer sources={sources()} />
+  }
+
   function TimelineRowFrame(input: { row: FramedTimelineRow; children: JSX.Element }) {
     const anchor = () => {
       const row = input.row
@@ -1296,6 +1323,7 @@ export function MessageTimeline(props: {
                 {renderAssistantPartGroup(row)}
               </div>
               <Show when={row.lastAssistantPart && !workingTurn(row.userMessageID)}>
+                <OurAppSources userMessageID={row.userMessageID} />
                 <OurAppDocxButton userMessageID={row.userMessageID} />
               </Show>
             </div>

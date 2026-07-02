@@ -21,6 +21,7 @@ import { guardSendCredits } from "@/ourapp/low-balance-guard"
 import { formatServerError } from "@/utils/server-errors"
 import { getAutoModelEnabled } from "@/ourapp/auto-model/store"
 import { getDeepThinkingEnabled, isReasoningModel, DEEP_THINKING_VARIANT } from "@/ourapp/deep-thinking/store"
+import { loadVertical } from "@/ourapp/verticals"
 
 type PendingPrompt = {
   abort: AbortController
@@ -461,7 +462,9 @@ export function createPromptSubmit(input: PromptSubmitInput) {
     if (getDeepThinkingEnabled() && (autoEnabled || isReasoningModel(model.modelID))) {
       autoVariant = DEEP_THINKING_VARIANT
     }
-    const agent = currentAgent.name
+    // OurApp: вертикаль «Технолог» (база знаний ГОСТ) заземляет ответы — шлём agent="gost", движок
+    // дёргает gost-rag, подмешивает выдержки и отдаёт источники под ответом. Иначе — агент как обычно.
+    const agent = loadVertical() === "technologist" ? "gost" : currentAgent.name
     const context = prompt.context.items().slice()
     const draft: FollowupDraft = {
       sessionID: session.id,

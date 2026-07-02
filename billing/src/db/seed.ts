@@ -24,7 +24,7 @@ const seedPlans: (typeof schema.plans.$inferInsert)[] = [
     monthlyBudgetUsdCenti: 200, // $2 — verifies LiteLLM hardcap
     monthlyCredits: 30, // ≈ 2-3 задачи на Sonnet 1.5×
     monthlyTasksTarget: 3, // deprecated, оставлено для совместимости
-    allowedModels: ["claude-sonnet", "claude-haiku", "gigachat-pro", "gigachat-lite", "yandexgpt-pro", "yandexgpt-lite"],
+    allowedModels: ["claude-sonnet", "claude-haiku", "gigachat-pro", "gigachat-lite", "yandexgpt-pro", "yandexgpt-lite", "z-ai/glm-5.2", "deepseek/deepseek-chat"],
     features: { trial: true, trialDays: 14 },
   },
   {
@@ -183,6 +183,25 @@ const seedRates: (typeof schema.modelRates.$inferInsert)[] = [
     displayNameRu: "YandexGPT Lite",
     providerPricePer1kInputUsdMicroCenti: 20,
     providerPricePer1kOutputUsdMicroCenti: 60,
+  },
+  // ===== OpenRouter (дешёвые, через шлюз) — цены проверь на openrouter.ai/models =====
+  {
+    modelCode: "z-ai/glm-5.2",
+    provider: "openrouter",
+    tier: "lite",
+    multiplier: "1.00",
+    displayNameRu: "GLM 5.2 (Zhipu)",
+    providerPricePer1kInputUsdMicroCenti: 600,
+    providerPricePer1kOutputUsdMicroCenti: 2200,
+  },
+  {
+    modelCode: "deepseek/deepseek-chat",
+    provider: "openrouter",
+    tier: "lite",
+    multiplier: "1.00",
+    displayNameRu: "DeepSeek Chat",
+    providerPricePer1kInputUsdMicroCenti: 300,
+    providerPricePer1kOutputUsdMicroCenti: 1200,
   },
 ]
 
