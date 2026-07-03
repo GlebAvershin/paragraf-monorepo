@@ -10,7 +10,7 @@
 import { config } from "./config.ts"
 import { publish } from "./bus.ts"
 import { getLitellmKey } from "./billing.ts"
-import { retrieveGost } from "./gostrag.ts"
+import { retrieveGost, type GostSource } from "./gostrag.ts"
 import { getSession, updateSession } from "./sessions.ts"
 import {
   historyForGateway,
@@ -85,12 +85,23 @@ function groundingSystemPrompt(context: string): string {
     "- Опирайся ТОЛЬКО на факты из выдержек; не достраивай по памяти и не обобщай за пределы текста.",
     "- Каждое утверждение подкрепляй ссылкой на пункт в формате [ГОСТ NNNN-ГГГГ, п. X.Y], как в выдержках.",
     "- Если в выдержках нет ответа — прямо скажи, что в базе ГОСТ это не найдено, и не выдумывай.",
+    "- НЕ комментируй саму выдержку: никаких «в выдержке не указано», «далее не приведено», «текст обрывается».",
+    "  Если конкретное значение в выдержке отсутствует — просто не приводи его (при необходимости сошлись на пункт",
+    "  целиком). Излагай ответ как связный факт, а не как пересказ обрезанной цитаты.",
     "- Отвечай на русском, кратко и по существу.",
     "",
     "=== Выдержки из стандартов ===",
     context,
     "=== Конец выдержек ===",
   ].join("\n")
+}
+
+// В «Источниках» показываем только документы, на которые ответ реально сослался — модель цитирует
+// [ГОСТ …, п. …], а doc_id источника = тот же designation. Фолбэк на все выдержки, если совпадений
+// нет (модель не процитировала в ожидаемом формате) — чтобы панель не оказалась пустой.
+function citedSources(answer: string, sources: GostSource[]): GostSource[] {
+  const cited = sources.filter((s) => answer.includes(s.doc_id))
+  return cited.length > 0 ? cited : sources
 }
 
 const GOST_ABSTAIN =
@@ -305,7 +316,8 @@ export async function runPrompt(input: PromptInput): Promise<{ info: StoredMessa
       // авторитетно (вместо регулярки по тексту). Поле уезжает в parts.data (jsonb) и доходит до
       // рендерера через listMessages/SSE без изменений контракта.
       if (grounded) {
-        asstPart.metadata = { sources: gost!.sources, grounding: { top_score: gost!.top_score, grounded: true } }
+        const shownSources = citedSources(asstPart.text as string, gost!.sources)
+        asstPart.metadata = { sources: shownSources, grounding: { top_score: gost!.top_score, grounded: true } }
         await updatePart(userId, asstPart)
         publish(userId, { type: "message.part.updated", properties: { part: asstPart } })
       }
