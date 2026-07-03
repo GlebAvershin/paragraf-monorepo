@@ -24,6 +24,9 @@ const syncedDirectories: string[] = []
 let params: { id?: string } = {}
 let selected = "/repo/worktree-a"
 let variant: string | undefined
+// Управляет loadVertical() в моке ниже: по умолчанию НЕ "technologist", чтобы agent брался
+// из currentAgent; тест gost-моста ставит "technologist".
+let activeVertical = "lawyer"
 
 const promptValue: Prompt = [{ type: "text", content: "ls", start: 0, end: 2 }]
 
@@ -197,6 +200,10 @@ beforeAll(async () => {
     }),
   }))
 
+  mock.module("@/ourapp/verticals", () => ({
+    loadVertical: () => activeVertical,
+  }))
+
   const mod = await import("./submit")
   createPromptSubmit = mod.createPromptSubmit
 })
@@ -213,6 +220,7 @@ beforeEach(() => {
   syncedDirectories.length = 0
   selected = "/repo/worktree-a"
   variant = undefined
+  activeVertical = "lawyer"
   for (const key of Object.keys(storedSessions)) delete storedSessions[key]
 })
 
@@ -313,6 +321,33 @@ describe("prompt submit worktree selection", () => {
         model: { providerID: "provider", modelID: "model", variant: "high" },
       },
     })
+  })
+
+  test("sends agent \"gost\" when the technologist vertical is active", async () => {
+    params = { id: "session-1" }
+    activeVertical = "technologist"
+
+    const submit = createPromptSubmit({
+      info: () => ({ id: "session-1" }),
+      imageAttachments: () => [],
+      commentCount: () => 0,
+      autoAccept: () => false,
+      mode: () => "normal",
+      working: () => false,
+      editor: () => undefined,
+      queueScroll: () => undefined,
+      promptLength: (value) => value.reduce((sum, part) => sum + ("content" in part ? part.content.length : 0), 0),
+      addToHistory: () => undefined,
+      resetHistoryNavigation: () => undefined,
+      setMode: () => undefined,
+      setPopover: () => undefined,
+      onSubmit: () => undefined,
+    })
+
+    await submit.handleSubmit({ preventDefault: () => undefined } as unknown as Event)
+
+    expect(optimistic).toHaveLength(1)
+    expect(optimistic[0]).toMatchObject({ message: { agent: "gost" } })
   })
 
   test("seeds new sessions before optimistic prompts are added", async () => {

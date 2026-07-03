@@ -44,21 +44,18 @@
 # 1. Соседним клоном — зарубежный шлюз
 git clone https://github.com/GlebAvershin/paragraf-gateway.git ../paragraf-gateway
 
-# 2. .env (JWT_SECRET в billing и engine ДОЛЖНЫ совпадать; в шлюз — ANTHROPIC_API_KEY)
-cp billing/.env.example billing/.env
-cp engine/.env.example  engine/.env
-cp ../paragraf-gateway/.env.example ../paragraf-gateway/.env
+# 2. Ключи моделей в .env шлюза (хотя бы один: ANTHROPIC_API_KEY / OPENROUTER_API_KEY / GIGACHAT_CREDENTIALS)
+cp ../paragraf-gateway/.env.example ../paragraf-gateway/.env   # затем впиши ключи
 
-# 3. Поднять весь бэкенд одной командой
-make up          # docker + миграции + billing/engine/ETL в фоне + health-check
-
-# 4. Веб-рендерер (отдельный терминал)
-make web
+# 3. ВЕСЬ продукт одной командой (создаст billing/.env + engine/.env с общим JWT_SECRET,
+#    поднимет шлюз + postgres + миграции + billing/engine/ETL в фоне, затем веб в этом терминале)
+make dev          # → http://localhost:5173
 ```
 
-`make help` — все команды (`up`, `down`, `restart`, `logs`, `health`, `migrate`, `seed`,
-`billing`/`engine`/`etl`/`web`, `typecheck`, `test`). OTP-коды входа в dev печатаются в логах
-billing (`make logs`) или приходят в Mailpit (http://localhost:8025), если поднят.
+`make dev` = `env-init` + `up` (бэкенд в фоне) + `web` (этот терминал). Нужен только заполненный
+`.env` шлюза (ключи моделей нельзя сгенерировать). `make help` — все команды (`dev`, `up`, `down`,
+`web`, `logs`, `health`, `migrate`, …). OTP-код входа в dev печатается в логах billing (`make logs`)
+или в Mailpit (http://localhost:8025), если поднят. Бэкенд без веба — `make up`; стоп — `make down`.
 
 > Windows: можно использовать `make` через git-bash/WSL, либо PowerShell-скрипты `up.ps1`/`down.ps1`.
 

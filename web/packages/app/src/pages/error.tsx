@@ -214,6 +214,10 @@ function formatError(error: unknown, t: Translator): string {
   return formatErrorChain(error, t, 0)
 }
 
+// TODO(plans): PLACEHOLDER — заменить на реальный email поддержки Параграфа, когда он появится.
+// Раньше экран ошибки вёл на фидбэк-канал opencode (Discord) — для нашего продукта это неуместно.
+const SUPPORT_EMAIL = "support@paragraf.example"
+
 interface ErrorPageProps {
   error: unknown
 }
@@ -347,15 +351,14 @@ export const ErrorPage: Component<ErrorPageProps> = (props) => {
           {(message) => <p class="text-xs text-text-danger-base text-center max-w-2xl">{message()}</p>}
         </Show>
         <div class="flex flex-col items-center gap-2">
-          <div class="flex items-center justify-center gap-1">
-            {language.t("error.page.report.prefix")}
+          <div class="flex items-center justify-center gap-1 text-center">
+            <span>Если ошибка повторяется — напишите нам:</span>
             <button
               type="button"
               class="flex items-center text-text-interactive-base gap-1"
-              onClick={() => platform.openLink("https://opencode.ai/desktop-feedback")}
+              onClick={() => platform.openLink(`mailto:${SUPPORT_EMAIL}`)}
             >
-              <div>{language.t("error.page.report.discord")}</div>
-              <Icon name="discord" class="text-text-interactive-base" />
+              <div>{SUPPORT_EMAIL}</div>
             </button>
           </div>
           <Show when={platform.version}>
