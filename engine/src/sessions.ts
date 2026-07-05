@@ -14,7 +14,7 @@ export interface Session {
   parentID?: string
   title: string
   version: string
-  time: { created: number; updated: number }
+  time: { created: number; updated: number; archived?: number }
 }
 
 export interface MessageWithParts {
@@ -45,9 +45,13 @@ export async function createSession(userId: string, input?: { title?: string; pa
   return session
 }
 
+// Заархивированные (data.time.archived задан) исключаются — «Архивировать» в UI должно
+// убирать сессию из истории насовсем (экрана «показать архивные» пока нет).
 export async function listSessions(userId: string): Promise<Session[]> {
   const rows = await sql<{ data: Session }[]>`
-    SELECT data FROM sessions WHERE user_id = ${userId} ORDER BY updated DESC LIMIT 200`
+    SELECT data FROM sessions
+    WHERE user_id = ${userId} AND data->'time'->>'archived' IS NULL
+    ORDER BY updated DESC LIMIT 200`
   return rows.map((r) => r.data)
 }
 
@@ -60,11 +64,15 @@ export async function getSession(userId: string, id: string): Promise<Session | 
 export async function updateSession(
   userId: string,
   id: string,
-  patch: Partial<Pick<Session, "title">>,
+  patch: { title?: string; time?: { archived?: number } },
 ): Promise<Session | null> {
   const current = await getSession(userId, id)
   if (!current) return null
-  const next: Session = { ...current, ...patch, time: { ...current.time, updated: Date.now() } }
+  const next: Session = {
+    ...current,
+    ...(patch.title !== undefined ? { title: patch.title } : {}),
+    time: { ...current.time, ...patch.time, updated: Date.now() },
+  }
   await sql`UPDATE sessions SET data = ${jsonb(next)}, updated = ${next.time.updated} WHERE user_id = ${userId} AND id = ${id}`
   return next
 }

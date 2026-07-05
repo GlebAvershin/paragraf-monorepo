@@ -70,7 +70,11 @@ app.get("/session/:id", async (c) => {
 
 app.patch("/session/:id", async (c) => {
   const body = await c.req.json().catch(() => ({}))
-  const s = await updateSession(c.var.session.userId, c.req.param("id"), { title: body?.title })
+  const archived = typeof body?.time?.archived === "number" ? body.time.archived : undefined
+  const s = await updateSession(c.var.session.userId, c.req.param("id"), {
+    title: body?.title,
+    ...(archived !== undefined ? { time: { archived } } : {}),
+  })
   return s ? c.json(s) : c.json({ error: "not_found" }, 404)
 })
 
