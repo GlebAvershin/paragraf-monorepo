@@ -32,8 +32,11 @@ dump_db() {
   size=$(du -h "$file" | cut -f1)
   echo "[$(date -Is)] $db dump done, size=$size"
 
-  # Sanity-check — базовая проверка непустого дампа.
-  if ! gzip -dc "$file" | grep -q 'CREATE TABLE'; then
+  # Sanity-check — базовая проверка непустого дампа. grep -q выходит по первому
+  # совпадению и закрывает пайп раньше gzip → тот падает по SIGPIPE, и set -o
+  # pipefail (см. верх файла) принимает это за провал ВСЕЙ команды, даже когда
+  # grep реально нашёл совпадение. Отключаем pipefail только для этой проверки.
+  if ! (set +o pipefail; gzip -dc "$file" | grep -q 'CREATE TABLE'); then
     echo "[$(date -Is)] ERROR: $db dump has no CREATE TABLE — failing!"
     exit 2
   fi
