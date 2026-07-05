@@ -58,6 +58,30 @@ app.use(
 app.get("/health/readiness", (c) => c.json({ status: "ok" }))
 app.get("/health/liveliness", (c) => c.text("alive"))
 
+// === Admin — просмотр переписки ЛЮБОГО пользователя для разработчиков (не гейтится
+// пользовательским JWT — отдельный секрет ADMIN_TOKEN, см. config.ts). Пусто в конфиге ⇒
+// 503 на всех /admin/* (явный отказ, а не молчаливое "открыто без пароля").
+// ВАЖНО: зарегистрировано ДО app.route("/", meta) ниже — meta.use("*", requireSession)
+// смонтирован в корень и иначе перехватывает ЛЮБОЙ ещё не обработанный путь (включая
+// /admin/*) требованием пользовательского JWT раньше, чем Hono доходит до этих роутов
+// (поймано 2026-07-05: гейт с ADMIN_TOKEN молча не срабатывал, отвечал requireSession).
+app.use("/admin/*", async (c, next) => {
+  if (!config.ADMIN_TOKEN) return c.json({ error: "admin_disabled" }, 503)
+  if (c.req.header("x-admin-token") !== config.ADMIN_TOKEN) return c.json({ error: "unauthorized" }, 401)
+  return next()
+})
+
+app.get("/admin/sessions", async (c) => {
+  const limit = Math.min(Number(c.req.query("limit") ?? 100), 500)
+  const offset = Number(c.req.query("offset") ?? 0)
+  const [sessions, total] = await Promise.all([listAllSessions(limit, offset), countAllSessions()])
+  return c.json({ sessions, total })
+})
+
+app.get("/admin/sessions/:id/messages", async (c) => {
+  return c.json(await listMessagesAdmin(c.req.param("id")))
+})
+
 // Метаданные-заглушки (config/provider/project/command/agent/path + скрытые группы).
 app.route("/", meta)
 
@@ -181,26 +205,6 @@ app.get("/global/event", (c) =>
     }
   }),
 )
-
-// === Admin — просмотр переписки ЛЮБОГО пользователя для разработчиков (не гейтится
-// пользовательским JWT — отдельный секрет ADMIN_TOKEN, см. config.ts). Пусто в конфиге ⇒
-// 503 на всех /admin/* (явный отказ, а не молчаливое "открыто без пароля").
-app.use("/admin/*", async (c, next) => {
-  if (!config.ADMIN_TOKEN) return c.json({ error: "admin_disabled" }, 503)
-  if (c.req.header("x-admin-token") !== config.ADMIN_TOKEN) return c.json({ error: "unauthorized" }, 401)
-  return next()
-})
-
-app.get("/admin/sessions", async (c) => {
-  const limit = Math.min(Number(c.req.query("limit") ?? 100), 500)
-  const offset = Number(c.req.query("offset") ?? 0)
-  const [sessions, total] = await Promise.all([listAllSessions(limit, offset), countAllSessions()])
-  return c.json({ sessions, total })
-})
-
-app.get("/admin/sessions/:id/messages", async (c) => {
-  return c.json(await listMessagesAdmin(c.req.param("id")))
-})
 
 await initSchema()
 console.log(`[engine] listening on :${config.PORT} (answer=${config.ANSWER_URL})`)
