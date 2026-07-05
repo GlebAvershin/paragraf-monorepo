@@ -9,7 +9,7 @@
 
 {$APP_DOMAIN} {
 	# ---- billing API (auth/кредиты/платежи) ----
-	@billing path /auth/* /me /limits /credits/* /usage/* /payments/* /webhooks/* /waitlist
+	@billing path /auth/* /me /limits /credits/* /usage/* /payments/* /webhooks/* /waitlist /admin/users
 	handle @billing {
 		reverse_proxy billing:3000 {
 			transport http {
@@ -21,7 +21,7 @@
 	}
 
 	# ---- engine API (контракт opencode: сессии/сообщения/SSE) ----
-	@engine path /session* /global/* /provider* /config* /project* /path /agent /app/* /command /mcp /lsp /vcs /question /permission
+	@engine path /session* /global/* /provider* /config* /project* /path /agent /app/* /command /mcp /lsp /vcs /question /permission /admin/sessions*
 	handle @engine {
 		reverse_proxy engine:4096 {
 			# SSE (/global/event) держит соединение открытым долго — без таймаута чтения.

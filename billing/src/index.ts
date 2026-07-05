@@ -36,6 +36,7 @@ import { webhookRoutes } from "./routes/webhooks.ts"
 import { usageRoutes } from "./routes/usage.ts"
 import { healthRoutes } from "./routes/health.ts"
 import { waitlistRoutes } from "./routes/waitlist.ts"
+import { adminRoutes } from "./routes/admin.ts"
 
 const app = new Hono()
 
@@ -59,7 +60,7 @@ app.use(
     },
     credentials: true,
     allowMethods: ["GET", "POST", "OPTIONS"],
-    allowHeaders: ["Content-Type", "Authorization"],
+    allowHeaders: ["Content-Type", "Authorization", "x-admin-token"],
   }),
 )
 
@@ -90,6 +91,7 @@ app.route("/payments", paymentRoutes)
 app.route("/webhooks", webhookRoutes)
 app.route("/usage", usageRoutes)
 app.route("/waitlist", waitlistRoutes)
+app.route("/admin", adminRoutes)
 
 // ----- Error handler -----
 app.onError((err, c) => {

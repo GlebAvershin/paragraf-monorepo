@@ -90,6 +90,9 @@ services:
       CLOUDPAYMENTS_API_SECRET: ${CLOUDPAYMENTS_API_SECRET}
       CLOUDPAYMENTS_WEBHOOK_SECRET: ${CLOUDPAYMENTS_WEBHOOK_SECRET}
       LOG_LEVEL: ${LOG_LEVEL:-info}
+      # Внутренняя админ-панель разработчиков (просмотр переписки всех юзеров) — /admin/*.
+      # Пусто ⇒ 503 (не открыто без пароля). Должен совпадать со значением у engine.
+      ADMIN_TOKEN: ${ADMIN_TOKEN:-}
     networks: [default, isaak_shared]
 
   billing_etl_worker:
@@ -167,6 +170,9 @@ services:
       BILLING_URL: http://billing:3000
       WEB_PUBLIC_URL: ${APP_PUBLIC_URL}
       LOG_LEVEL: ${LOG_LEVEL:-info}
+      # Внутренняя админ-панель разработчиков (просмотр переписки всех юзеров) — /admin/*.
+      # Пусто ⇒ 503 (не открыто без пароля). Должен совпадать со значением у billing.
+      ADMIN_TOKEN: ${ADMIN_TOKEN:-}
     networks: [default, isaak_shared]
 
   caddy:

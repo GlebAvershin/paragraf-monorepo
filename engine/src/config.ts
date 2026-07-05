@@ -47,6 +47,11 @@ export const config = {
   // billing/config.ts APP_PUBLIC_URL. Пусто в dev (localhost/127.0.0.1 разрешены
   // всегда через regex ниже в index.ts).
   WEB_PUBLIC_URL: process.env.WEB_PUBLIC_URL ?? "",
+
+  // Админ-доступ для разработчиков (просмотр переписки всех пользователей) — отдельный
+  // секрет, НЕ пользовательский JWT. Пусто ⇒ /admin/* эндпоинты отключены (503), а не
+  // открыты без пароля. Тот же токен должен быть прописан в billing/.env (ADMIN_TOKEN).
+  ADMIN_TOKEN: process.env.ADMIN_TOKEN ?? "",
 } as const
 
 export const isProd = process.env.NODE_ENV === "production"

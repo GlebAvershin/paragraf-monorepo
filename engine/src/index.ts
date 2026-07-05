@@ -11,7 +11,17 @@ import { streamSSE } from "hono/streaming"
 import { config } from "./config.ts"
 import { requireSession, type Session as Auth } from "./auth.ts"
 import { initSchema } from "./db.ts"
-import { createSession, getSession, listMessages, listSessions, removeSession, updateSession } from "./sessions.ts"
+import {
+  countAllSessions,
+  createSession,
+  getSession,
+  listAllSessions,
+  listMessages,
+  listMessagesAdmin,
+  listSessions,
+  removeSession,
+  updateSession,
+} from "./sessions.ts"
 import { subscribe } from "./bus.ts"
 import { runPrompt } from "./chat.ts"
 import { meta } from "./meta.ts"
@@ -41,7 +51,7 @@ app.use(
     // Без них в allowHeaders браузер валит preflight на любой не-GET запрос (сервер отвечает 204 на OPTIONS,
     // но т.к. Access-Control-Allow-Headers уже сервера не покрывает запрошенный header, сам POST браузер
     // не отправляет) → создание сессии/сообщения падает с "Failed to fetch" при живом сервере.
-    allowHeaders: ["Content-Type", "Authorization", "x-opencode-directory", "x-opencode-workspace"],
+    allowHeaders: ["Content-Type", "Authorization", "x-opencode-directory", "x-opencode-workspace", "x-admin-token"],
   }),
 )
 
@@ -171,6 +181,26 @@ app.get("/global/event", (c) =>
     }
   }),
 )
+
+// === Admin — просмотр переписки ЛЮБОГО пользователя для разработчиков (не гейтится
+// пользовательским JWT — отдельный секрет ADMIN_TOKEN, см. config.ts). Пусто в конфиге ⇒
+// 503 на всех /admin/* (явный отказ, а не молчаливое "открыто без пароля").
+app.use("/admin/*", async (c, next) => {
+  if (!config.ADMIN_TOKEN) return c.json({ error: "admin_disabled" }, 503)
+  if (c.req.header("x-admin-token") !== config.ADMIN_TOKEN) return c.json({ error: "unauthorized" }, 401)
+  return next()
+})
+
+app.get("/admin/sessions", async (c) => {
+  const limit = Math.min(Number(c.req.query("limit") ?? 100), 500)
+  const offset = Number(c.req.query("offset") ?? 0)
+  const [sessions, total] = await Promise.all([listAllSessions(limit, offset), countAllSessions()])
+  return c.json({ sessions, total })
+})
+
+app.get("/admin/sessions/:id/messages", async (c) => {
+  return c.json(await listMessagesAdmin(c.req.param("id")))
+})
 
 await initSchema()
 console.log(`[engine] listening on :${config.PORT} (answer=${config.ANSWER_URL})`)

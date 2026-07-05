@@ -98,3 +98,40 @@ export async function listMessages(userId: string, sessionID: string): Promise<M
   }
   return msgs.map((m) => ({ info: m.data, parts: byMessage.get(m.id) ?? [] }))
 }
+
+// ── Админ-эндпоинты (для разработчиков) ─────────────────────────────────────────────────
+// В отличие от остальных функций выше, НЕ фильтруют по user_id — это единственная точка
+// в движке, где сознательно читаются данные любого пользователя. Гейтится отдельным
+// ADMIN_TOKEN (не пользовательским JWT), см. requireAdmin в index.ts.
+
+export interface AdminSessionRow extends Session {
+  userId: string
+}
+
+/** Все сессии всех пользователей, сортировка по updated desc, с пагинацией. */
+export async function listAllSessions(limit: number, offset: number): Promise<AdminSessionRow[]> {
+  const rows = await sql<{ user_id: string; data: Session }[]>`
+    SELECT user_id, data FROM sessions ORDER BY updated DESC LIMIT ${limit} OFFSET ${offset}`
+  return rows.map((r) => ({ ...r.data, userId: r.user_id }))
+}
+
+export async function countAllSessions(): Promise<number> {
+  const rows = await sql<{ count: string }[]>`SELECT count(*)::text FROM sessions`
+  return Number(rows[0]?.count ?? 0)
+}
+
+/** Полная переписка сессии — БЕЗ привязки к user_id (сессия может принадлежать любому юзеру). */
+export async function listMessagesAdmin(sessionID: string): Promise<MessageWithParts[]> {
+  const msgs = await sql<{ id: string; data: Record<string, unknown> }[]>`
+    SELECT id, data FROM messages WHERE session_id = ${sessionID} ORDER BY created ASC`
+  if (msgs.length === 0) return []
+  const parts = await sql<{ message_id: string; data: Record<string, unknown> }[]>`
+    SELECT message_id, data FROM parts WHERE session_id = ${sessionID} ORDER BY idx ASC`
+  const byMessage = new Map<string, Array<Record<string, unknown>>>()
+  for (const p of parts) {
+    const arr = byMessage.get(p.message_id) ?? []
+    arr.push(p.data)
+    byMessage.set(p.message_id, arr)
+  }
+  return msgs.map((m) => ({ info: m.data, parts: byMessage.get(m.id) ?? [] }))
+}

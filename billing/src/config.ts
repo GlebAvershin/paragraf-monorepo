@@ -44,6 +44,11 @@ const ConfigSchema = z.object({
   // notifications with the API secret unless a dedicated secret is configured).
   CLOUDPAYMENTS_WEBHOOK_SECRET: z.string().optional(),
   CLOUDPAYMENTS_API_URL: z.string().url().default("https://api.cloudpayments.ru"),
+
+  // Админ-доступ для разработчиков (просмотр списка пользователей для сопоставления
+  // с перепиской из engine) — отдельный секрет, НЕ пользовательский JWT. Пусто ⇒
+  // /admin/* эндпоинты отключены (503). Тот же токен должен быть прописан в engine/.env.
+  ADMIN_TOKEN: z.string().optional(),
 })
 
 export type Config = z.infer<typeof ConfigSchema>
