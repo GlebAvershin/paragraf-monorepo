@@ -78,6 +78,17 @@
 }
 
 html[data-color-scheme="dark"] {
+  /* Пиним CSS-свойство color-scheme к ВЫБРАННОЙ в приложении теме (а не к ОС).
+     От него зависит CSS-функция light-dark(), которой пользуются все наши экраны
+     (home/settings/help/scenarios/…). Раньше color-scheme задавался только на
+     :root — и статикой (theme.css), и динамикой (theme/context.tsx), и через
+     @media (prefers-color-scheme) от ОС. При несовпадении «тема приложения ≠ тема
+     ОС» победитель зависел от ПОРЯДКА CSS (в dev один, в prod-бандле другой) →
+     часть страниц следовала выбору, часть — ОС = «намешаны темы». Селектор
+     html[data-color-scheme] имеет специфичность выше :root и бьёт все :root-правила
+     детерминированно, независимо от порядка. data-color-scheme выставляется и
+     preload-скриптом (до отрисовки), и провайдером — всегда = разрешённая тема. */
+  color-scheme: dark;
   --ourapp-highlight: #D4B872;
   --ourapp-highlight-muted: #D4B8722A;
   --ourapp-bg-page: #15120f;
@@ -104,6 +115,7 @@ html[data-color-scheme="dark"] {
    высокую специфичность, чем :root внутри @media — источник правды побеждает
    независимо от порядка. */
 html[data-color-scheme="light"] {
+  color-scheme: light;
   --ourapp-highlight: #C8A85C;
   --ourapp-highlight-muted: #C8A85C1A;
   --ourapp-bg-page: #fbf9f4;
