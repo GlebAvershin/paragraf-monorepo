@@ -38,7 +38,8 @@ dump_db() {
     exit 2
   fi
 
-  if [ -n "${BACKUP_S3_BUCKET:-}" ] && command -v aws >/dev/null 2>&1; then
+  if [ -n "${BACKUP_S3_BUCKET:-}" ] && [ -n "${BACKUP_S3_ACCESS_KEY:-}" ] && [ -n "${BACKUP_S3_SECRET_KEY:-}" ] \
+    && command -v aws >/dev/null 2>&1; then
     AWS_ACCESS_KEY_ID="$BACKUP_S3_ACCESS_KEY" \
       AWS_SECRET_ACCESS_KEY="$BACKUP_S3_SECRET_KEY" \
       aws --endpoint-url "$BACKUP_S3_ENDPOINT" \
