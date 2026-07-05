@@ -133,6 +133,91 @@
   flex-wrap: wrap;
 }
 
+/* Тема-адаптивная ссылка (напр. support-email на Помощи). */
+.ourapp-settings__link {
+  color: light-dark(#0B5345, #1A8A6B);
+  border-bottom: 1px solid light-dark(#0B5345, #1A8A6B);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.ourapp-settings__link:hover {
+  color: light-dark(#0D6B58, #1FA17F);
+}
+
+/* FAQ-аккордеон (Помощь) — отдельная карточка на каждый вопрос (mockup «Помощь»).
+   Раньше эти стили были инлайном с захардкоженными светлыми цветами
+   (--color-text-primary/#2A2723 и т.п.) — в тёмной теме текст пропадал. */
+.ourapp-faq {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ourapp-faq__item {
+  border: 1px solid light-dark(#D8D2C5, #3A342D);
+  border-radius: 12px;
+  background: light-dark(#FFFFFF, #1F1B17);
+  overflow: hidden;
+}
+
+.ourapp-faq__q {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  padding: 16px 20px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  color: light-dark(#1A1614, #EDE8DF);
+  transition: background 120ms var(--ourapp-ease, ease);
+}
+
+.ourapp-faq__q:hover {
+  background: light-dark(#F6F2EB, #25201B);
+}
+
+.ourapp-faq__icon {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  color: light-dark(#0B5345, #1A8A6B);
+  transition: transform 200ms var(--ourapp-ease, ease);
+}
+
+.ourapp-faq__item--open .ourapp-faq__icon {
+  transform: rotate(45deg);
+}
+
+.ourapp-faq__a {
+  padding: 0 20px 18px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: light-dark(#5C5852, #B5AFA4);
+  animation: ourapp-faq-fade 200ms var(--ourapp-ease, ease) both;
+}
+
+@keyframes ourapp-faq-fade {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 /* Danger-вариант кнопки — используется только в settings (выйти из аккаунта). */
 .ourapp-btn--danger {
   background: transparent;

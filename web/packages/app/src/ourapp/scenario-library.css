@@ -156,9 +156,24 @@
   outline-offset: 2px;
 }
 
+/* Промо-карточка (первый/популярный сценарий) — заливка акцентом (изумруд),
+   текст on-accent. Соответствует крупной карточке в mockup «С чего начать?». */
 .ourapp-scenario--feature {
   grid-column: span 2;
   grid-row: span 2;
+  background: light-dark(#0B5345, #1A8A6B);
+  border-color: transparent;
+  box-shadow:
+    0 1px 2px light-dark(rgba(26, 22, 20, 0.06), rgba(0, 0, 0, 0.4)),
+    0 12px 30px -14px light-dark(rgba(11, 83, 69, 0.5), rgba(0, 0, 0, 0.6));
+}
+
+.ourapp-scenario--feature:hover {
+  background: light-dark(#0D6B58, #1FA17F);
+  border-color: transparent;
+  box-shadow:
+    0 1px 2px light-dark(rgba(26, 22, 20, 0.08), rgba(0, 0, 0, 0.5)),
+    0 16px 36px -14px light-dark(rgba(11, 83, 69, 0.55), rgba(0, 0, 0, 0.7));
 }
 
 @media (max-width: 720px) {
@@ -168,14 +183,30 @@
   }
 }
 
+.ourapp-scenario--feature .ourapp-scenario__num {
+  color: light-dark(rgba(251, 249, 244, 0.72), rgba(10, 15, 13, 0.66));
+}
+
 .ourapp-scenario--feature .ourapp-scenario__title {
-  font-size: 22px;
-  line-height: 1.2;
+  font-size: 26px;
+  line-height: 1.15;
+  color: light-dark(#FBF9F4, #0A0F0D);
 }
 
 .ourapp-scenario--feature .ourapp-scenario__lede {
   font-size: 14px;
   -webkit-line-clamp: unset;
+  color: light-dark(rgba(251, 249, 244, 0.85), rgba(10, 15, 13, 0.82));
+}
+
+.ourapp-scenario--feature .ourapp-scenario__foot {
+  color: light-dark(rgba(251, 249, 244, 0.72), rgba(10, 15, 13, 0.66));
+}
+
+.ourapp-scenario--feature .ourapp-scenario__model {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: transparent;
+  color: light-dark(#FBF9F4, #0A0F0D);
 }
 
 .ourapp-scenario__num {

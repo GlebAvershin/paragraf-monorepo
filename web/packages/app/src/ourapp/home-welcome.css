@@ -20,18 +20,32 @@
 /* ---- Top bar (brand + nav) ---- */
 
 .ourapp-landing__topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 40px;
+  gap: 16px;
+  padding: 11px 24px;
+  background: light-dark(#F6F2EB, #25201B);
   border-bottom: 1px solid light-dark(#E8E3DB, #2E2924);
+  backdrop-filter: blur(10px);
   flex-shrink: 0;
+}
+
+.ourapp-landing__brandgroup {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+  flex-wrap: wrap;
 }
 
 .ourapp-landing__brand {
   display: flex;
   align-items: baseline;
-  gap: 12px;
+  gap: 10px;
 }
 
 .ourapp-landing__brandname {
@@ -68,25 +82,34 @@
 
 .ourapp-landing__nav {
   display: flex;
-  gap: 4px;
+  gap: 2px;
+  flex-wrap: wrap;
 }
 
-.ourapp-landing__navbtn {
+.ourapp-navpill {
   background: transparent;
-  border: 0;
+  border: 1px solid transparent;
   font-family: inherit;
   font-size: 13px;
   font-weight: 500;
   color: light-dark(#5C5852, #B5AFA4);
-  padding: 7px 14px;
-  border-radius: var(--ourapp-radius-sm, 6px);
+  padding: 6px 13px;
+  border-radius: 9999px;
   cursor: pointer;
-  transition: all 120ms var(--ourapp-ease, ease);
+  white-space: nowrap;
+  transition: background 120ms var(--ourapp-ease, ease), color 120ms var(--ourapp-ease, ease);
 }
 
-.ourapp-landing__navbtn:hover {
-  background: light-dark(rgba(26, 22, 20, 0.04), rgba(255, 255, 255, 0.05));
+.ourapp-navpill:hover {
+  background: light-dark(#F1EDE3, #2B251F);
   color: light-dark(#1A1614, #EDE8DF);
+}
+
+.ourapp-navpill--active,
+.ourapp-navpill--active:hover {
+  background: light-dark(#0B5345, #1A8A6B);
+  color: light-dark(#FBF9F4, #0A0F0D);
+  cursor: default;
 }
 
 /* ---- Main (hero center + recent right) ---- */

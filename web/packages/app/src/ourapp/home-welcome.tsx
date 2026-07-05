@@ -49,35 +49,40 @@ export const HomeWelcome: Component<HomeWelcomeProps> = (props) => {
   return (
     <div class="ourapp-landing">
       <header class="ourapp-landing__topbar">
-        <div class="ourapp-landing__brand">
-          <span class="ourapp-landing__brandname">Isaac</span>
-          <span
-            class="ourapp-landing__vertical"
-            title="Сейчас доступен только Технолог"
-          >
-            {currentLabel()}
-          </span>
-        </div>
-        <div class="ourapp-landing__nav">
-          <button type="button" class="ourapp-landing__navbtn" onClick={props.onOpenCredits}>
-            Кредиты
-          </button>
-          <button type="button" class="ourapp-landing__navbtn" onClick={props.onOpenSettings}>
-            ⚙ Настройки
-          </button>
-          {props.onOpenHistory && (
-            <button type="button" class="ourapp-landing__navbtn" onClick={props.onOpenHistory}>
-              🗂 История
+        <div class="ourapp-landing__brandgroup">
+          <div class="ourapp-landing__brand">
+            <span class="ourapp-landing__brandname">Isaac</span>
+            <span
+              class="ourapp-landing__vertical"
+              title="Сейчас доступен только Технолог"
+            >
+              {currentLabel()}
+            </span>
+          </div>
+          <nav class="ourapp-landing__nav" aria-label="Разделы">
+            <button type="button" class="ourapp-navpill ourapp-navpill--active" aria-current="page">
+              Главная
             </button>
-          )}
-          {props.onOpenAnalytics && (
-            <button type="button" class="ourapp-landing__navbtn" onClick={props.onOpenAnalytics}>
-              📊 Аналитика
+            <button type="button" class="ourapp-navpill" onClick={props.onOpenCredits}>
+              Кредиты
             </button>
-          )}
-          <button type="button" class="ourapp-landing__navbtn" onClick={props.onOpenHelp}>
-            Помощь
-          </button>
+            {props.onOpenHistory && (
+              <button type="button" class="ourapp-navpill" onClick={props.onOpenHistory}>
+                История
+              </button>
+            )}
+            {props.onOpenAnalytics && (
+              <button type="button" class="ourapp-navpill" onClick={props.onOpenAnalytics}>
+                Аналитика
+              </button>
+            )}
+            <button type="button" class="ourapp-navpill" onClick={props.onOpenSettings}>
+              Настройки
+            </button>
+            <button type="button" class="ourapp-navpill" onClick={props.onOpenHelp}>
+              Помощь
+            </button>
+          </nav>
         </div>
       </header>
 

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<button onClick="{{ onSelect }}" style="text-align:left;background:var(--surface);border:1px solid var(--hairline-strong);border-radius:14px;padding:22px;cursor:pointer;display:flex;flex-direction:column;gap:7px;width:100%;height:100%;font-family:var(--body);transition:background .1s linear;" style-hover="{{ hover }}">
+  <span style="font-family:var(--mono);font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-tertiary);">{{ num }} · {{ tag }}</span>
+  <h3 style="font-family:var(--serif);font-size:19px;font-weight:500;margin:2px 0 0;color:var(--text-primary);letter-spacing:-0.01em;">{{ title }}</h3>
+  <p style="font-size:13.5px;color:var(--text-secondary);margin:0;line-height:1.5;">{{ desc }}</p>
+  <sc-if value="{{ steps }}"><span style="font-family:var(--mono);font-size:11px;color:var(--text-tertiary);margin-top:auto;padding-top:10px;">{{ steps }}</span></sc-if>
+</button>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:320,&quot;height&quot;:180},&quot;num&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;02&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;tag&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;проверка&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;title&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Проверить документ на соответствие&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;desc&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Загрузите файл — Isaac сверит его с нормативами и вернёт нумерованные находки.&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;steps&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;3 шага&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;onSelect&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;() =&gt; void&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    return { hover: { borderColor: 'var(--accent)', background: 'var(--surface-alt)' } };
+  }
+}
+</script>
+</body>
+</html>

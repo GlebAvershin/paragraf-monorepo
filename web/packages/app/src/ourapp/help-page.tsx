@@ -74,65 +74,29 @@ export const HelpPage: Component<{ onClose?: () => void }> = (props) => {
         </h1>
         <p class="ourapp-settings__lede">
           Частые вопросы о работе с Isaac. Не нашли ответ — напишите нам на{" "}
-          <a href="mailto:support@isaac-ai.ru" style={{ color: "#0B5345" }}>
+          <a href="mailto:support@isaac-ai.ru" class="ourapp-settings__link">
             support@isaac-ai.ru
           </a>
           .
         </p>
 
-        <section class="ourapp-settings__card" style={{ padding: "8px 0" }}>
+        <section class="ourapp-faq">
           <For each={FAQ}>
             {(item, i) => (
-              <div
-                style={{
-                  "border-bottom": i() < FAQ.length - 1 ? "1px solid var(--color-hairline, #E5DFD0)" : "none",
-                }}
-              >
+              <div class="ourapp-faq__item" classList={{ "ourapp-faq__item--open": open() === i() }}>
                 <button
                   type="button"
+                  class="ourapp-faq__q"
+                  aria-expanded={open() === i()}
                   onClick={() => toggle(i())}
-                  style={{
-                    width: "100%",
-                    display: "flex",
-                    "align-items": "center",
-                    "justify-content": "space-between",
-                    gap: "12px",
-                    padding: "16px 24px",
-                    background: "transparent",
-                    border: "none",
-                    cursor: "pointer",
-                    "text-align": "left",
-                    "font-family": "inherit",
-                    "font-size": "15px",
-                    "font-weight": "500",
-                    color: "var(--color-text-primary, #2A2723)",
-                  }}
                 >
                   <span>{item.q}</span>
-                  <span
-                    style={{
-                      color: "#0B5345",
-                      "font-size": "20px",
-                      transform: open() === i() ? "rotate(45deg)" : "none",
-                      transition: "transform 150ms",
-                      "flex-shrink": "0",
-                    }}
-                    aria-hidden="true"
-                  >
+                  <span class="ourapp-faq__icon" aria-hidden="true">
                     +
                   </span>
                 </button>
                 <Show when={open() === i()}>
-                  <div
-                    style={{
-                      padding: "0 24px 18px",
-                      "font-size": "14px",
-                      "line-height": "1.65",
-                      color: "var(--color-text-secondary, #5C5852)",
-                    }}
-                  >
-                    {item.a}
-                  </div>
+                  <div class="ourapp-faq__a">{item.a}</div>
                 </Show>
               </div>
             )}
