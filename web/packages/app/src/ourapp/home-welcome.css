@@ -8,7 +8,7 @@
   width: 100%;
   height: 100%;
   font-family: var(--font-family-sans);
-  color: light-dark(#5C5852, #B5AFA4);
+  color: light-dark(#4A453F, #B5AFA4);
   background:
     radial-gradient(rgba(26, 22, 20, 0.025) 1px, transparent 1px) 0 0 / 4px 4px,
     light-dark(#FBF9F4, #15120F);
@@ -68,7 +68,7 @@
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  color: light-dark(#8B8680, #847E72);
+  color: light-dark(#6B6660, #847E72);
   padding: 4px 8px;
   border-radius: var(--ourapp-radius-sm, 6px);
   cursor: pointer;
@@ -92,7 +92,7 @@
   font-family: inherit;
   font-size: 13px;
   font-weight: 500;
-  color: light-dark(#5C5852, #B5AFA4);
+  color: light-dark(#4A453F, #B5AFA4);
   padding: 6px 13px;
   border-radius: 9999px;
   cursor: pointer;
@@ -189,7 +189,7 @@
 .ourapp-landing__lede {
   font-size: 17px;
   line-height: 1.55;
-  color: light-dark(#5C5852, #B5AFA4);
+  color: light-dark(#4A453F, #B5AFA4);
   max-width: 540px;
   margin: 0 0 40px;
 }
@@ -267,7 +267,7 @@
 
 .ourapp-landing__recentcount {
   font-size: 11px;
-  color: light-dark(#8B8680, #847E72);
+  color: light-dark(#6B6660, #847E72);
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
@@ -333,7 +333,7 @@
 
 .ourapp-landing__recentmeta {
   font-size: 11px;
-  color: light-dark(#8B8680, #847E72);
+  color: light-dark(#6B6660, #847E72);
 }
 
 /* ---- Footer ---- */
@@ -342,7 +342,7 @@
   padding: 16px 40px;
   border-top: 1px solid light-dark(#E8E3DB, #2E2924);
   font-size: 11px;
-  color: light-dark(#8B8680, #847E72);
+  color: light-dark(#6B6660, #847E72);
   text-align: center;
   flex-shrink: 0;
 }

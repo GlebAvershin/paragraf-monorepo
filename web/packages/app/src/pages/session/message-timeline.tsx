@@ -1105,7 +1105,7 @@ export function MessageTimeline(props: {
     }
 
     const btnClass =
-      "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-[13px] border-[light-dark(#D8D2C5,#3A342D)] bg-[light-dark(#fff,#1F1B17)] hover:bg-[light-dark(#F6F2EB,#25201B)] text-[light-dark(#5C5852,#B5AFA4)] transition-colors disabled:opacity-50 disabled:cursor-wait"
+      "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-[13px] border-[light-dark(#D8D2C5,#3A342D)] bg-[light-dark(#fff,#1F1B17)] hover:bg-[light-dark(#F6F2EB,#25201B)] text-[light-dark(#4A453F,#B5AFA4)] transition-colors disabled:opacity-50 disabled:cursor-wait"
 
     return (
       <Show when={hasContent()}>

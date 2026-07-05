@@ -24,8 +24,11 @@
   --hairline: #e8e3db;
   --hairline-strong: #d8d2c5;
   --text-primary: #1a1614;
-  --text-secondary: #5c5852;
-  --text-tertiary: #8b8680;
+  /* Затемнено 2026-07-05: было #5c5852/#8b8680 (~6.9:1/~3.6:1 контраста на белом) — в живом
+     продукте (см. окно чата, скриншот юзера) читалось тускло и сливалось с фоном. Новые
+     значения ~9.5:1/~5.7:1 — заметно чётче, tertiary теперь проходит WCAG AA даже для body-текста. */
+  --text-secondary: #4a453f;
+  --text-tertiary: #6b6660;
   --ourapp-accent: #0b5345;
   --accent-muted: rgba(11, 83, 69, 0.06);
   --error: #991b1b;
@@ -125,13 +128,23 @@ html[data-color-scheme="light"] {
   --hairline: #e8e3db;
   --hairline-strong: #d8d2c5;
   --text-primary: #1a1614;
-  --text-secondary: #5c5852;
-  --text-tertiary: #8b8680;
+  --text-secondary: #4a453f;
+  --text-tertiary: #6b6660;
   --ourapp-accent: #0b5345;
   --accent-muted: rgba(11, 83, 69, 0.06);
   --error: #991b1b;
   --error-muted: rgba(153, 27, 27, 0.1);
   --info: #475569;
+
+  /* opencode v2-компонентная библиотека (композер, сайдбар сессии) использует СВОЮ,
+     отдельную от нашей, нейтрально-серую шкалу (v2/styles/colors.css). --v2-text-text-faint
+     резолвится в --v2-grey-600 = #808080 (~3.95:1 контраста на белом — ниже WCAG AA, плюс
+     холодный нейтральный серый выбивается из тёплой палитры продукта). Перекрываем на свои
+     тёплые токены тем же приёмом, что и color-scheme выше — html[data-color-scheme] специфичнее
+     голого [data-color-scheme] в v2/styles/theme.css, поэтому побеждает независимо от порядка
+     CSS. Найдено 2026-07-05 по живому скриншоту юзера («Углублённо», сайдбар сессии). */
+  --v2-text-text-faint: var(--text-tertiary);
+  --v2-text-text-muted: var(--text-secondary);
 }
 
 /* Бумажная зернистость на фоне body — наш «премиум-рычаг» */

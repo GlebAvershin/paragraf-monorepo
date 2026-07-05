@@ -51,12 +51,12 @@ export function extractSources(text: string): Source[] {
 }
 
 const ITEM =
-  "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-[13px] border-[var(--color-hairline-strong,#D8D2C5)] transition-colors"
+  "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-[13px] border-[var(--hairline-strong,#D8D2C5)] transition-colors"
 
 export const SourceViewer: Component<{ sources: Source[] }> = (props) => (
   <Show when={props.sources.length > 0}>
     <div data-component="ourapp-source-viewer" class="flex flex-col gap-1.5 px-3 pt-2 pb-1">
-      <span class="text-[11px] uppercase tracking-wide text-[var(--color-text-tertiary,#8A857C)]">
+      <span class="text-[11px] uppercase tracking-wide text-[var(--text-tertiary,#6B6660)]">
         Источники — открыть и проверить
       </span>
       <div data-slot="source-list" class="flex flex-wrap gap-2">
@@ -67,7 +67,7 @@ export const SourceViewer: Component<{ sources: Source[] }> = (props) => (
               fallback={
                 <span
                   data-slot="source-na"
-                  class={`${ITEM} text-[var(--color-text-tertiary,#8A857C)] opacity-60`}
+                  class={`${ITEM} text-[var(--text-tertiary,#6B6660)] opacity-60`}
                   title="источник недоступен"
                 >
                   {s.doc_id}
@@ -81,7 +81,7 @@ export const SourceViewer: Component<{ sources: Source[] }> = (props) => (
                 target="_blank"
                 rel="noreferrer"
                 title={`${s.title || s.doc_id}${s.view.kind === "external" ? " · внешний портал" : ""}`}
-                class={`${ITEM} bg-[var(--color-bg-surface,#fff)] hover:bg-[var(--color-bg-surface-alt,#F6F2EB)] text-[var(--color-text-secondary,#5C5852)]`}
+                class={`${ITEM} bg-[var(--ourapp-bg-surface,#fff)] hover:bg-[var(--ourapp-bg-surface-alt,#F6F2EB)] text-[var(--text-secondary,#4A453F)]`}
               >
                 <Icon name="open-file" size="small" />
                 <span>

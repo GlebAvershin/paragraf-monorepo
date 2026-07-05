@@ -123,7 +123,7 @@ export function LowBalanceBanner() {
               >
                 Кредиты на исходе
               </div>
-              <div class="text-[13px] leading-relaxed" style={{ color: "#5C5852" }}>
+              <div class="text-[13px] leading-relaxed" style={{ color: "#4A453F" }}>
                 Осталось <strong style={{ color: "#2A2723" }}>{warn().remaining}</strong> из {warn().monthlyTotal}.
                 Можно докупить или сменить тариф.
               </div>
@@ -141,7 +141,7 @@ export function LowBalanceBanner() {
               onClick={handleClose}
               aria-label="Закрыть"
               class="shrink-0 size-5 flex items-center justify-center rounded hover:bg-[#F0EBE0] transition-colors"
-              style={{ color: "#5C5852" }}
+              style={{ color: "#4A453F" }}
             >
               ✕
             </button>
@@ -181,13 +181,13 @@ export function LowBalanceModal() {
         onClick={handleClose}
       >
         <div
-          class="bg-[var(--color-bg-base,#FBF9F4)] border border-[var(--color-hairline-strong,#D8D2C5)] rounded-lg shadow-xl max-w-md w-full mx-4 p-6 animate-in zoom-in-95 duration-150"
+          class="bg-[var(--ourapp-bg-page,#FBF9F4)] border border-[var(--hairline-strong,#D8D2C5)] rounded-lg shadow-xl max-w-md w-full mx-4 p-6 animate-in zoom-in-95 duration-150"
           onClick={(e) => e.stopPropagation()}
         >
           <h2 class="text-[20px] font-medium mb-2" style={{ "font-family": "'IBM Plex Serif', serif" }}>
             Кредиты закончились
           </h2>
-          <p class="text-[14px] text-[var(--color-text-secondary,#5C5852)] mb-5 leading-relaxed">
+          <p class="text-[14px] text-[var(--text-secondary,#4A453F)] mb-5 leading-relaxed">
             В этом месяце вы использовали всю норму подписки. Чтобы продолжить — докупите
             дополнительные кредиты (не сгорают в этом месяце) или перейдите на больший тариф.
           </p>
@@ -196,7 +196,7 @@ export function LowBalanceModal() {
               type="button"
               onClick={handleClose}
               class="px-3.5 py-1.5 rounded-md text-[13px] transition-colors"
-              style={{ color: "#5C5852" }}
+              style={{ color: "#4A453F" }}
               onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#F0EBE0")}
               onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
             >

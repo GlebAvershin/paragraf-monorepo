@@ -16,7 +16,7 @@
   display: flex;
   flex-direction: column;
   font-family: var(--font-family-sans);
-  color: light-dark(#5C5852, #B5AFA4);
+  color: light-dark(#4A453F, #B5AFA4);
   overflow-y: auto;
 }
 
@@ -214,7 +214,7 @@
   font-family: inherit;
   font-size: 13px;
   text-align: left;
-  color: light-dark(#5C5852, #B5AFA4);
+  color: light-dark(#4A453F, #B5AFA4);
   cursor: pointer;
   transition: background 120ms var(--ourapp-ease, ease), color 120ms var(--ourapp-ease, ease);
 }
