@@ -35,7 +35,13 @@ app.use(
     },
     credentials: true,
     allowMethods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
-    allowHeaders: ["Content-Type", "Authorization"],
+    // x-opencode-directory/-workspace — SDK-клиент (createOpencodeClient, packages/sdk/js/src/v2/client.ts)
+    // вешает их на КАЖДЫЙ запрос через config.headers, когда задан directory. Для GET/HEAD клиент сам
+    // убирает их (rewrite() переносит в query), а для POST/PATCH/DELETE — оставляет как реальный header.
+    // Без них в allowHeaders браузер валит preflight на любой не-GET запрос (сервер отвечает 204 на OPTIONS,
+    // но т.к. Access-Control-Allow-Headers уже сервера не покрывает запрошенный header, сам POST браузер
+    // не отправляет) → создание сессии/сообщения падает с "Failed to fetch" при живом сервере.
+    allowHeaders: ["Content-Type", "Authorization", "x-opencode-directory", "x-opencode-workspace"],
   }),
 )
 
