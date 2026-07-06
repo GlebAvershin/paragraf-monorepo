@@ -90,12 +90,6 @@ export const ScenarioLibrary: Component<ScenarioLibraryProps> = (props) => {
                 <span class="ourapp-scenario__steps">
                   {s.steps} {s.steps === 1 ? "шаг" : s.steps < 5 ? "шага" : "шагов"}
                 </span>
-                <span class="ourapp-scenario__model">
-                  {s.recommendedModel === "lite" && "Lite"}
-                  {s.recommendedModel === "mid" && "Sonnet/Pro"}
-                  {s.recommendedModel === "top" && "Opus/Max"}
-                  {s.recommendedModel === "auto" && "Auto"}
-                </span>
               </div>
             </article>
           )}

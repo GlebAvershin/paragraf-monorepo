@@ -1768,14 +1768,25 @@ export default function Page() {
           <WelcomeSidebar
             vertical={loadVertical()}
             onPickScenario={(s: Scenario) => {
-              // OurApp: открываем мастер сценария (multi-step wizard). Если у
-              // сценария нет конфига с шагами — фоллбек на старое пред-заполнение.
-              if (openScenarioWizard(s.id)) return
-              window.dispatchEvent(
-                new CustomEvent("ourapp:scenario-pick", {
-                  detail: { scenarioId: s.id, prompt: s.prompt, recommendedModel: s.recommendedModel },
-                }),
-              )
+              // OurApp: сценарий из сайдбара всегда должен стартовать в НОВОЙ
+              // сессии — иначе wizard/prompt-pick шлют в текущую активную сессию
+              // (params.id уже задан) и склеивают несвязанные темы в одном чате
+              // (баг из видео-ревью 2026-07-06: "какого чёрта они объединились").
+              // Если мы уже на "чистом" /session без id — переход не нужен.
+              const openPicker = () => {
+                if (openScenarioWizard(s.id)) return
+                window.dispatchEvent(
+                  new CustomEvent("ourapp:scenario-pick", {
+                    detail: { scenarioId: s.id, prompt: s.prompt, recommendedModel: s.recommendedModel },
+                  }),
+                )
+              }
+              if (params.id) {
+                navigate(`/${params.dir}/session`)
+                requestAnimationFrame(openPicker)
+                return
+              }
+              openPicker()
             }}
             recentSessions={sidebarRecentSessions()}
             activeSessionId={params.id}
