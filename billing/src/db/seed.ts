@@ -35,7 +35,16 @@ const seedPlans: (typeof schema.plans.$inferInsert)[] = [
     monthlyBudgetUsdCenti: 800, // $8 hardcap
     monthlyCredits: 500,
     monthlyTasksTarget: 60, // deprecated
-    allowedModels: ["claude-sonnet", "claude-haiku", "gigachat-pro", "gigachat-max", "yandexgpt-pro", "yandexgpt-lite"],
+    allowedModels: [
+      "claude-sonnet",
+      "claude-haiku",
+      "gigachat-pro",
+      "gigachat-max",
+      "yandexgpt-pro",
+      "yandexgpt-lite",
+      "z-ai/glm-5.2",
+      "deepseek/deepseek-chat",
+    ],
   },
   {
     code: "pro",
@@ -55,6 +64,8 @@ const seedPlans: (typeof schema.plans.$inferInsert)[] = [
       "gigachat-max",
       "yandexgpt-pro",
       "yandexgpt-lite",
+      "z-ai/glm-5.2",
+      "deepseek/deepseek-chat",
     ],
   },
   {
@@ -76,6 +87,8 @@ const seedPlans: (typeof schema.plans.$inferInsert)[] = [
       "gigachat-lite",
       "yandexgpt-pro",
       "yandexgpt-lite",
+      "z-ai/glm-5.2",
+      "deepseek/deepseek-chat",
     ],
     features: { teamSeats: 5 },
   },
