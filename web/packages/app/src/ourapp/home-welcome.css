@@ -178,8 +178,7 @@
   margin: 0 0 28px;
 }
 
-.ourapp-landing__title em {
-  font-style: italic;
+.ourapp-landing__title span {
   color: light-dark(#0B5345, #1A8A6B);
 }
 

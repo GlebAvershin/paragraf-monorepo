@@ -49,9 +49,7 @@ export const HomeWelcome: Component<HomeWelcomeProps> = (props) => {
             <span class="ourapp-landing__eyebrowrole">{currentLabel()}</span>
           </div>
           <h1 class="ourapp-landing__title">
-            Инструмент для
-            <br />
-            <em>инженера-технолога.</em>
+            Работа с ГОСТами <span>и стандартами.</span>
           </h1>
           <p class="ourapp-landing__lede">{heroLede()}</p>
 
