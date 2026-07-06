@@ -58,14 +58,13 @@ export const AboutModal: Component<AboutModalProps> = (props) => {
           </button>
 
           <div class="ourapp-about-modal__brand">
-            <span class="ourapp-about-modal__mark">§</span>
             <h2 class="ourapp-about-modal__title">Isaac</h2>
             <p class="ourapp-about-modal__version">Версия {APP_VERSION}</p>
           </div>
 
           <p class="ourapp-about-modal__lede">
-            ИИ-агент для профессионалов. Работа с документами, поиск и разбор стандартов,
-            проверка на соответствие — на современных языковых моделях.
+            ИИ-агент для профессионалов. Разбирает ГОСТы и стандарты, проверяет документы
+            на соответствие — по готовым сценариям под вашу профессию.
           </p>
 
           <div class="ourapp-about-modal__links">

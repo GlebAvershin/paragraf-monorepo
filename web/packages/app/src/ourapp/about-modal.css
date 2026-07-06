@@ -46,15 +46,6 @@
   margin-bottom: 20px;
 }
 
-.ourapp-about-modal__mark {
-  font-family: var(--font-family-serif, "IBM Plex Serif", serif);
-  font-size: 56px;
-  line-height: 1;
-  color: var(--ourapp-accent, #0b5345);
-  display: block;
-  margin-bottom: 8px;
-}
-
 .ourapp-about-modal__title {
   font-family: var(--font-family-serif, "IBM Plex Serif", serif);
   font-size: 28px;
@@ -62,6 +53,10 @@
   letter-spacing: -0.02em;
   color: var(--text-primary, #1a1614);
   margin: 0;
+}
+
+.ourapp-about-modal__title::first-letter {
+  color: light-dark(#0B5345, #1A8A6B);
 }
 
 .ourapp-about-modal__version {
