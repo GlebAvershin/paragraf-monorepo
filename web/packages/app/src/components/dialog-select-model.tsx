@@ -12,8 +12,7 @@ import { List } from "@opencode-ai/ui/list"
 import { Tooltip } from "@opencode-ai/ui/tooltip"
 import { ModelTooltip } from "./model-tooltip"
 import { useLanguage } from "@/context/language"
-import { AutoModelRow } from "@/ourapp/auto-model/auto-model-row"
-import { setAutoModelEnabled, autoModelEnabled } from "@/ourapp/auto-model/store"
+import { setAutoModelEnabled } from "@/ourapp/auto-model/store"
 
 // OurApp: в нашем сервисе нет «бесплатных» моделей — любой вызов тарифицируется
 // кредитами. Пометка «Бесплатно» приходит от opencode Zen и для нас вводит в
@@ -41,14 +40,13 @@ const ModelList: Component<{
 
   return (
     <>
-      <AutoModelRow onSelect={props.onSelect} />
       <List
       class={`flex-1 min-h-0 [&_[data-slot=list-scroll]]:flex-1 [&_[data-slot=list-scroll]]:min-h-0 ${props.class ?? ""}`}
       search={{ placeholder: language.t("dialog.model.search.placeholder"), autofocus: true, action: props.action }}
       emptyMessage={language.t("dialog.model.empty")}
       key={(x) => `${x.provider.id}:${x.id}`}
       items={models}
-      current={autoModelEnabled() ? undefined : model.current()}
+      current={model.current()}
       filterKeys={["provider.name", "name", "id"]}
       sortBy={(a, b) => a.name.localeCompare(b.name)}
       groupBy={(x) => x.provider.name}

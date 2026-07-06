@@ -10,8 +10,7 @@ import { useLocal } from "@/context/local"
 import { popularProviders, useProviders } from "@/hooks/use-providers"
 import { ModelTooltip } from "./model-tooltip"
 import { useLanguage } from "@/context/language"
-import { AutoModelRow } from "@/ourapp/auto-model/auto-model-row"
-import { setAutoModelEnabled, autoModelEnabled } from "@/ourapp/auto-model/store"
+import { setAutoModelEnabled } from "@/ourapp/auto-model/store"
 
 type ModelState = ReturnType<typeof useLocal>["model"]
 
@@ -45,13 +44,12 @@ export const DialogSelectModelUnpaid: Component<{ model?: ModelState }> = (props
       class="overflow-y-auto [&_[data-slot=dialog-body]]:overflow-visible [&_[data-slot=dialog-body]]:flex-none"
     >
       <div class="flex flex-col gap-3 px-2.5" onKeyDown={handleKeyDown}>
-        <AutoModelRow onSelect={() => dialog.close()} />
         <div class="text-14-medium text-text-base px-2.5">{language.t("dialog.model.unpaid.freeModels.title")}</div>
         <List
           class="[&_[data-slot=list-scroll]]:overflow-visible"
           ref={(ref) => (listRef = ref)}
           items={model.list}
-          current={autoModelEnabled() ? undefined : model.current()}
+          current={model.current()}
           key={(x) => `${x.provider.id}:${x.id}`}
           itemWrapper={(item, node) => (
             <Tooltip

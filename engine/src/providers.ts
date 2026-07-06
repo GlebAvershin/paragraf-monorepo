@@ -146,7 +146,7 @@ export function providerList(): ProviderListResponse {
   }
   const openrouter: Provider = {
     id: "openrouter",
-    name: "OpenRouter (дешёвые)",
+    name: "OpenRouter",
     source: "config",
     env: [],
     options: {},
