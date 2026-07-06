@@ -63,13 +63,11 @@ export const OnboardingPage: Component<{ onDone: () => void }> = (props) => {
 
       <main class="ourapp-onboarding__main">
         <form class="ourapp-onboarding__step" onSubmit={login}>
-          <div class="ourapp-onboarding__eyebrow">Добро пожаловать</div>
           <h1 class="ourapp-onboarding__title">
-            ИИ-агент <em>для&nbsp;вашей&nbsp;работы</em>
+            ИИ-агент <span>для вашей работы</span>
           </h1>
           <p class="ourapp-onboarding__lede">
-            Работает с&nbsp;ГОСТами и&nbsp;стандартами: находит нужный документ, разбирает
-            требования, проверяет соответствие&nbsp;— по&nbsp;сценариям под вашу профессию.
+            Разбирает ГОСТы и стандарты, готовит документы — по сценариям под вашу профессию.
           </p>
 
           <div class="ourapp-onboarding__field">

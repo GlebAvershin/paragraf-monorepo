@@ -67,29 +67,17 @@
   gap: 12px;
 }
 
-.ourapp-onboarding__eyebrow {
-  display: block;
-  font-family: var(--font-family-sans);
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.2em;
-  font-weight: 600;
-  color: light-dark(#4A453F, #B5AFA4);
-  margin-bottom: 12px;
-}
-
 .ourapp-onboarding__title {
   font-family: var(--font-family-serif);
-  font-size: 48px;
-  line-height: 1.05;
+  font-size: 44px;
+  line-height: 1.15;
   letter-spacing: -0.025em;
   font-weight: 400;
   color: light-dark(#1A1614, #EDE8DF);
-  margin: 0 0 4px;
+  margin: 0 0 12px;
 }
 
-.ourapp-onboarding__title em {
-  font-style: italic;
+.ourapp-onboarding__title span {
   color: light-dark(#0B5345, #1A8A6B);
 }
 
