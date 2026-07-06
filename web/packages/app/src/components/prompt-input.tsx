@@ -50,6 +50,14 @@ import { createTextFragment, getCursorPosition, setCursorPosition, setRangeEdge 
 import { createPromptAttachments } from "./prompt-input/attachments"
 import { ACCEPTED_FILE_TYPES } from "./prompt-input/files"
 import { markDocxSession, markChatOnlySession } from "@/ourapp/scenarios/docx-result-tracker"
+import {
+  markScenarioSession,
+  isScenarioSession,
+  markPendingScenarioSession,
+  consumePendingScenarioSession,
+} from "@/ourapp/scenarios/scenario-session-tracker"
+import { ScenarioTierSelector } from "@/ourapp/scenario-model-tier/scenario-tier-selector"
+import { tierForPreferredModel, TIER_MODEL } from "@/ourapp/scenario-model-tier/store"
 import { ModelTriggerLabel } from "@/ourapp/auto-model/model-trigger-label"
 import { DeepThinkingToggle } from "@/ourapp/deep-thinking/deep-thinking-toggle"
 import {
@@ -136,6 +144,33 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
   const language = useLanguage()
   const platform = usePlatform()
   const { params, tabs, view } = useSessionLayout()
+
+  // OurApp: сессии, запущенные из сценария, показывают вместо тумблера
+  // «Углублённо» + полного списка моделей — упрощённый выбор силы (Medium/Hi/
+  // Ultra), см. scenario-model-tier/. scenarioMode взводится синхронно при
+  // "ourapp:scenario-run" (до того, как params.id вообще появится для новой
+  // сессии), и персистится в scenario-session-tracker, когда id становится
+  // известен, чтобы состояние переживало возврат к этой сессии позже.
+  const [scenarioMode, setScenarioMode] = createSignal(isScenarioSession(params.id))
+  createEffect(
+    on(
+      () => params.id,
+      (id) => {
+        // Компонент не перемонтируется при переключении между сессиями —
+        // обязательно ПЕРЕВЫЧИСЛЯЕМ значение на каждый id (а не только
+        // "включаем"), иначе scenarioMode залипает true при переходе в
+        // обычную (не-сценарную) сессию после того, как был открыт сценарий.
+        if (!id) return
+        if (consumePendingScenarioSession()) {
+          markScenarioSession(id)
+          setScenarioMode(true)
+        } else {
+          setScenarioMode(isScenarioSession(id))
+        }
+      },
+    ),
+  )
+
   let editorRef!: HTMLDivElement
   let fileInputRef: HTMLInputElement | undefined
   let scrollRef!: HTMLDivElement
@@ -586,6 +621,7 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
           displayText?: string
           autoSubmit?: boolean
           resultAction?: { type?: string }
+          preferredModel?: Parameters<typeof tierForPreferredModel>[0]
         }>
       ).detail
       const parts = detail?.parts
@@ -603,7 +639,18 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
         } else {
           markChatOnlySession(params.id)
         }
+        markScenarioSession(params.id)
+      } else {
+        // Сессии ещё нет (частый случай — сценарий стартует "с чистого
+        // листа") — id появится асинхронно, пометим его effect'ом выше.
+        markPendingScenarioSession()
       }
+      // OurApp: сценарные сессии выбирают модель по «силе» (Medium/Hi/Ultra),
+      // не по имени — см. scenario-model-tier/store.ts. Дефолт — тир под
+      // scenario.preferredModel.
+      setScenarioMode(true)
+      const tier = tierForPreferredModel(detail?.preferredModel)
+      local.model.set(TIER_MODEL[tier], { recent: true })
       // Курсор — в конец последней текстовой части.
       const lastText = [...parts].reverse().find((p) => p.type === "text")
       const cursor = lastText && lastText.type === "text" ? lastText.content.length : 0
@@ -1378,58 +1425,60 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
 
   const modelControl = () => (
     <Show when={!providersLoading()}>
-      <DeepThinkingToggle />
-      <Show
-        when={providers.paid().length > 0}
-        fallback={
+      <Show when={!scenarioMode()} fallback={<ScenarioTierSelector model={local.model} />}>
+        <DeepThinkingToggle />
+        <Show
+          when={providers.paid().length > 0}
+          fallback={
+            <TooltipKeybind
+              placement="top"
+              gutter={4}
+              title={language.t("command.model.choose")}
+              keybind={command.keybind("model.choose")}
+            >
+              <Button
+                data-action="prompt-model"
+                as="div"
+                variant="ghost"
+                size="normal"
+                class="min-w-0 max-w-[220px] justify-start text-[13px] font-[440] leading-4 text-v2-text-text-faint group"
+                style={control()}
+                onClick={() => {
+                  void import("@/components/dialog-select-model-unpaid").then((x) => {
+                    dialog.show(() => <x.DialogSelectModelUnpaid model={local.model} />)
+                  })
+                }}
+              >
+                <ModelTriggerLabel />
+                <Icon name="chevron-down" size="small" class="shrink-0 text-v2-icon-icon-muted" />
+              </Button>
+            </TooltipKeybind>
+          }
+        >
           <TooltipKeybind
             placement="top"
             gutter={4}
             title={language.t("command.model.choose")}
             keybind={command.keybind("model.choose")}
           >
-            <Button
-              data-action="prompt-model"
-              as="div"
-              variant="ghost"
-              size="normal"
-              class="min-w-0 max-w-[220px] justify-start text-[13px] font-[440] leading-4 text-v2-text-text-faint group"
-              style={control()}
-              onClick={() => {
-                void import("@/components/dialog-select-model-unpaid").then((x) => {
-                  dialog.show(() => <x.DialogSelectModelUnpaid model={local.model} />)
-                })
+            <ModelSelectorPopover
+              model={local.model}
+              triggerAs={Button}
+              triggerProps={{
+                variant: "ghost",
+                size: "normal",
+                style: control(),
+                class:
+                  "min-w-0 max-w-[220px] justify-start text-[13px] font-[440] leading-4 text-v2-text-text-faint group",
+                "data-action": "prompt-model",
               }}
+              onClose={restoreFocus}
             >
               <ModelTriggerLabel />
               <Icon name="chevron-down" size="small" class="shrink-0 text-v2-icon-icon-muted" />
-            </Button>
+            </ModelSelectorPopover>
           </TooltipKeybind>
-        }
-      >
-        <TooltipKeybind
-          placement="top"
-          gutter={4}
-          title={language.t("command.model.choose")}
-          keybind={command.keybind("model.choose")}
-        >
-          <ModelSelectorPopover
-            model={local.model}
-            triggerAs={Button}
-            triggerProps={{
-              variant: "ghost",
-              size: "normal",
-              style: control(),
-              class:
-                "min-w-0 max-w-[220px] justify-start text-[13px] font-[440] leading-4 text-v2-text-text-faint group",
-              "data-action": "prompt-model",
-            }}
-            onClose={restoreFocus}
-          >
-            <ModelTriggerLabel />
-            <Icon name="chevron-down" size="small" class="shrink-0 text-v2-icon-icon-muted" />
-          </ModelSelectorPopover>
-        </TooltipKeybind>
+        </Show>
       </Show>
     </Show>
   )
@@ -1838,93 +1887,98 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
                     </Show>
                     <Show when={!providersLoading()}>
                       <Show when={store.mode !== "shell"}>
-                        <DeepThinkingToggle
-                          style={providersShouldFadeIn() ? { animation: "fade-in 0.3s" } : undefined}
-                        />
-                        <div
-                          data-component="prompt-model-control"
-                          style={providersShouldFadeIn() ? { animation: "fade-in 0.3s" } : undefined}
+                        <Show
+                          when={!scenarioMode()}
+                          fallback={<ScenarioTierSelector model={local.model} />}
                         >
-                          <Show
-                            when={providers.paid().length > 0}
-                            fallback={
+                          <DeepThinkingToggle
+                            style={providersShouldFadeIn() ? { animation: "fade-in 0.3s" } : undefined}
+                          />
+                          <div
+                            data-component="prompt-model-control"
+                            style={providersShouldFadeIn() ? { animation: "fade-in 0.3s" } : undefined}
+                          >
+                            <Show
+                              when={providers.paid().length > 0}
+                              fallback={
+                                <TooltipKeybind
+                                  placement="top"
+                                  gutter={4}
+                                  title={language.t("command.model.choose")}
+                                  keybind={command.keybind("model.choose")}
+                                >
+                                  <Button
+                                    data-action="prompt-model"
+                                    as="div"
+                                    variant="ghost"
+                                    size="normal"
+                                    class="min-w-0 max-w-[320px] text-13-regular text-text-base group"
+                                    style={control()}
+                                    onClick={() => {
+                                      void import("@/components/dialog-select-model-unpaid").then((x) => {
+                                        dialog.show(() => <x.DialogSelectModelUnpaid model={local.model} />)
+                                      })
+                                    }}
+                                  >
+                                    <ModelTriggerLabel />
+                                    <Icon name="chevron-down" size="small" class="shrink-0" />
+                                  </Button>
+                                </TooltipKeybind>
+                              }
+                            >
                               <TooltipKeybind
                                 placement="top"
                                 gutter={4}
                                 title={language.t("command.model.choose")}
                                 keybind={command.keybind("model.choose")}
                               >
-                                <Button
-                                  data-action="prompt-model"
-                                  as="div"
-                                  variant="ghost"
-                                  size="normal"
-                                  class="min-w-0 max-w-[320px] text-13-regular text-text-base group"
-                                  style={control()}
-                                  onClick={() => {
-                                    void import("@/components/dialog-select-model-unpaid").then((x) => {
-                                      dialog.show(() => <x.DialogSelectModelUnpaid model={local.model} />)
-                                    })
+                                <ModelSelectorPopover
+                                  model={local.model}
+                                  triggerAs={Button}
+                                  triggerProps={{
+                                    variant: "ghost",
+                                    size: "normal",
+                                    style: control(),
+                                    class: "min-w-0 max-w-[320px] text-13-regular text-text-base group",
+                                    "data-action": "prompt-model",
                                   }}
+                                  onClose={restoreFocus}
                                 >
                                   <ModelTriggerLabel />
                                   <Icon name="chevron-down" size="small" class="shrink-0" />
-                                </Button>
+                                </ModelSelectorPopover>
                               </TooltipKeybind>
-                            }
-                          >
-                            <TooltipKeybind
-                              placement="top"
-                              gutter={4}
-                              title={language.t("command.model.choose")}
-                              keybind={command.keybind("model.choose")}
-                            >
-                              <ModelSelectorPopover
-                                model={local.model}
-                                triggerAs={Button}
-                                triggerProps={{
-                                  variant: "ghost",
-                                  size: "normal",
-                                  style: control(),
-                                  class: "min-w-0 max-w-[320px] text-13-regular text-text-base group",
-                                  "data-action": "prompt-model",
-                                }}
-                                onClose={restoreFocus}
-                              >
-                                <ModelTriggerLabel />
-                                <Icon name="chevron-down" size="small" class="shrink-0" />
-                              </ModelSelectorPopover>
-                            </TooltipKeybind>
-                          </Show>
-                        </div>
-                        <Show when={variants().length > 2}>
-                          <div
-                            data-component="prompt-variant-control"
-                            style={providersShouldFadeIn() ? { animation: "fade-in 0.3s" } : undefined}
-                          >
-                            <TooltipKeybind
-                              placement="top"
-                              gutter={4}
-                              title={language.t("command.model.variant.cycle")}
-                              keybind={command.keybind("model.variant.cycle")}
-                            >
-                              <Select
-                                size="normal"
-                                options={variants()}
-                                current={local.model.variant.current() ?? "default"}
-                                label={(x) => (x === "default" ? language.t("common.default") : x)}
-                                onSelect={(value) => {
-                                  local.model.variant.set(value === "default" ? undefined : value)
-                                  restoreFocus()
-                                }}
-                                class="capitalize max-w-[160px] text-text-base"
-                                valueClass="truncate text-13-regular text-text-base"
-                                triggerStyle={control()}
-                                triggerProps={{ "data-action": "prompt-model-variant" }}
-                                variant="ghost"
-                              />
-                            </TooltipKeybind>
+                            </Show>
                           </div>
+                          <Show when={variants().length > 2}>
+                            <div
+                              data-component="prompt-variant-control"
+                              style={providersShouldFadeIn() ? { animation: "fade-in 0.3s" } : undefined}
+                            >
+                              <TooltipKeybind
+                                placement="top"
+                                gutter={4}
+                                title={language.t("command.model.variant.cycle")}
+                                keybind={command.keybind("model.variant.cycle")}
+                              >
+                                <Select
+                                  size="normal"
+                                  options={variants()}
+                                  current={local.model.variant.current() ?? "default"}
+                                  label={(x) => (x === "default" ? language.t("common.default") : x)}
+                                  onSelect={(value) => {
+                                    local.model.variant.set(value === "default" ? undefined : value)
+                                    restoreFocus()
+                                  }}
+                                  class="capitalize max-w-[160px] text-text-base"
+                                  valueClass="truncate text-13-regular text-text-base"
+                                  triggerStyle={control()}
+                                  triggerProps={{ "data-action": "prompt-model-variant" }}
+                                  variant="ghost"
+                                />
+                              </TooltipKeybind>
+                            </div>
+                          </Show>
                         </Show>
                       </Show>
                     </Show>
