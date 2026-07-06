@@ -6,45 +6,11 @@
   font-family: var(--font-family-sans);
   color: light-dark(#4A453F, #B5AFA4);
   background:
-    radial-gradient(rgba(26, 22, 20, 0.025) 1px, transparent 1px) 0 0 / 4px 4px,
+    radial-gradient(light-dark(rgba(26, 22, 20, 0.012), rgba(255, 255, 255, 0.018)) 1px, transparent 1px) 0 0 / 4px 4px,
     light-dark(#FBF9F4, #15120F);
   display: flex;
   flex-direction: column;
   overflow-y: auto;
-}
-
-.ourapp-settings__topbar {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 16px 32px;
-  border-bottom: 1px solid light-dark(#E8E3DB, #2E2924);
-  flex-shrink: 0;
-}
-
-.ourapp-settings__back {
-  background: transparent;
-  border: 0;
-  font-family: inherit;
-  font-size: 13px;
-  color: light-dark(#4A453F, #B5AFA4);
-  padding: 6px 12px;
-  border-radius: var(--ourapp-radius-sm, 6px);
-  cursor: pointer;
-  transition: all 120ms var(--ourapp-ease, ease);
-}
-
-.ourapp-settings__back:hover {
-  background: light-dark(rgba(26, 22, 20, 0.04), rgba(255, 255, 255, 0.05));
-  color: light-dark(#1A1614, #EDE8DF);
-}
-
-.ourapp-settings__crumb {
-  font-family: var(--font-family-mono);
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: light-dark(#6B6660, #847E72);
 }
 
 .ourapp-settings__main {

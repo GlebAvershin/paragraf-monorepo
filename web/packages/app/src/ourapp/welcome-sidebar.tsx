@@ -11,6 +11,7 @@
  * реальной session-list, кредитному API и роутеру — следующая итерация.
  */
 import { createMemo, createResource, For, type Component } from "solid-js"
+import { Icon } from "@opencode-ai/ui/icon"
 import { scenariosFor, type Scenario } from "./scenarios"
 import { verticalLabel, type Vertical } from "./verticals"
 import { billingApi, daysUntil } from "./billing-api"
@@ -171,33 +172,25 @@ export const WelcomeSidebar: Component<WelcomeSidebarProps> = (props) => {
           <div class="ourapp-sidebar__nav">
             {props.onOpenHistory && (
               <button type="button" class="ourapp-sidebar__navitem" onClick={props.onOpenHistory}>
-                <span class="ourapp-sidebar__navicon" aria-hidden="true">
-                  🗂
-                </span>
+                <Icon name="archive" class="ourapp-sidebar__navicon" size="small" aria-hidden="true" />
                 История
               </button>
             )}
             {props.onOpenAnalytics && (
               <button type="button" class="ourapp-sidebar__navitem" onClick={props.onOpenAnalytics}>
-                <span class="ourapp-sidebar__navicon" aria-hidden="true">
-                  📊
-                </span>
+                <Icon name="sliders" class="ourapp-sidebar__navicon" size="small" aria-hidden="true" />
                 Аналитика
               </button>
             )}
             {props.onOpenSettings && (
               <button type="button" class="ourapp-sidebar__navitem" onClick={props.onOpenSettings}>
-                <span class="ourapp-sidebar__navicon" aria-hidden="true">
-                  ⚙
-                </span>
+                <Icon name="settings-gear" class="ourapp-sidebar__navicon" size="small" aria-hidden="true" />
                 Настройки
               </button>
             )}
             {props.onOpenHelp && (
               <button type="button" class="ourapp-sidebar__navitem" onClick={props.onOpenHelp}>
-                <span class="ourapp-sidebar__navicon" aria-hidden="true">
-                  ?
-                </span>
+                <Icon name="help" class="ourapp-sidebar__navicon" size="small" aria-hidden="true" />
                 Помощь
               </button>
             )}

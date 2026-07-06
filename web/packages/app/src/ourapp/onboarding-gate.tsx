@@ -15,6 +15,12 @@ export const OnboardingGate: Component<{ children: JSX.Element }> = (props) => {
   const [loggedIn, setLoggedIn] = createSignal(isLoggedIn())
 
   onMount(() => {
+    // Gate сидит ВЫШЕ Router'а (app.tsx), поэтому useNavigate() здесь недоступен —
+    // адрес-бар остаётся тем, каким был до логина (напр. "/settings" из закладки),
+    // хотя рендерится форма входа. Нормализуем на "/" через History API напрямую.
+    if (!loggedIn() && window.location.pathname !== "/") {
+      window.history.replaceState(null, "", "/")
+    }
     const onChanged = () => setLoggedIn(isLoggedIn())
     window.addEventListener("ourapp:session-changed", onChanged)
     onCleanup(() => window.removeEventListener("ourapp:session-changed", onChanged))

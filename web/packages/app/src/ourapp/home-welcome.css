@@ -10,7 +10,7 @@
   font-family: var(--font-family-sans);
   color: light-dark(#4A453F, #B5AFA4);
   background:
-    radial-gradient(rgba(26, 22, 20, 0.025) 1px, transparent 1px) 0 0 / 4px 4px,
+    radial-gradient(light-dark(rgba(26, 22, 20, 0.012), rgba(255, 255, 255, 0.018)) 1px, transparent 1px) 0 0 / 4px 4px,
     light-dark(#FBF9F4, #15120F);
   display: flex;
   flex-direction: column;
@@ -61,6 +61,9 @@
 }
 
 .ourapp-landing__vertical {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   background: transparent;
   border: 0;
   font-family: inherit;

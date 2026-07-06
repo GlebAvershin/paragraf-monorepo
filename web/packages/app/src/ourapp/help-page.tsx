@@ -9,6 +9,7 @@
  * FAQ-секции.
  */
 import { For, Show, createSignal, type Component } from "solid-js"
+import { AppTopbar } from "./app-topbar"
 import "./settings-page.css"
 
 interface FaqItem {
@@ -55,18 +56,13 @@ const FAQ: FaqItem[] = [
   },
 ]
 
-export const HelpPage: Component<{ onClose?: () => void }> = (props) => {
+export const HelpPage: Component = () => {
   const [open, setOpen] = createSignal<number | null>(0)
   const toggle = (i: number) => setOpen(open() === i ? null : i)
 
   return (
     <div class="ourapp-settings">
-      <header class="ourapp-settings__topbar">
-        <button type="button" class="ourapp-settings__back" onClick={props.onClose}>
-          ← Назад
-        </button>
-        <div class="ourapp-settings__crumb">Профиль · Помощь</div>
-      </header>
+      <AppTopbar active="help" />
 
       <main class="ourapp-settings__main">
         <h1 class="ourapp-settings__title">

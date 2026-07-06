@@ -6,7 +6,7 @@
   font-family: var(--font-family-sans);
   color: light-dark(#4A453F, #B5AFA4);
   background:
-    radial-gradient(rgba(26, 22, 20, 0.025) 1px, transparent 1px) 0 0 / 4px 4px,
+    radial-gradient(light-dark(rgba(26, 22, 20, 0.012), rgba(255, 255, 255, 0.018)) 1px, transparent 1px) 0 0 / 4px 4px,
     light-dark(#FBF9F4, #15120F);
   display: flex;
   flex-direction: column;
@@ -68,19 +68,14 @@
 }
 
 .ourapp-onboarding__eyebrow {
-  display: inline-flex;
-  align-self: flex-start;
-  gap: 8px;
+  display: block;
   font-family: var(--font-family-sans);
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.2em;
   font-weight: 600;
-  color: light-dark(#0B5345, #1A8A6B);
-  padding: 6px 14px;
-  background: light-dark(rgba(11, 83, 69, 0.07), rgba(26, 138, 107, 0.15));
-  border-radius: 999px;
-  margin-bottom: 8px;
+  color: light-dark(#4A453F, #B5AFA4);
+  margin-bottom: 12px;
 }
 
 .ourapp-onboarding__title {

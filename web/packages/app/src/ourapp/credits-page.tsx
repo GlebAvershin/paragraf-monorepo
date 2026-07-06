@@ -34,6 +34,7 @@ import {
 } from "./billing-api"
 import { openCardBindingWidget, isPaymentsConfigured } from "./cloudpayments-widget"
 import { PlanChangeModal } from "./plan-change-modal"
+import { AppTopbar } from "./app-topbar"
 
 const TOPUP_PACKAGE = "p500"
 
@@ -42,7 +43,7 @@ interface Notice {
   text: string
 }
 
-export const CreditsPage: Component<{ onClose?: () => void }> = (props) => {
+export const CreditsPage: Component = () => {
   const [searchParams] = useSearchParams<{ focus?: string }>()
 
   const [limits, { refetch: refetchLimits }] = createResource(() =>
@@ -175,12 +176,7 @@ export const CreditsPage: Component<{ onClose?: () => void }> = (props) => {
 
   return (
     <div class="ourapp-credits">
-      <header class="ourapp-credits__topbar">
-        <button type="button" class="ourapp-credits__back" onClick={props.onClose}>
-          ← Назад
-        </button>
-        <div class="ourapp-credits__crumb">Профиль · Кредиты и подписка</div>
-      </header>
+      <AppTopbar active="credits" />
 
       <main class="ourapp-credits__main">
         <h1 class="ourapp-credits__title">

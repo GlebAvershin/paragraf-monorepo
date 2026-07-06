@@ -12,6 +12,7 @@
  */
 import { For, Show, type Component } from "solid-js"
 import type { Scenario } from "./scenarios"
+import { AppTopbar } from "./app-topbar"
 import { VERTICALS, verticalLabel, type Vertical } from "./verticals"
 
 export interface HomeRecentSession {
@@ -29,16 +30,6 @@ export interface HomeWelcomeProps {
   onPickScenario: (s: Scenario) => void
   /** Начать новую задачу (основной CTA). */
   onStartNew: () => void
-  onOpenSettings: () => void
-  onOpenHelp: () => void
-  /** Открыть страницу истории сессий. */
-  onOpenHistory?: () => void
-  /** Открыть страницу аналитики использования. */
-  onOpenAnalytics?: () => void
-  /** Открыть страницу «Кредиты и подписка». */
-  onOpenCredits: () => void
-  /** Сменить вертикаль — клик в шапке. */
-  onVerticalChange: (v: Vertical) => void
 }
 
 export const HomeWelcome: Component<HomeWelcomeProps> = (props) => {
@@ -48,43 +39,7 @@ export const HomeWelcome: Component<HomeWelcomeProps> = (props) => {
 
   return (
     <div class="ourapp-landing">
-      <header class="ourapp-landing__topbar">
-        <div class="ourapp-landing__brandgroup">
-          <div class="ourapp-landing__brand">
-            <span class="ourapp-landing__brandname">Isaac</span>
-            <span
-              class="ourapp-landing__vertical"
-              title="Сейчас доступен только Технолог"
-            >
-              {currentLabel()}
-            </span>
-          </div>
-          <nav class="ourapp-landing__nav" aria-label="Разделы">
-            <button type="button" class="ourapp-navpill ourapp-navpill--active" aria-current="page">
-              Главная
-            </button>
-            <button type="button" class="ourapp-navpill" onClick={props.onOpenCredits}>
-              Кредиты
-            </button>
-            {props.onOpenHistory && (
-              <button type="button" class="ourapp-navpill" onClick={props.onOpenHistory}>
-                История
-              </button>
-            )}
-            {props.onOpenAnalytics && (
-              <button type="button" class="ourapp-navpill" onClick={props.onOpenAnalytics}>
-                Аналитика
-              </button>
-            )}
-            <button type="button" class="ourapp-navpill" onClick={props.onOpenSettings}>
-              Настройки
-            </button>
-            <button type="button" class="ourapp-navpill" onClick={props.onOpenHelp}>
-              Помощь
-            </button>
-          </nav>
-        </div>
-      </header>
+      <AppTopbar active="home" />
 
       <main class="ourapp-landing__main">
         <div class="ourapp-landing__hero">
@@ -94,9 +49,9 @@ export const HomeWelcome: Component<HomeWelcomeProps> = (props) => {
             <span class="ourapp-landing__eyebrowrole">{currentLabel()}</span>
           </div>
           <h1 class="ourapp-landing__title">
-            Серьёзный инструмент
+            Инструмент для
             <br />
-            <em>с тёплой подачей.</em>
+            <em>инженера-технолога.</em>
           </h1>
           <p class="ourapp-landing__lede">{heroLede()}</p>
 

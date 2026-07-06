@@ -1,8 +1,8 @@
 import type { Session } from "@opencode-ai/sdk/v2/client"
-import { createMemo, createSignal, For, Match, Show, Switch } from "solid-js"
+import { createMemo, createSignal, For, Match, onCleanup, onMount, Show, Switch } from "solid-js"
 import { createStore } from "solid-js/store"
 import { type Vertical } from "@/ourapp/scenario-library"
-import { loadVertical, saveVertical } from "@/ourapp/verticals"
+import { loadVertical } from "@/ourapp/verticals"
 import { HomeWelcome, type HomeRecentSession } from "@/ourapp/home-welcome"
 import { openScenarioWizard } from "@/ourapp/scenarios/wizard-controller"
 import { useQuery } from "@tanstack/solid-query"
@@ -71,7 +71,15 @@ function HomeDesign() {
   // OurApp: текущая вертикаль (профессия). Источник правды — ourapp/verticals.ts
   // (там же список включённых и дефолт). loadVertical() автоматически вернёт
   // дефолт, если в localStorage лежит ВЫКЛЮЧЕННАЯ вертикаль (lawyer/accountant).
+  // Сменить вертикаль можно из шапки (AppTopbar, любая страница) — она пишет в
+  // localStorage и шлёт "ourapp:vertical-changed", на который здесь подписка,
+  // чтобы hero на Home оставался реактивным без прокидывания коллбэка через пропсы.
   const [vertical, setVertical] = createSignal<Vertical>(loadVertical())
+  onMount(() => {
+    const onChanged = () => setVertical(loadVertical())
+    window.addEventListener("ourapp:vertical-changed", onChanged)
+    onCleanup(() => window.removeEventListener("ourapp:vertical-changed", onChanged))
+  })
 
   const projects = createMemo(() => layout.projects.list())
   const selectedProject = createMemo(
@@ -205,11 +213,6 @@ function HomeDesign() {
     })
   }
 
-  const onVerticalChange = (v: Vertical) => {
-    setVertical(v)
-    saveVertical(v)
-  }
-
   // Преобразуем opencode-сессии в формат для HomeWelcome.
   const recentForHome = (): HomeRecentSession[] =>
     records().map((record) => {
@@ -239,12 +242,6 @@ function HomeDesign() {
         }}
         onPickScenario={onScenarioPick}
         onStartNew={openNewSession}
-        onOpenCredits={() => navigate("/credits")}
-        onOpenSettings={openSettings}
-        onOpenHistory={() => navigate("/history")}
-        onOpenAnalytics={() => navigate("/analytics")}
-        onOpenHelp={() => navigate("/help")}
-        onVerticalChange={onVerticalChange}
       />
     </div>
   )

@@ -16,6 +16,7 @@ import { useLayout } from "@/context/layout"
 import { sortedRootSessions } from "@/pages/layout/helpers"
 import { sessionTitle } from "@/utils/session-title"
 import { exportSession, type ExportFormat } from "@/ourapp/session-export"
+import { AppTopbar } from "@/ourapp/app-topbar"
 import type { Part } from "@opencode-ai/sdk/v2"
 import "./history.css"
 
@@ -153,12 +154,7 @@ export const HistoryPage: Component = () => {
 
   return (
     <div class="ourapp-history">
-      <header class="ourapp-history__topbar">
-        <button type="button" class="ourapp-settings__back" onClick={() => navigate(-1)}>
-          ← Назад
-        </button>
-        <div class="ourapp-settings__crumb">История сессий</div>
-      </header>
+      <AppTopbar active="history" />
 
       <main class="ourapp-history__main">
         <div class="ourapp-history__head">

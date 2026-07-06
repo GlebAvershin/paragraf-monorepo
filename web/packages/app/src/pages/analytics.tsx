@@ -5,11 +5,11 @@
  * Данные через usage-api → /usage/summary.
  */
 import { For, Show, createResource, createSignal, type Component } from "solid-js"
-import { useNavigate } from "@solidjs/router"
 import { Icon } from "@opencode-ai/ui/icon"
 import { periodRange, usageApi, type UsagePeriod } from "@/ourapp/usage-api"
 import { BarChart } from "@/ourapp/charts/bar-chart"
 import { SCENARIOS as WIZARD_SCENARIOS } from "@/ourapp/scenarios/index"
+import { AppTopbar } from "@/ourapp/app-topbar"
 import "./analytics.css"
 
 const PERIOD_LABELS: Record<UsagePeriod, string> = {
@@ -19,7 +19,6 @@ const PERIOD_LABELS: Record<UsagePeriod, string> = {
 }
 
 export const AnalyticsPage: Component = () => {
-  const navigate = useNavigate()
   const [period, setPeriod] = createSignal<UsagePeriod>("month")
 
   const [summary, { refetch }] = createResource(period, async (p) => {
@@ -46,12 +45,7 @@ export const AnalyticsPage: Component = () => {
 
   return (
     <div class="ourapp-analytics">
-      <header class="ourapp-analytics__topbar">
-        <button type="button" class="ourapp-settings__back" onClick={() => navigate(-1)}>
-          ← Назад
-        </button>
-        <div class="ourapp-settings__crumb">Профиль · Аналитика</div>
-      </header>
+      <AppTopbar active="analytics" />
 
       <main class="ourapp-analytics__main">
         <h1 class="ourapp-analytics__title">
@@ -124,35 +118,6 @@ export const AnalyticsPage: Component = () => {
                     formatLabel={formatDay}
                     height={200}
                   />
-                </section>
-
-                <section class="ourapp-analytics__section">
-                  <h2 class="ourapp-analytics__sectionTitle">По моделям</h2>
-                  <Show
-                    when={s().byModel.length > 0}
-                    fallback={<div class="ourapp-analytics__empty">Нет данных</div>}
-                  >
-                    <table class="ourapp-analytics__table">
-                      <thead>
-                        <tr>
-                          <th>Модель</th>
-                          <th>Запросов</th>
-                          <th>Кредитов</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <For each={s().byModel}>
-                          {(m) => (
-                            <tr>
-                              <td>{m.model}</td>
-                              <td class="ourapp-analytics__num">{m.requests}</td>
-                              <td class="ourapp-analytics__num">{m.credits}</td>
-                            </tr>
-                          )}
-                        </For>
-                      </tbody>
-                    </table>
-                  </Show>
                 </section>
 
                 <Show when={s().byScenario.length > 0}>

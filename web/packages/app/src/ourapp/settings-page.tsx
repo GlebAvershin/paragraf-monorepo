@@ -15,11 +15,12 @@ import { billingApi } from "./billing-api"
 import { clearSession } from "./auth-storage"
 import { loadVertical, saveVertical, VERTICAL_ORDER, VERTICALS, type Vertical } from "./verticals"
 import { AboutModal } from "./about-modal"
+import { AppTopbar } from "./app-topbar"
 import "./about-modal.css"
 import "./pii.css"
 import { useLanguage } from "@/context/language"
 
-export const SettingsPage: Component<{ onClose?: () => void }> = (props) => {
+export const SettingsPage: Component = () => {
   const theme = useTheme()
   const language = useLanguage()
   const [me] = createResource(() => billingApi.me().then((r) => (r.ok ? r.data : null)))
@@ -31,6 +32,7 @@ export const SettingsPage: Component<{ onClose?: () => void }> = (props) => {
     if (!VERTICALS[v].enabled) return
     setVertical(v)
     saveVertical(v)
+    window.dispatchEvent(new Event("ourapp:vertical-changed"))
   }
 
   const updateScheme = (scheme: ColorScheme) => {
@@ -46,12 +48,7 @@ export const SettingsPage: Component<{ onClose?: () => void }> = (props) => {
 
   return (
     <div class="ourapp-settings">
-      <header class="ourapp-settings__topbar">
-        <button type="button" class="ourapp-settings__back" onClick={props.onClose}>
-          ← Назад
-        </button>
-        <div class="ourapp-settings__crumb">Профиль · Настройки</div>
-      </header>
+      <AppTopbar active="settings" />
 
       <main class="ourapp-settings__main">
         <h1 class="ourapp-settings__title">
@@ -155,8 +152,9 @@ export const SettingsPage: Component<{ onClose?: () => void }> = (props) => {
             <button
               type="button"
               class="ourapp-pill"
-              classList={{ "ourapp-pill--active": language.locale() === "en" }}
-              onClick={() => language.setLocale("en")}
+              classList={{ "ourapp-pill--disabled": true }}
+              disabled
+              title="Скоро"
             >
               English
             </button>
@@ -164,15 +162,6 @@ export const SettingsPage: Component<{ onClose?: () => void }> = (props) => {
         </section>
 
         <section class="ourapp-settings__card">
-          <div class="ourapp-settings__label">О приложении</div>
-          <div class="ourapp-settings__row">
-            <span class="ourapp-settings__rowLabel">Версия</span>
-            <span class="ourapp-settings__rowValue">0.1.0 · ourapp/main</span>
-          </div>
-          <div class="ourapp-settings__row">
-            <span class="ourapp-settings__rowLabel">Gateway</span>
-            <span class="ourapp-settings__rowValue">{me()?.gateway?.baseUrl ?? "—"}</span>
-          </div>
           <div class="ourapp-settings__rowActions">
             <button type="button" class="ourapp-btn" onClick={() => setAboutOpen(true)}>
               О Isaac

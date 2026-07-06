@@ -19,7 +19,7 @@
   /* Усиливаем кремовый оттенок чтобы карточки белые отчётливо отделялись.
      В preview.html фон был #FBF9F4 — здесь применяем как локальный override. */
   background:
-    radial-gradient(rgba(26, 22, 20, 0.03) 1px, transparent 1px) 0 0 / 4px 4px,
+    radial-gradient(light-dark(rgba(26, 22, 20, 0.012), rgba(255, 255, 255, 0.018)) 1px, transparent 1px) 0 0 / 4px 4px,
     light-dark(#FBF9F4, #15120F);
   min-height: 100%;
 }
