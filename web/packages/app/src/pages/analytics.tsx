@@ -118,7 +118,7 @@ export const AnalyticsPage: Component = () => {
                     data={s().byDay.map((d) => ({ label: d.day, value: d.credits }))}
                     unit="кредитов"
                     formatLabel={formatDay}
-                    height={200}
+                    height={120}
                   />
                 </section>
 
