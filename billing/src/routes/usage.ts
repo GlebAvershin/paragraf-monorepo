@@ -88,15 +88,22 @@ usageRoutes.get("/summary", requireSession, async (c) => {
   const totalCredits = total?.credits ?? 0
   const totalRequests = total?.requests ?? 0
 
-  // Разбивка по дням.
+  // Разбивка по дням — непрерывный ряд через generate_series, иначе дни без
+  // расхода просто выпадают из GROUP BY (график выглядел как «скип» дат вместо
+  // явного нуля). Фильтр по subFilter — в ON, не в WHERE, чтобы LEFT JOIN не
+  // вырождался в INNER JOIN и пустые дни не терялись.
   const byDayRows = await db.execute<{ day: string; credits: number; requests: number }>(sql`
-    SELECT date_trunc('day', created_at)::date::text AS day,
-           COALESCE(SUM(credits_charged), 0)::int AS credits,
-           COUNT(*)::int AS requests
-    FROM usage_events
-    WHERE ${subFilter}
-      AND created_at >= ${range.from.toISOString()}
-      AND created_at <= ${range.to.toISOString()}
+    SELECT day_series.day::date::text AS day,
+           COALESCE(SUM(usage_events.credits_charged), 0)::int AS credits,
+           COUNT(usage_events.id)::int AS requests
+    FROM generate_series(
+      date_trunc('day', ${range.from.toISOString()}::timestamptz),
+      date_trunc('day', ${range.to.toISOString()}::timestamptz),
+      interval '1 day'
+    ) AS day_series(day)
+    LEFT JOIN usage_events
+      ON date_trunc('day', usage_events.created_at) = day_series.day
+      AND ${subFilter}
     GROUP BY 1
     ORDER BY 1 ASC
   `)

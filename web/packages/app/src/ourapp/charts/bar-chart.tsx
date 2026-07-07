@@ -24,6 +24,15 @@ export const BarChart: Component<BarChartProps> = (props) => {
 
   const formatLabel = (l: string) => (props.formatLabel ? props.formatLabel(l) : l)
 
+  // Тултип следует за наведённым баром по горизонтали (было — фиксирован в
+  // правом верхнем углу, не читалось, на какой день смотришь).
+  const hoverLeftPercent = createMemo(() => {
+    const i = hover()
+    if (i === null || props.data.length === 0) return 50
+    const pct = ((i + 0.5) / props.data.length) * 100
+    return Math.min(92, Math.max(8, pct))
+  })
+
   return (
     <Show
       when={props.data.length > 0}
@@ -63,7 +72,10 @@ export const BarChart: Component<BarChartProps> = (props) => {
           <span>{formatLabel(props.data[props.data.length - 1]?.label ?? "")}</span>
         </div>
         <Show when={hover() !== null}>
-          <div class="ourapp-chart__tooltip">
+          <div
+            class="ourapp-chart__tooltip"
+            style={{ left: `${hoverLeftPercent()}%` }}
+          >
             <span class="ourapp-chart__tooltipDate">
               {formatLabel(props.data[hover()!]?.label ?? "")}
             </span>
