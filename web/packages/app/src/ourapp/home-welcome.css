@@ -240,14 +240,6 @@
   }
 }
 
-.ourapp-landing__scenpath {
-  font-family: var(--font-family-mono, ui-monospace, monospace);
-  font-size: 12px;
-  color: light-dark(#0B5345, #1A8A6B);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 
 /* ---- Hero (центр) ---- */
 

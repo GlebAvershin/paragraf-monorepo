@@ -266,71 +266,114 @@ dfn {
 .ourapp-history,
 .ourapp-analytics,
 .ourapp-onboarding {
-  animation: ourapp-page-in 600ms var(--ourapp-anim-ease) both;
+  animation: ourapp-page-in 850ms var(--ourapp-anim-ease) both;
 }
 
-.ourapp-landing__topbar {
-  animation: ourapp-drop-in 640ms var(--ourapp-anim-ease) both;
-}
+/* Шапку НЕ анимируем: она есть на каждой странице, и при переходах по ней же
+   она «мигала» бы заново при каждом монтировании (фидбек 2026-07-07). */
 
 /* Главная: hero всплывает по центру, сценарии въезжают слева,
-   «Продолжить работу» — справа, с небольшим отставанием. */
+   «Продолжить работу» — справа, с отставанием. */
 .ourapp-landing__hero,
 .ourapp-onboarding__step {
-  animation: ourapp-rise-in 760ms var(--ourapp-anim-ease) 120ms both;
+  animation: ourapp-rise-in 1000ms var(--ourapp-anim-ease) 150ms both;
 }
 
 .ourapp-landing__scen {
-  animation: ourapp-slide-left-in 760ms var(--ourapp-anim-ease) 260ms both;
+  animation: ourapp-slide-left-in 1000ms var(--ourapp-anim-ease) 350ms both;
 }
 
 .ourapp-landing__recent {
-  animation: ourapp-slide-right-in 760ms var(--ourapp-anim-ease) 260ms both;
+  animation: ourapp-slide-right-in 1000ms var(--ourapp-anim-ease) 350ms both;
 }
 
 /* Настройки/кредиты: карточки поднимаются каскадом. */
 .ourapp-settings__card,
 .ourapp-credits__card {
-  animation: ourapp-rise-in 700ms var(--ourapp-anim-ease) both;
+  animation: ourapp-rise-in 900ms var(--ourapp-anim-ease) both;
 }
 
 .ourapp-settings__card:nth-of-type(2),
 .ourapp-credits__card:nth-of-type(2) {
-  animation-delay: 110ms;
+  animation-delay: 150ms;
 }
 
 .ourapp-settings__card:nth-of-type(3),
 .ourapp-credits__card:nth-of-type(3) {
-  animation-delay: 220ms;
+  animation-delay: 300ms;
 }
 
 .ourapp-settings__card:nth-of-type(n + 4),
 .ourapp-credits__card:nth-of-type(n + 4) {
-  animation-delay: 330ms;
+  animation-delay: 450ms;
 }
 
-/* Доска сценариев: заголовок опускается, мозаика прямоугольников вырастает
-   волной слева-направо/сверху-вниз — большая feature-карточка первой,
-   остальные догоняют каскадом. */
+/* История: плашки сессий выпадают каскадом. */
+.ourapp-history__item {
+  animation: ourapp-rise-in 850ms var(--ourapp-anim-ease) both;
+}
+
+.ourapp-history__item:nth-child(2) { animation-delay: 110ms; }
+.ourapp-history__item:nth-child(3) { animation-delay: 220ms; }
+.ourapp-history__item:nth-child(4) { animation-delay: 330ms; }
+.ourapp-history__item:nth-child(5) { animation-delay: 440ms; }
+.ourapp-history__item:nth-child(6) { animation-delay: 550ms; }
+.ourapp-history__item:nth-child(n + 7) { animation-delay: 660ms; }
+
+/* Аналитика: stat-карточки, затем секции. */
+.ourapp-analytics__card {
+  animation: ourapp-rise-in 850ms var(--ourapp-anim-ease) both;
+}
+
+.ourapp-analytics__card:nth-child(2) { animation-delay: 140ms; }
+.ourapp-analytics__card:nth-child(3) { animation-delay: 280ms; }
+
+.ourapp-analytics__section {
+  animation: ourapp-rise-in 900ms var(--ourapp-anim-ease) 380ms both;
+}
+
+.ourapp-analytics__section + .ourapp-analytics__section {
+  animation-delay: 540ms;
+}
+
+/* Помощь: FAQ-плашки выпадают одна за другой. */
+.ourapp-faq__item {
+  animation: ourapp-rise-in 800ms var(--ourapp-anim-ease) both;
+}
+
+.ourapp-faq__item:nth-child(2) { animation-delay: 90ms; }
+.ourapp-faq__item:nth-child(3) { animation-delay: 180ms; }
+.ourapp-faq__item:nth-child(4) { animation-delay: 270ms; }
+.ourapp-faq__item:nth-child(5) { animation-delay: 360ms; }
+.ourapp-faq__item:nth-child(6) { animation-delay: 450ms; }
+.ourapp-faq__item:nth-child(7) { animation-delay: 540ms; }
+.ourapp-faq__item:nth-child(n + 8) { animation-delay: 630ms; }
+
+/* Воркспейс (/workspace/session): сайдбар въезжает слева,
+   доска сценариев — заголовок опускается, мозаика вырастает волной. */
+.ourapp-sidebar {
+  animation: ourapp-slide-left-in 900ms var(--ourapp-anim-ease) both;
+}
+
 .ourapp-library__head {
-  animation: ourapp-drop-in 640ms var(--ourapp-anim-ease) both;
+  animation: ourapp-drop-in 900ms var(--ourapp-anim-ease) 150ms both;
 }
 
 .ourapp-scenario {
-  animation: ourapp-tile-in 720ms var(--ourapp-anim-ease) both;
+  animation: ourapp-tile-in 950ms var(--ourapp-anim-ease) both;
 }
 
 .ourapp-scenario--feature {
-  animation: ourapp-slide-left-in 780ms var(--ourapp-anim-ease) 120ms both;
+  animation: ourapp-slide-left-in 1050ms var(--ourapp-anim-ease) 200ms both;
 }
 
-.ourapp-scenario:nth-child(2) { animation-delay: 220ms; }
-.ourapp-scenario:nth-child(3) { animation-delay: 300ms; }
-.ourapp-scenario:nth-child(4) { animation-delay: 380ms; }
-.ourapp-scenario:nth-child(5) { animation-delay: 460ms; }
-.ourapp-scenario:nth-child(6) { animation-delay: 540ms; }
-.ourapp-scenario:nth-child(7) { animation-delay: 620ms; }
-.ourapp-scenario:nth-child(n + 8) { animation-delay: 700ms; }
+.ourapp-scenario:nth-child(2) { animation-delay: 320ms; }
+.ourapp-scenario:nth-child(3) { animation-delay: 430ms; }
+.ourapp-scenario:nth-child(4) { animation-delay: 540ms; }
+.ourapp-scenario:nth-child(5) { animation-delay: 650ms; }
+.ourapp-scenario:nth-child(6) { animation-delay: 760ms; }
+.ourapp-scenario:nth-child(7) { animation-delay: 870ms; }
+.ourapp-scenario:nth-child(n + 8) { animation-delay: 980ms; }
 
 @media (prefers-reduced-motion: reduce) {
   .ourapp-landing,
@@ -340,13 +383,17 @@ dfn {
   .ourapp-history,
   .ourapp-analytics,
   .ourapp-onboarding,
-  .ourapp-landing__topbar,
   .ourapp-landing__hero,
   .ourapp-landing__scen,
   .ourapp-landing__recent,
   .ourapp-onboarding__step,
   .ourapp-settings__card,
   .ourapp-credits__card,
+  .ourapp-history__item,
+  .ourapp-analytics__card,
+  .ourapp-analytics__section,
+  .ourapp-faq__item,
+  .ourapp-sidebar,
   .ourapp-library__head,
   .ourapp-scenario,
   .ourapp-scenario--feature {

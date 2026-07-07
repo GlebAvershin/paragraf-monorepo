@@ -11,6 +11,7 @@
  * реальной session-list, кредитному API и роутеру — следующая итерация.
  */
 import { createMemo, createResource, For, type Component } from "solid-js"
+import { useNavigate } from "@solidjs/router"
 import { Icon } from "@opencode-ai/ui/icon"
 import { scenariosFor, type Scenario } from "./scenarios"
 import { verticalLabel, type Vertical } from "./verticals"
@@ -55,6 +56,7 @@ export interface WelcomeSidebarProps {
 
 
 export const WelcomeSidebar: Component<WelcomeSidebarProps> = (props) => {
+  const navigate = useNavigate()
   // Показываем все сценарии вертикали (их 7) — лимит .slice(0,5) скрывал новые.
   const list = createMemo(() => scenariosFor(props.vertical))
   const currentLabel = () => verticalLabel(props.vertical)
@@ -89,7 +91,9 @@ export const WelcomeSidebar: Component<WelcomeSidebarProps> = (props) => {
   return (
     <aside class="ourapp-sidebar">
       <div class="ourapp-sidebar__header">
-        <div class="ourapp-sidebar__brand">Isaac</div>
+        <button type="button" class="ourapp-sidebar__brand" title="На главную" onClick={() => navigate("/")}>
+          Isaac
+        </button>
         <div class="ourapp-sidebar__role">{currentLabel()}</div>
       </div>
 

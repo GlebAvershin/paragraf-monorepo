@@ -31,13 +31,26 @@
   border-bottom: 1px solid var(--border-weak-base);
 }
 
+/* Кнопка-бренд: клик ведёт на главную. display:block — чтобы ::first-letter
+   работал и на <button>. */
 .ourapp-sidebar__brand {
+  display: block;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
   font-family: var(--font-family-serif);
   font-size: 18px;
   font-weight: 500;
   color: var(--text-strong);
   letter-spacing: -0.01em;
   line-height: 1.2;
+  transition: opacity 200ms var(--ourapp-ease, ease);
+}
+
+.ourapp-sidebar__brand:hover {
+  opacity: 0.75;
 }
 
 .ourapp-sidebar__brand::first-letter {

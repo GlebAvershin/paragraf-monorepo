@@ -10,8 +10,14 @@ import { createResource, createSignal, For, Show, type Component } from "solid-j
 import { useNavigate } from "@solidjs/router"
 import { DropdownMenu } from "@opencode-ai/ui/dropdown-menu"
 import { Icon } from "@opencode-ai/ui/icon"
-import { billingApi } from "./billing-api"
+import { billingApi, type LimitsResponse, type MeResponse } from "./billing-api"
 import { isVerticalEnabled, loadVertical, saveVertical, VERTICAL_ORDER, verticalLabel, type Vertical } from "./verticals"
+
+// Последние загруженные значения переживают перемонтирование шапки: навигация
+// между страницами монтирует AppTopbar заново, и без этого кэша блок
+// кредитов/почты на мгновение исчезал («мигал») при каждом переходе.
+let lastMe: MeResponse | null = null
+let lastLimits: LimitsResponse | null = null
 
 export type AppTopbarActive = "home" | "credits" | "history" | "analytics" | "settings" | "help"
 
@@ -30,8 +36,14 @@ export const AppTopbar: Component<{ active: AppTopbarActive }> = (props) => {
   const [vertical, setVertical] = createSignal<Vertical>(loadVertical())
   const [menuOpen, setMenuOpen] = createSignal(false)
 
-  const [me] = createResource(() => billingApi.me().then((r) => (r.ok ? r.data : null)))
-  const [limits] = createResource(() => billingApi.limits().then((r) => (r.ok ? r.data : null)))
+  const [me] = createResource(
+    () => billingApi.me().then((r) => (r.ok ? (lastMe = r.data) : lastMe)),
+    { initialValue: lastMe ?? undefined },
+  )
+  const [limits] = createResource(
+    () => billingApi.limits().then((r) => (r.ok ? (lastLimits = r.data) : lastLimits)),
+    { initialValue: lastLimits ?? undefined },
+  )
 
   const creditsRemaining = () => limits()?.credits.remaining ?? 0
   const creditsTotal = () => limits()?.credits.monthlyTotal ?? 0

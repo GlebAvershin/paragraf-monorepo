@@ -16,9 +16,6 @@ import { AppTopbar } from "./app-topbar"
 import { VERTICALS, verticalLabel, type Vertical } from "./verticals"
 import { DotWaveBackground } from "./dot-wave-bg"
 
-/** id сценария в виде пути — «tech.gost.find» → «/tech/gost/find». */
-const scenarioPath = (id: string) => "/" + id.replaceAll(".", "/")
-
 export interface HomeRecentSession {
   id: string
   title: string
@@ -65,8 +62,7 @@ export const HomeWelcome: Component<HomeWelcomeProps> = (props) => {
                       <div class="ourapp-landing__recentline">
                         <span class="ourapp-landing__recentdot" aria-hidden="true" />
                         <span class="ourapp-landing__recentbody">
-                          <span class="ourapp-landing__scenpath">{scenarioPath(scenario.id)}</span>
-                          <span class="ourapp-landing__recentmeta">{scenario.title}</span>
+                          <span class="ourapp-landing__recenttext">{scenario.title}</span>
                         </span>
                       </div>
                     </button>
