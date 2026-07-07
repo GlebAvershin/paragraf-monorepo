@@ -6,20 +6,22 @@
  * страницами шапка визуально «прыгала» (цвет/ширина/текст). Теперь одна шапка,
  * меняется только подсвеченный пункт nav.
  */
-import { createSignal, For, type Component } from "solid-js"
+import { createResource, createSignal, For, Show, type Component } from "solid-js"
 import { useNavigate } from "@solidjs/router"
 import { DropdownMenu } from "@opencode-ai/ui/dropdown-menu"
 import { Icon } from "@opencode-ai/ui/icon"
+import { billingApi } from "./billing-api"
 import { isVerticalEnabled, loadVertical, saveVertical, VERTICAL_ORDER, verticalLabel, type Vertical } from "./verticals"
 
 export type AppTopbarActive = "home" | "credits" | "history" | "analytics" | "settings" | "help"
 
+// «Настройки» из nav переехали в правый край шапки: там теперь почта аккаунта
+// (клик → настройки) и полоска остатка кредитов (клик → /credits).
 const NAV_ITEMS: Array<{ id: AppTopbarActive; label: string; path: string }> = [
   { id: "home", label: "Главная", path: "/" },
   { id: "credits", label: "Кредиты", path: "/credits" },
   { id: "history", label: "История", path: "/history" },
   { id: "analytics", label: "Аналитика", path: "/analytics" },
-  { id: "settings", label: "Настройки", path: "/settings" },
   { id: "help", label: "Помощь", path: "/help" },
 ]
 
@@ -27,6 +29,17 @@ export const AppTopbar: Component<{ active: AppTopbarActive }> = (props) => {
   const navigate = useNavigate()
   const [vertical, setVertical] = createSignal<Vertical>(loadVertical())
   const [menuOpen, setMenuOpen] = createSignal(false)
+
+  const [me] = createResource(() => billingApi.me().then((r) => (r.ok ? r.data : null)))
+  const [limits] = createResource(() => billingApi.limits().then((r) => (r.ok ? r.data : null)))
+
+  const creditsRemaining = () => limits()?.credits.remaining ?? 0
+  const creditsTotal = () => limits()?.credits.monthlyTotal ?? 0
+  const creditsPct = () => {
+    const total = creditsTotal()
+    if (total <= 0) return 0
+    return Math.max(0, Math.min(100, (creditsRemaining() / total) * 100))
+  }
 
   const onVerticalChange = (v: Vertical) => {
     setVertical(v)
@@ -86,6 +99,33 @@ export const AppTopbar: Component<{ active: AppTopbarActive }> = (props) => {
             )}
           </For>
         </nav>
+      </div>
+
+      <div class="ourapp-topbar__right">
+        <Show when={limits()}>
+          <button
+            type="button"
+            class="ourapp-topbar__credits"
+            title="Остаток кредитов в этом месяце — подробнее на странице «Кредиты»"
+            onClick={() => navigate("/credits")}
+          >
+            <span class="ourapp-topbar__creditsbar" aria-hidden="true">
+              <span class="ourapp-topbar__creditsfill" style={{ width: `${creditsPct()}%` }} />
+            </span>
+            <span class="ourapp-topbar__creditstext">
+              {creditsRemaining().toLocaleString("ru")} из {creditsTotal().toLocaleString("ru")}
+            </span>
+          </button>
+        </Show>
+        <button
+          type="button"
+          class="ourapp-topbar__account"
+          classList={{ "ourapp-topbar__account--active": props.active === "settings" }}
+          title="Настройки аккаунта"
+          onClick={() => navigate("/settings")}
+        >
+          {me()?.user.email ?? "Настройки"}
+        </button>
       </div>
     </header>
   )

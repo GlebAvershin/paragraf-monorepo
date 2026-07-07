@@ -154,9 +154,10 @@
    канву в кадре при прокрутке, z-index:-1 + isolation:isolate на корне
    страницы кладут её ЗА контент, но НАД фоном корня. */
 .ourapp-landing,
-.ourapp-library,
 .ourapp-settings,
 .ourapp-credits,
+.ourapp-history,
+.ourapp-analytics,
 .ourapp-onboarding {
   isolation: isolate;
 }
@@ -183,13 +184,26 @@ dfn {
   font-style: normal;
 }
 
-/* Плавное появление страниц: лёгкий fade+lift при каждом переходе между
-   экранами (лендинг, библиотека, настройки, кредиты, история, аналитика,
-   вход). Карточки контента чуть отстают от корня — двухслойный эффект. */
+/* Появление экранов — медленное «стекание» вместо выстрела: длинные
+   длительности + easeOutQuint-кривая, элементы въезжают с разных сторон
+   (левая колонка — слева, правая — справа, hero всплывает, шапка опускается). */
+:root {
+  --ourapp-anim-ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 @keyframes ourapp-page-in {
   from {
     opacity: 0;
-    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes ourapp-rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(26px);
   }
   to {
     opacity: 1;
@@ -197,10 +211,47 @@ dfn {
   }
 }
 
-@keyframes ourapp-rise-in {
+@keyframes ourapp-slide-left-in {
   from {
     opacity: 0;
-    transform: translateY(16px) scale(0.99);
+    transform: translateX(-36px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes ourapp-slide-right-in {
+  from {
+    opacity: 0;
+    transform: translateX(36px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes ourapp-drop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Тайлы доски сценариев: вырастают из глубины с лёгким поворотом. */
+@keyframes ourapp-tile-in {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.92);
+  }
+  60% {
+    opacity: 1;
   }
   to {
     opacity: 1;
@@ -215,23 +266,71 @@ dfn {
 .ourapp-history,
 .ourapp-analytics,
 .ourapp-onboarding {
-  animation: ourapp-page-in 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: ourapp-page-in 600ms var(--ourapp-anim-ease) both;
 }
 
-.ourapp-onboarding__step,
+.ourapp-landing__topbar {
+  animation: ourapp-drop-in 640ms var(--ourapp-anim-ease) both;
+}
+
+/* Главная: hero всплывает по центру, сценарии въезжают слева,
+   «Продолжить работу» — справа, с небольшим отставанием. */
 .ourapp-landing__hero,
-.ourapp-settings__card,
-.ourapp-credits__card,
-.ourapp-scenario {
-  animation: ourapp-rise-in 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+.ourapp-onboarding__step {
+  animation: ourapp-rise-in 760ms var(--ourapp-anim-ease) 120ms both;
 }
 
-/* Лёгкий каскад для карточек сценариев. */
-.ourapp-scenario:nth-child(2) { animation-delay: 40ms; }
-.ourapp-scenario:nth-child(3) { animation-delay: 80ms; }
-.ourapp-scenario:nth-child(4) { animation-delay: 120ms; }
-.ourapp-scenario:nth-child(5) { animation-delay: 160ms; }
-.ourapp-scenario:nth-child(n + 6) { animation-delay: 200ms; }
+.ourapp-landing__scen {
+  animation: ourapp-slide-left-in 760ms var(--ourapp-anim-ease) 260ms both;
+}
+
+.ourapp-landing__recent {
+  animation: ourapp-slide-right-in 760ms var(--ourapp-anim-ease) 260ms both;
+}
+
+/* Настройки/кредиты: карточки поднимаются каскадом. */
+.ourapp-settings__card,
+.ourapp-credits__card {
+  animation: ourapp-rise-in 700ms var(--ourapp-anim-ease) both;
+}
+
+.ourapp-settings__card:nth-of-type(2),
+.ourapp-credits__card:nth-of-type(2) {
+  animation-delay: 110ms;
+}
+
+.ourapp-settings__card:nth-of-type(3),
+.ourapp-credits__card:nth-of-type(3) {
+  animation-delay: 220ms;
+}
+
+.ourapp-settings__card:nth-of-type(n + 4),
+.ourapp-credits__card:nth-of-type(n + 4) {
+  animation-delay: 330ms;
+}
+
+/* Доска сценариев: заголовок опускается, мозаика прямоугольников вырастает
+   волной слева-направо/сверху-вниз — большая feature-карточка первой,
+   остальные догоняют каскадом. */
+.ourapp-library__head {
+  animation: ourapp-drop-in 640ms var(--ourapp-anim-ease) both;
+}
+
+.ourapp-scenario {
+  animation: ourapp-tile-in 720ms var(--ourapp-anim-ease) both;
+}
+
+.ourapp-scenario--feature {
+  animation: ourapp-slide-left-in 780ms var(--ourapp-anim-ease) 120ms both;
+}
+
+.ourapp-scenario:nth-child(2) { animation-delay: 220ms; }
+.ourapp-scenario:nth-child(3) { animation-delay: 300ms; }
+.ourapp-scenario:nth-child(4) { animation-delay: 380ms; }
+.ourapp-scenario:nth-child(5) { animation-delay: 460ms; }
+.ourapp-scenario:nth-child(6) { animation-delay: 540ms; }
+.ourapp-scenario:nth-child(7) { animation-delay: 620ms; }
+.ourapp-scenario:nth-child(n + 8) { animation-delay: 700ms; }
 
 @media (prefers-reduced-motion: reduce) {
   .ourapp-landing,
@@ -241,11 +340,16 @@ dfn {
   .ourapp-history,
   .ourapp-analytics,
   .ourapp-onboarding,
-  .ourapp-onboarding__step,
+  .ourapp-landing__topbar,
   .ourapp-landing__hero,
+  .ourapp-landing__scen,
+  .ourapp-landing__recent,
+  .ourapp-onboarding__step,
   .ourapp-settings__card,
   .ourapp-credits__card,
-  .ourapp-scenario {
+  .ourapp-library__head,
+  .ourapp-scenario,
+  .ourapp-scenario--feature {
     animation: none;
   }
 }

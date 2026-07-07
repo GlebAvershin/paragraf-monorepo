@@ -58,6 +58,93 @@
   color: light-dark(#0B5345, #1A8A6B);
 }
 
+/* ---- Правый блок шапки: кредиты + почта аккаунта ---- */
+
+.ourapp-topbar__right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+}
+
+.ourapp-topbar__credits {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: 0;
+  font-family: inherit;
+  font-size: 12px;
+  color: light-dark(#4A453F, #B5AFA4);
+  padding: 6px 10px;
+  border-radius: var(--ourapp-radius-sm, 6px);
+  cursor: pointer;
+  transition: all 200ms var(--ourapp-ease, ease);
+}
+
+.ourapp-topbar__credits:hover {
+  background: light-dark(rgba(11, 83, 69, 0.06), rgba(26, 138, 107, 0.12));
+  color: light-dark(#0B5345, #1A8A6B);
+}
+
+.ourapp-topbar__creditsbar {
+  width: 72px;
+  height: 5px;
+  border-radius: 999px;
+  background: light-dark(#E8E3DB, #2E2924);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.ourapp-topbar__creditsfill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: light-dark(#0B5345, #1A8A6B);
+  transition: width 600ms var(--ourapp-ease, ease);
+}
+
+.ourapp-topbar__creditstext {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.ourapp-topbar__account {
+  background: transparent;
+  border: 1px solid light-dark(#E8E3DB, #2E2924);
+  font-family: inherit;
+  font-size: 12px;
+  color: light-dark(#4A453F, #B5AFA4);
+  padding: 6px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: all 200ms var(--ourapp-ease, ease);
+}
+
+.ourapp-topbar__account:hover {
+  border-color: light-dark(#0B5345, #1A8A6B);
+  color: light-dark(#0B5345, #1A8A6B);
+}
+
+.ourapp-topbar__account--active {
+  border-color: light-dark(#0B5345, #1A8A6B);
+  color: light-dark(#0B5345, #1A8A6B);
+  background: light-dark(rgba(11, 83, 69, 0.06), rgba(26, 138, 107, 0.12));
+}
+
+@media (max-width: 860px) {
+  .ourapp-topbar__creditstext {
+    display: none;
+  }
+  .ourapp-topbar__account {
+    max-width: 140px;
+  }
+}
+
 .ourapp-landing__vertical {
   display: inline-flex;
   align-items: center;
@@ -113,16 +200,16 @@
   cursor: default;
 }
 
-/* ---- Main (hero center + recent right) ---- */
+/* ---- Main (сценарии слева + hero центр + recent справа) ---- */
 
 .ourapp-landing__main {
   flex: 1;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 360px;
-  gap: 64px;
-  padding: 80px 80px 64px;
+  grid-template-columns: 280px minmax(0, 1fr) 340px;
+  gap: 48px;
+  padding: 80px 64px 64px;
   align-items: start;
-  max-width: 1280px;
+  max-width: 1400px;
   margin: 0 auto;
   width: 100%;
 }
@@ -135,10 +222,43 @@
   }
 }
 
-/* ---- Hero (центр-лево) ---- */
+/* ---- Scenarios (левая колонка) — прозрачный список-«пути», зеркально recent ---- */
+
+.ourapp-landing__scen {
+  border-right: 1px solid light-dark(#E8E3DB, #2E2924);
+  padding-right: 32px;
+  padding-top: 8px;
+}
+
+@media (max-width: 1080px) {
+  .ourapp-landing__scen {
+    order: 2; /* на узких экранах — после hero */
+    border-right: 0;
+    padding-right: 0;
+    border-top: 1px solid light-dark(#E8E3DB, #2E2924);
+    padding-top: 32px;
+  }
+}
+
+.ourapp-landing__scenpath {
+  font-family: var(--font-family-mono, ui-monospace, monospace);
+  font-size: 12px;
+  color: light-dark(#0B5345, #1A8A6B);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---- Hero (центр) ---- */
 
 .ourapp-landing__hero {
   max-width: 640px;
+}
+
+@media (max-width: 1080px) {
+  .ourapp-landing__hero {
+    order: 1;
+  }
 }
 
 .ourapp-landing__eyebrow {
@@ -241,6 +361,7 @@
 
 @media (max-width: 1080px) {
   .ourapp-landing__recent {
+    order: 3;
     border-left: 0;
     padding-left: 0;
     border-top: 1px solid light-dark(#E8E3DB, #2E2924);

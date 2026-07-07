@@ -10,6 +10,7 @@ import { periodRange, usageApi, type UsagePeriod } from "@/ourapp/usage-api"
 import { BarChart } from "@/ourapp/charts/bar-chart"
 import { SCENARIOS as WIZARD_SCENARIOS } from "@/ourapp/scenarios/index"
 import { AppTopbar } from "@/ourapp/app-topbar"
+import { DotWaveBackground } from "@/ourapp/dot-wave-bg"
 import "./analytics.css"
 
 const PERIOD_LABELS: Record<UsagePeriod, string> = {
@@ -45,6 +46,7 @@ export const AnalyticsPage: Component = () => {
 
   return (
     <div class="ourapp-analytics">
+      <DotWaveBackground />
       <AppTopbar active="analytics" />
 
       <main class="ourapp-analytics__main">

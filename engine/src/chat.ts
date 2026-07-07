@@ -144,6 +144,18 @@ async function generateTitle(key: string, userText: string, assistantText: strin
   }
 }
 
+// Фолбэк: первые слова запроса юзера, если LLM-заголовок не получился
+// (модель недоступна/ключ не разрешает claude-haiku/таймаут). Иначе все сессии
+// навсегда остаются «Новая сессия» — поймано на проде 2026-07-07.
+function fallbackTitle(userText: string): string | undefined {
+  const clean = userText.replace(/\s+/g, " ").trim()
+  if (!clean) return undefined
+  if (clean.length <= 60) return clean
+  const cut = clean.slice(0, 60)
+  const lastSpace = cut.lastIndexOf(" ")
+  return (lastSpace > 30 ? cut.slice(0, lastSpace) : cut) + "…"
+}
+
 // Генерируем заголовок только для первого обмена (пока он дефолтный). Fire-and-forget:
 // session.updated прилетит чуть позже, не задерживая ответ/idle.
 async function maybeGenerateTitle(
@@ -155,7 +167,7 @@ async function maybeGenerateTitle(
 ): Promise<void> {
   const session = await getSession(userId, sessionID)
   if (!session || session.title !== DEFAULT_TITLE) return
-  const title = await generateTitle(key, userText, assistantText)
+  const title = (await generateTitle(key, userText, assistantText)) ?? fallbackTitle(userText)
   if (!title) return
   const updated = await updateSession(userId, sessionID, { title })
   if (updated) publish(userId, { type: "session.updated", properties: { info: updated } })

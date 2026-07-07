@@ -17,6 +17,7 @@ import { sortedRootSessions } from "@/pages/layout/helpers"
 import { sessionTitle } from "@/utils/session-title"
 import { exportSession, type ExportFormat } from "@/ourapp/session-export"
 import { AppTopbar } from "@/ourapp/app-topbar"
+import { DotWaveBackground } from "@/ourapp/dot-wave-bg"
 import type { Part } from "@opencode-ai/sdk/v2"
 import "./history.css"
 
@@ -154,6 +155,7 @@ export const HistoryPage: Component = () => {
 
   return (
     <div class="ourapp-history">
+      <DotWaveBackground />
       <AppTopbar active="history" />
 
       <main class="ourapp-history__main">

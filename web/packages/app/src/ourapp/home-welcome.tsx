@@ -11,10 +11,13 @@
  * Цель: дать «дом» с одним очевидным действием. Библиотека сценариев — на /session.
  */
 import { For, Show, type Component } from "solid-js"
-import type { Scenario } from "./scenarios"
+import { scenariosFor, type Scenario } from "./scenarios"
 import { AppTopbar } from "./app-topbar"
 import { VERTICALS, verticalLabel, type Vertical } from "./verticals"
 import { DotWaveBackground } from "./dot-wave-bg"
+
+/** id сценария в виде пути — «tech.gost.find» → «/tech/gost/find». */
+const scenarioPath = (id: string) => "/" + id.replaceAll(".", "/")
 
 export interface HomeRecentSession {
   id: string
@@ -37,6 +40,7 @@ export const HomeWelcome: Component<HomeWelcomeProps> = (props) => {
   const recentVisible = () => props.recent.slice(0, 4)
   const currentLabel = () => verticalLabel(props.vertical)
   const heroLede = () => VERTICALS[props.vertical]?.heroLede ?? ""
+  const scenarios = () => scenariosFor(props.vertical).slice(0, 6)
 
   return (
     <div class="ourapp-landing">
@@ -44,6 +48,35 @@ export const HomeWelcome: Component<HomeWelcomeProps> = (props) => {
       <AppTopbar active="home" />
 
       <main class="ourapp-landing__main">
+        <Show when={scenarios().length > 0}>
+          <aside class="ourapp-landing__scen">
+            <div class="ourapp-landing__recenthead">
+              <h2 class="ourapp-landing__recenttitle">Сценарии</h2>
+            </div>
+            <ul class="ourapp-landing__recentlist">
+              <For each={scenarios()}>
+                {(scenario) => (
+                  <li>
+                    <button
+                      type="button"
+                      class="ourapp-landing__recentitem"
+                      onClick={() => props.onPickScenario(scenario)}
+                    >
+                      <div class="ourapp-landing__recentline">
+                        <span class="ourapp-landing__recentdot" aria-hidden="true" />
+                        <span class="ourapp-landing__recentbody">
+                          <span class="ourapp-landing__scenpath">{scenarioPath(scenario.id)}</span>
+                          <span class="ourapp-landing__recentmeta">{scenario.title}</span>
+                        </span>
+                      </div>
+                    </button>
+                  </li>
+                )}
+              </For>
+            </ul>
+          </aside>
+        </Show>
+
         <div class="ourapp-landing__hero">
           <div class="ourapp-landing__eyebrow">
             Добро пожаловать в&nbsp;Isaac
@@ -51,7 +84,7 @@ export const HomeWelcome: Component<HomeWelcomeProps> = (props) => {
             <span class="ourapp-landing__eyebrowrole">{currentLabel()}</span>
           </div>
           <h1 class="ourapp-landing__title">
-            Работа с ГОСТами <span>и стандартами.</span>
+            Весь потенциал ИИ — <span>в вашей работе.</span>
           </h1>
           <p class="ourapp-landing__lede">{heroLede()}</p>
 
