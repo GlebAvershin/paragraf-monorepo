@@ -147,25 +147,9 @@ html[data-color-scheme="light"] {
   --v2-text-text-muted: var(--text-secondary);
 }
 
-/* Бумажная зернистость на фоне body — наш «премиум-рычаг» */
-body {
-  background-image: var(--ourapp-grain-light);
-  background-size: var(--ourapp-grain-size);
-}
-
-@media (prefers-color-scheme: dark) {
-  body {
-    background-image: var(--ourapp-grain-dark);
-  }
-}
-
-html[data-color-scheme="dark"] body {
-  background-image: var(--ourapp-grain-dark);
-}
-
-html[data-color-scheme="light"] body {
-  background-image: var(--ourapp-grain-light);
-}
+/* Бумажная зернистость на body убрана по фидбеку (2026-07-07): точечный
+   паттерн на фоне читался как визуальный шум. Токены --ourapp-grain-* оставлены
+   на случай возврата. */
 
 /* Утилитарный класс — серифный заголовок (используется в наших сценариях/билинге) */
 .ourapp-serif {

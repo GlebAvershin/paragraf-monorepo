@@ -35,6 +35,7 @@ import {
 import { openCardBindingWidget, isPaymentsConfigured } from "./cloudpayments-widget"
 import { PlanChangeModal } from "./plan-change-modal"
 import { AppTopbar } from "./app-topbar"
+import { DotWaveBackground } from "./dot-wave-bg"
 
 const TOPUP_PACKAGE = "p500"
 
@@ -176,6 +177,7 @@ export const CreditsPage: Component = () => {
 
   return (
     <div class="ourapp-credits">
+      <DotWaveBackground />
       <AppTopbar active="credits" />
 
       <main class="ourapp-credits__main">

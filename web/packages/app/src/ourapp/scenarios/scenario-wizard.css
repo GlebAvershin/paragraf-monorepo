@@ -5,8 +5,6 @@
   display: flex;
   flex-direction: column;
   background: var(--ourapp-bg-page, #fbf9f4);
-  background-image: var(--ourapp-grain-light, none);
-  background-size: var(--ourapp-grain-size, 4px 4px);
   animation: ourapp-wiz-in var(--ourapp-duration-enter, 150ms) var(--ourapp-ease, ease-out);
 }
 

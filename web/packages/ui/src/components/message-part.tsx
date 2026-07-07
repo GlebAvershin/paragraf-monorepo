@@ -1169,13 +1169,6 @@ export function UserMessageDisplay(props: { message: UserMessage; parts: PartTyp
 
   const agents = createMemo(() => (props.parts?.filter((p) => p.type === "agent") as AgentPart[]) ?? [])
 
-  const model = createMemo(() => {
-    const providerID = props.message.model?.providerID
-    const modelID = props.message.model?.modelID
-    if (!providerID || !modelID) return ""
-    const match = data.store.provider?.all?.get(providerID)
-    return match?.models?.[modelID]?.name ?? modelID
-  })
   const timefmt = createMemo(() => new Intl.DateTimeFormat(i18n.locale(), { timeStyle: "short" }))
 
   const stamp = createMemo(() => {
@@ -1184,11 +1177,8 @@ export function UserMessageDisplay(props: { message: UserMessage; parts: PartTyp
     return timefmt().format(created)
   })
 
-  const metaHead = createMemo(() => {
-    const agent = props.message.agent
-    const items = [agent ? agent[0]?.toUpperCase() + agent.slice(1) : "", model()]
-    return items.filter((x) => !!x).join("\u00A0\u00B7\u00A0")
-  })
+  // OurApp: \u0432 \u043C\u0435\u0442\u0430-\u0441\u0442\u0440\u043E\u043A\u0435 \u0442\u043E\u043B\u044C\u043A\u043E \u0432\u0440\u0435\u043C\u044F \u2014 \u0431\u0435\u0437 \u043C\u043E\u0434\u0435\u043B\u0438 \u0438 \u0430\u0433\u0435\u043D\u0442\u0430 (\u0444\u0438\u0434\u0431\u0435\u043A 2026-07-07).
+  const metaHead = () => ""
 
   const metaTail = stamp
 
@@ -1581,13 +1571,6 @@ PART_MAPPING["text"] = function TextPartDisplay(props) {
       props.message.role === "assistant" && (props.message as AssistantMessage).error?.name === "MessageAbortedError",
   )
 
-  const model = createMemo(() => {
-    if (props.message.role !== "assistant") return ""
-    const message = props.message as AssistantMessage
-    const match = data.store.provider?.all?.get(message.providerID)
-    return match?.models?.[message.modelID]?.name ?? message.modelID
-  })
-
   const duration = createMemo(() => {
     if (props.message.role !== "assistant") return ""
     const message = props.message as AssistantMessage
@@ -1611,13 +1594,8 @@ PART_MAPPING["text"] = function TextPartDisplay(props) {
 
   const meta = createMemo(() => {
     if (props.message.role !== "assistant") return ""
-    const agent = (props.message as AssistantMessage).agent
-    const items = [
-      agent ? agent[0]?.toUpperCase() + agent.slice(1) : "",
-      model(),
-      duration(),
-      interrupted() ? i18n.t("ui.message.interrupted") : "",
-    ]
+    // OurApp: \u0432 \u043C\u0435\u0442\u0430-\u0441\u0442\u0440\u043E\u043A\u0435 \u0442\u043E\u043B\u044C\u043A\u043E \u0434\u043B\u0438\u0442\u0435\u043B\u044C\u043D\u043E\u0441\u0442\u044C \u2014 \u0431\u0435\u0437 \u043C\u043E\u0434\u0435\u043B\u0438 \u0438 \u0430\u0433\u0435\u043D\u0442\u0430 (\u0444\u0438\u0434\u0431\u0435\u043A 2026-07-07).
+    const items = [duration(), interrupted() ? i18n.t("ui.message.interrupted") : ""]
     return items.filter((x) => !!x).join(" \u00B7 ")
   })
 

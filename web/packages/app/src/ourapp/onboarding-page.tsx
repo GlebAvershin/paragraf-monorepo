@@ -11,6 +11,7 @@ import { createSignal, Show, type Component } from "solid-js"
 import { billingApi } from "./billing-api"
 import { setSessionToken } from "./auth-storage"
 import { usePlatform } from "@/context/platform"
+import { DotWaveBackground } from "./dot-wave-bg"
 
 export const OnboardingPage: Component<{ onDone: () => void }> = (props) => {
   const platform = usePlatform()
@@ -57,6 +58,7 @@ export const OnboardingPage: Component<{ onDone: () => void }> = (props) => {
 
   return (
     <div class="ourapp-onboarding">
+      <DotWaveBackground />
       <header class="ourapp-onboarding__topbar">
         <span class="ourapp-onboarding__brand">Isaac</span>
       </header>
@@ -64,10 +66,10 @@ export const OnboardingPage: Component<{ onDone: () => void }> = (props) => {
       <main class="ourapp-onboarding__main">
         <form class="ourapp-onboarding__step" onSubmit={login}>
           <h1 class="ourapp-onboarding__title">
-            ИИ-агент <span>для вашей работы</span>
+            ИИ-инфраструктура <span>для решения любых ваших задач</span>
           </h1>
           <p class="ourapp-onboarding__lede">
-            Разбирает ГОСТы и стандарты, готовит документы — по сценариям под вашу профессию.
+            Платформа для полного и удобного внедрения ИИ в производство.
           </p>
 
           <div class="ourapp-onboarding__field">

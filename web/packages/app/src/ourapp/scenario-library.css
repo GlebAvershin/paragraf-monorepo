@@ -18,9 +18,7 @@
   color: var(--text-base);
   /* Усиливаем кремовый оттенок чтобы карточки белые отчётливо отделялись.
      В preview.html фон был #FBF9F4 — здесь применяем как локальный override. */
-  background:
-    radial-gradient(light-dark(rgba(26, 22, 20, 0.012), rgba(255, 255, 255, 0.018)) 1px, transparent 1px) 0 0 / 4px 4px,
-    light-dark(#FBF9F4, #15120F);
+  background: light-dark(#FBF9F4, #15120F);
   min-height: 100%;
 }
 
@@ -45,8 +43,8 @@
 }
 
 .ourapp-library__title em {
-  font-style: italic;
-  color: var(--text-interactive-base, var(--text-strong));
+  font-style: normal;
+  color: light-dark(#0B5345, #1A8A6B);
 }
 
 .ourapp-library__lede {

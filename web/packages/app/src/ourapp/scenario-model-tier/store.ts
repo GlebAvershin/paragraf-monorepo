@@ -23,11 +23,11 @@ export const TIER_MODEL: Record<ModelTier, TierModelKey> = {
 
 export const TIER_LABEL: Record<ModelTier, string> = {
   medium: "Medium",
-  hi: "Hi",
+  hi: "High",
   ultra: "Ultra",
 }
 
-export const TIER_ORDER: ModelTier[] = ["medium", "hi", "ultra"]
+export const TIER_ORDER: ModelTier[] = ["ultra", "hi", "medium"]
 
 /** Какой тир соответствует уже выбранной модели (для подсветки текущего выбора). */
 export function tierForModel(current: { id: string; provider: { id: string } } | undefined): ModelTier | undefined {

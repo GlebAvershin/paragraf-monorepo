@@ -147,3 +147,142 @@
     }
   }
 }
+
+/* ============ OurApp глобальные штрихи (фидбек 2026-07-07) ============ */
+
+/* 3D-волны из точек (dot-wave-bg.tsx): sticky-обёртка нулевой высоты держит
+   канву в кадре при прокрутке, z-index:-1 + isolation:isolate на корне
+   страницы кладут её ЗА контент, но НАД фоном корня. */
+.ourapp-landing,
+.ourapp-library,
+.ourapp-settings,
+.ourapp-credits,
+.ourapp-onboarding {
+  isolation: isolate;
+}
+
+.ourapp-dotwave {
+  position: sticky;
+  top: 0;
+  height: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.ourapp-dotwave canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+/* Без курсива нигде — включая markdown-курсив в ответах модели. */
+em,
+i,
+cite,
+dfn {
+  font-style: normal;
+}
+
+/* Плавное появление страниц: лёгкий fade+lift при каждом переходе между
+   экранами (лендинг, библиотека, настройки, кредиты, история, аналитика,
+   вход). Карточки контента чуть отстают от корня — двухслойный эффект. */
+@keyframes ourapp-page-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ourapp-rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.ourapp-landing,
+.ourapp-library,
+.ourapp-settings,
+.ourapp-credits,
+.ourapp-history,
+.ourapp-analytics,
+.ourapp-onboarding {
+  animation: ourapp-page-in 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.ourapp-onboarding__step,
+.ourapp-landing__hero,
+.ourapp-settings__card,
+.ourapp-credits__card,
+.ourapp-scenario {
+  animation: ourapp-rise-in 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Лёгкий каскад для карточек сценариев. */
+.ourapp-scenario:nth-child(2) { animation-delay: 40ms; }
+.ourapp-scenario:nth-child(3) { animation-delay: 80ms; }
+.ourapp-scenario:nth-child(4) { animation-delay: 120ms; }
+.ourapp-scenario:nth-child(5) { animation-delay: 160ms; }
+.ourapp-scenario:nth-child(n + 6) { animation-delay: 200ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ourapp-landing,
+  .ourapp-library,
+  .ourapp-settings,
+  .ourapp-credits,
+  .ourapp-history,
+  .ourapp-analytics,
+  .ourapp-onboarding,
+  .ourapp-onboarding__step,
+  .ourapp-landing__hero,
+  .ourapp-settings__card,
+  .ourapp-credits__card,
+  .ourapp-scenario {
+    animation: none;
+  }
+}
+
+/* Больше фирменного изумрудного (цвет буквы I в «Isaac»). */
+.ourapp-pill--active,
+.ourapp-pill--active:hover {
+  background: light-dark(#0B5345, #1A8A6B);
+  color: light-dark(#FBF9F4, #F2FBF7);
+  border-color: light-dark(#0B5345, #1A8A6B);
+}
+
+.ourapp-btn--secondary:hover {
+  border-color: light-dark(#0B5345, #1A8A6B);
+  color: light-dark(#0B5345, #1A8A6B);
+}
+
+.ourapp-sidebar__item--active,
+.ourapp-sidebar__item--active:hover {
+  background: light-dark(rgba(11, 83, 69, 0.08), rgba(26, 138, 107, 0.14));
+  color: light-dark(#0B5345, #1A8A6B);
+}
+
+.ourapp-scenario:hover {
+  border-color: light-dark(rgba(11, 83, 69, 0.45), rgba(26, 138, 107, 0.5));
+}
+
+.ourapp-history__item:hover,
+.ourapp-landing__recentitem:hover {
+  border-color: light-dark(rgba(11, 83, 69, 0.35), rgba(26, 138, 107, 0.4));
+}
+
+.ourapp-settings__title em,
+.ourapp-credits__title em,
+.ourapp-library__title em,
+.ourapp-history__title em,
+.ourapp-analytics__title em,
+.ourapp-help__title em {
+  color: light-dark(#0B5345, #1A8A6B);
+}

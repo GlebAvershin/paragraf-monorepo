@@ -14,6 +14,7 @@ import { For, Show, type Component } from "solid-js"
 import type { Scenario } from "./scenarios"
 import { AppTopbar } from "./app-topbar"
 import { VERTICALS, verticalLabel, type Vertical } from "./verticals"
+import { DotWaveBackground } from "./dot-wave-bg"
 
 export interface HomeRecentSession {
   id: string
@@ -39,6 +40,7 @@ export const HomeWelcome: Component<HomeWelcomeProps> = (props) => {
 
   return (
     <div class="ourapp-landing">
+      <DotWaveBackground />
       <AppTopbar active="home" />
 
       <main class="ourapp-landing__main">

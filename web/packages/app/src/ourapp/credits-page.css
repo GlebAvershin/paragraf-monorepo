@@ -5,9 +5,7 @@
   height: 100%;
   font-family: var(--font-family-sans);
   color: light-dark(#4A453F, #B5AFA4);
-  background:
-    radial-gradient(light-dark(rgba(26, 22, 20, 0.012), rgba(255, 255, 255, 0.018)) 1px, transparent 1px) 0 0 / 4px 4px,
-    light-dark(#FBF9F4, #15120F);
+  background: light-dark(#FBF9F4, #15120F);
   display: flex;
   flex-direction: column;
   overflow-y: auto;
@@ -34,7 +32,7 @@
 }
 
 .ourapp-credits__title em {
-  font-style: italic;
+  font-style: normal;
   color: light-dark(#0B5345, #1A8A6B);
 }
 
@@ -248,7 +246,6 @@
   text-align: center;
   font-size: 13px;
   color: light-dark(#6B6660, #847E72);
-  font-style: italic;
 }
 
 /* ---- Notice (inline-фидбек после оплаты/смены тарифа) ---- */

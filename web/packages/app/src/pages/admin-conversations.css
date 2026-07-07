@@ -217,7 +217,6 @@
 
 .ourapp-admin__msgReasoning {
   font-size: 12px;
-  font-style: italic;
   color: light-dark(#6b6660, #847e72);
   white-space: pre-wrap;
   margin-bottom: 8px;

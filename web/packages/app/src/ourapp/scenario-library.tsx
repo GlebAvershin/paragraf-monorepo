@@ -12,6 +12,7 @@
 import { For, type Component } from "solid-js"
 import { SCENARIOS, scenariosFor, type Scenario, type Vertical } from "./scenarios"
 import { VERTICAL_ORDER, VERTICALS } from "./verticals"
+import { DotWaveBackground } from "./dot-wave-bg"
 
 export interface ScenarioLibraryProps {
   /** Текущая вертикаль (controlled). */
@@ -27,6 +28,7 @@ export const ScenarioLibrary: Component<ScenarioLibraryProps> = (props) => {
 
   return (
     <div class="ourapp-library">
+      <DotWaveBackground />
       <header class="ourapp-library__head">
         <div>
           <h1 class="ourapp-library__title">

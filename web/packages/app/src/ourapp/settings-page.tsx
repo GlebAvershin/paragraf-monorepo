@@ -16,6 +16,7 @@ import { clearSession } from "./auth-storage"
 import { loadVertical, saveVertical, VERTICAL_ORDER, VERTICALS, type Vertical } from "./verticals"
 import { AboutModal } from "./about-modal"
 import { AppTopbar } from "./app-topbar"
+import { DotWaveBackground } from "./dot-wave-bg"
 import "./about-modal.css"
 import "./pii.css"
 import { useLanguage } from "@/context/language"
@@ -48,6 +49,7 @@ export const SettingsPage: Component = () => {
 
   return (
     <div class="ourapp-settings">
+      <DotWaveBackground />
       <AppTopbar active="settings" />
 
       <main class="ourapp-settings__main">
