@@ -24,14 +24,11 @@ export const BarChart: Component<BarChartProps> = (props) => {
 
   const formatLabel = (l: string) => (props.formatLabel ? props.formatLabel(l) : l)
 
-  // Тултип следует за наведённым баром по горизонтали (было — фиксирован в
-  // правом верхнем углу, не читалось, на какой день смотришь).
-  const hoverLeftPercent = createMemo(() => {
-    const i = hover()
-    if (i === null || props.data.length === 0) return 50
-    const pct = ((i + 0.5) / props.data.length) * 100
-    return Math.min(92, Math.max(8, pct))
-  })
+  // Постоянная подпись под графиком вместо тултипа по наведению (было —
+  // значение видно только при hover, неудобно). По умолчанию — последний
+  // (самый свежий) день; при наведении переключается на наведённый бар.
+  const activeIndex = createMemo(() => hover() ?? props.data.length - 1)
+  const activeDay = createMemo(() => props.data[activeIndex()])
 
   return (
     <Show
@@ -71,20 +68,15 @@ export const BarChart: Component<BarChartProps> = (props) => {
           <span>{formatLabel(props.data[0]?.label ?? "")}</span>
           <span>{formatLabel(props.data[props.data.length - 1]?.label ?? "")}</span>
         </div>
-        <Show when={hover() !== null}>
-          <div
-            class="ourapp-chart__tooltip"
-            style={{ left: `${hoverLeftPercent()}%` }}
-          >
-            <span class="ourapp-chart__tooltipDate">
-              {formatLabel(props.data[hover()!]?.label ?? "")}
+        <div class="ourapp-chart__readout">
+          <span class="ourapp-chart__readoutDay">
+            <span class="ourapp-chart__readoutDate">{formatLabel(activeDay()?.label ?? "")}</span>
+            <span class="ourapp-chart__readoutValue">
+              {activeDay()?.value ?? 0} {props.unit ?? ""}
             </span>
-            <span class="ourapp-chart__tooltipValue">
-              {props.data[hover()!]?.value} {props.unit ?? ""}
-            </span>
-          </div>
-        </Show>
-        <div class="ourapp-chart__total">Итого: {total()} {props.unit ?? ""}</div>
+          </span>
+          <span class="ourapp-chart__total">Итого: {total()} {props.unit ?? ""}</span>
+        </div>
       </div>
     </Show>
   )
