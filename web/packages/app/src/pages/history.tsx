@@ -7,7 +7,7 @@
  *
  * Источник данных — sync.data через globalSync (НЕ дублируем хранилище opencode).
  */
-import { For, Show, createMemo, createSignal, type Component } from "solid-js"
+import { For, Show, createEffect, createMemo, createSignal, type Component } from "solid-js"
 import { useNavigate } from "@solidjs/router"
 import { base64Encode } from "@opencode-ai/core/util/encode"
 import { useGlobalSync } from "@/context/global-sync"
@@ -46,12 +46,34 @@ function bucketLabel(now: number, ts: number): string {
 
 const BUCKET_ORDER = ["Сегодня", "Вчера", "На этой неделе", "Раньше"] as const
 
+// Страница «История» должна показывать ВСЮ историю, а не только то, что
+// уже лежит в лёгком sync-кэше (SESSION_CACHE_LIMIT=40, общий с сайдбаром).
+// При активном тестировании 40 слотов заполняются сессиями за один день,
+// и более старые пропадают из выдачи — не баг фильтрации по дате, а нехватка
+// лимита. Поднимаем лимит и догружаем.
+const HISTORY_SESSION_LIMIT = 500
+
 export const HistoryPage: Component = () => {
   const navigate = useNavigate()
   const layout = useLayout()
   const globalSync = useGlobalSync()
   const globalSDK = useGlobalSDK()
   const [search, setSearch] = createSignal("")
+
+  // Догружаем сессии сверх лёгкого sync-кэша (см. HISTORY_SESSION_LIMIT выше) —
+  // иначе на странице «Вся история» видна только часть, влезшая в кэш сайдбара.
+  createEffect(() => {
+    for (const project of layout.projects.list()) {
+      const directories = [project.worktree, ...(project.sandboxes ?? [])]
+      for (const dir of directories) {
+        const [store, setStore] = globalSync.child(dir, { bootstrap: false })
+        if (store.limit < HISTORY_SESSION_LIMIT) {
+          setStore("limit", HISTORY_SESSION_LIMIT)
+          void globalSync.project.loadSessions(dir)
+        }
+      }
+    }
+  })
 
   // Все сессии из всех проектов пользователя.
   const allSessions = createMemo<HistoryRow[]>(() => {
