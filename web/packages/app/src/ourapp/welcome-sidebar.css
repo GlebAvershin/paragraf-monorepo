@@ -197,22 +197,22 @@
 
 .ourapp-sidebar__nav {
   margin-top: 12px;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
 }
 
 .ourapp-sidebar__navitem {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 10px;
+  padding: 6px 9px;
   width: 100%;
   border: 1px solid light-dark(#E8E3DB, #3A342D);
   background: light-dark(#FFFFFF, #25201B);
   border-radius: var(--ourapp-radius-sm, 6px);
   font-family: inherit;
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 500;
   text-align: left;
   color: light-dark(#2A2621, #D8D2C5);
