@@ -9,7 +9,7 @@ import { useTheme } from "@opencode-ai/ui/theme/context"
 import { IconButtonV2 } from "@opencode-ai/ui/v2/components/icon-button-v2.jsx"
 import { Icon as IconV2 } from "@opencode-ai/ui/v2/components/icon.jsx"
 
-import { getAvatarColors, useLayout, type LocalProject } from "@/context/layout"
+import { useLayout } from "@/context/layout"
 import { usePlatform } from "@/context/platform"
 import { useCommand } from "@/context/command"
 import { useLanguage } from "@/context/language"
@@ -20,8 +20,6 @@ import { useGlobalSync } from "@/context/global-sync"
 import { decodeDirectory } from "@/pages/directory-layout"
 import { iife } from "@opencode-ai/core/util/iife"
 import { base64Encode } from "@opencode-ai/core/util/encode"
-import { Avatar as AvatarV2 } from "@opencode-ai/ui/v2/components/avatar-v2.jsx"
-import { displayName, getProjectAvatarSource, projectForSession } from "@/pages/layout/helpers"
 import { makeEventListener } from "@solid-primitives/event-listener"
 import { StatusPopover } from "./status-popover"
 import { SDKProvider } from "@/context/sdk"
@@ -291,11 +289,6 @@ export function Titlebar(props: { update?: TitlebarUpdate }) {
               })
             })
 
-            const projects = createMemo(() => layout.projects.list())
-            const projectByID = createMemo(
-              () => new Map(projects().flatMap((project) => (project.id ? [[project.id, project] as const] : []))),
-            )
-
             const currentSessionTab = () => {
               if (!params.dir || !params.id) return
               const href = makeSessionHref(params.dir, params.id)
@@ -429,13 +422,11 @@ export function Titlebar(props: { update?: TitlebarUpdate }) {
                       {(tab, i) => (
                         <>
                           {i() !== 0 && (
-                            <div class="w-[1.5px] h-3 shrink-0 rounded-full bg-[var(--v2-background-bg-layer-02)]" />
+                            <div class="w-[1.5px] h-3 shrink-0 rounded-full bg-[var(--hairline)]" />
                           )}
                           <TabNavItem
                             href={tab.href}
                             title={tab.info.title}
-                            project={projectForSession(tab.info, projects(), projectByID())}
-                            directory={tab.dir}
                             onClose={() => tabsStoreActions.removeTab(tab.href)}
                             hideClose={tabsEnriched().length < 2}
                           />
@@ -675,8 +666,6 @@ function DesktopTitlebarIconButton(props: Parameters<typeof IconButtonV2>[0]) {
 function TabNavItem(props: {
   href: string
   title: string
-  project?: LocalProject
-  directory: string
   hideClose?: boolean
   onClose: () => void
 }) {
@@ -684,15 +673,14 @@ function TabNavItem(props: {
   const isActive = () => !!match()
   return (
     <div
-      class="group relative flex h-7 min-w-24 max-w-60 flex-row items-center gap-1.5 overflow-hidden whitespace-nowrap rounded-[6px] bg-[var(--tab-bg)] pl-1.5 [--tab-bg:var(--v2-background-bg-deep)] hover:[--tab-bg:var(--v2-background-bg-layer-02)] data-[active='true']:[--tab-bg:var(--v2-background-bg-layer-02)]"
+      class="group relative flex h-7 min-w-24 max-w-60 flex-row items-center gap-1.5 overflow-hidden whitespace-nowrap rounded-[6px] bg-[var(--tab-bg)] pl-2.5 [--tab-bg:transparent] hover:[--tab-bg:var(--accent-muted)] data-[active='true']:[--tab-bg:var(--accent-muted)]"
       data-active={isActive()}
     >
       <a
         href={props.href}
-        class="flex h-full min-w-0 flex-1 flex-row items-center gap-1.5 overflow-hidden text-[13px] font-medium text-v2-text-text-faint group-data-[active='true']:text-v2-text-text-base"
+        class="flex h-full min-w-0 flex-1 flex-row items-center gap-1.5 overflow-hidden text-[13px] font-medium text-[var(--text-tertiary)] group-data-[active='true']:text-[var(--ourapp-accent)]"
       >
-        <ProjectTabAvatar project={props.project} directory={props.directory} />
-        <span class="text-clip">{props.title}</span>
+        <span class="truncate">{props.title}</span>
       </a>
 
       <div class="absolute right-0 inset-y-0 flex flex-row items-center pr-1 py-1 w-8 pl-2">
@@ -715,26 +703,13 @@ function TabNavItem(props: {
   )
 }
 
-function ProjectTabAvatar(props: { project?: LocalProject; directory: string }) {
-  return (
-    <AvatarV2
-      fallback={displayName(props.project ?? { worktree: props.directory })}
-      src={getProjectAvatarSource(props.project?.id, props.project?.icon)}
-      kind="org"
-      size="small"
-      {...getAvatarColors(props.project?.icon?.color)}
-      class="size-4 rounded"
-    />
-  )
-}
-
 function NewSessionTabItem(props: { href: string; title: string; onClose: () => void }) {
   return (
-    <div class="group relative flex h-7 max-w-60 flex-row items-center gap-1.5 overflow-hidden rounded-[6px] bg-[var(--v2-overlay-simple-overlay-pressed)] pl-1.5 pr-8 whitespace-nowrap focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-[var(--v2-border-border-focus)]">
+    <div class="group relative flex h-7 max-w-60 flex-row items-center gap-1.5 overflow-hidden rounded-[6px] bg-[var(--accent-muted)] pl-2.5 pr-8 whitespace-nowrap focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-[var(--ourapp-accent)]">
       <a
         href={props.href}
         aria-current="page"
-        class="flex h-full min-w-0 flex-1 flex-row items-center gap-1.5 overflow-hidden text-[13px] font-medium leading-none text-[var(--v2-text-text-base)]"
+        class="flex h-full min-w-0 flex-1 flex-row items-center gap-1.5 overflow-hidden text-[13px] font-medium leading-none text-[var(--ourapp-accent)]"
       >
         <span class="flex size-4 shrink-0 rotate-90 items-center justify-center">
           <IconV2 name="edit" />
