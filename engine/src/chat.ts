@@ -110,7 +110,13 @@ const GOST_ABSTAIN =
 
 // Заголовок сессии. После первого обмена генерируем краткий заголовок дешёвой моделью.
 // Запрос идёт через gateway-app (как и основной чат) — там же маскирование.
-const TITLE_MODEL = "claude-haiku"
+//
+// РФ-модель, не claude-haiku: (1) claude-* алиасы идут через OpenRouter —
+// та же точка отказа, что у основного чата (см. инцидент с блокировкой
+// OpenRouter 2026-07-07, из-за которого генерация заголовков массово падала
+// в fallbackTitle); (2) для тривиальной задачи «заголовок в 3-6 слов»
+// GigaChat Lite более чем достаточен и не гонит текст запроса за рубеж.
+const TITLE_MODEL = "gigachat-lite"
 const DEFAULT_TITLE = "Новая сессия"
 
 async function generateTitle(key: string, userText: string, assistantText: string): Promise<string | undefined> {
