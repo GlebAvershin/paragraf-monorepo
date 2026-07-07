@@ -147,8 +147,19 @@ async function generateTitle(key: string, userText: string, assistantText: strin
 // Фолбэк: первые слова запроса юзера, если LLM-заголовок не получился
 // (модель недоступна/ключ не разрешает claude-haiku/таймаут). Иначе все сессии
 // навсегда остаются «Новая сессия» — поймано на проде 2026-07-07.
+//
+// Промпты сценариев (wizard) структурированы markdown'ом (# заголовок, ##
+// шаги, --- разделители) — без очистки это протекало в заголовок сессии
+// буквально ("# Сварка патрубка ... --- ## 1. Что норм…"). Снимаем markdown-
+// разметку ДО схлопывания в одну строку, чтобы построчные паттерны (^#, ^---)
+// сработали корректно — поймано на проде 2026-07-08.
 function fallbackTitle(userText: string): string | undefined {
-  const clean = userText.replace(/\s+/g, " ").trim()
+  const stripped = userText
+    .replace(/^#{1,6}\s+/gm, "")
+    .replace(/^[-*_]{3,}\s*$/gm, "")
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    .replace(/[*_`#>]+/g, "")
+  const clean = stripped.replace(/\s+/g, " ").trim()
   if (!clean) return undefined
   if (clean.length <= 60) return clean
   const cut = clean.slice(0, 60)
