@@ -27,6 +27,13 @@ export const TIER_LABEL: Record<ModelTier, string> = {
   ultra: "Ultra",
 }
 
+/** Короткое описание уровня — показывается рядом с названием в выпадашке. */
+export const TIER_DESC: Record<ModelTier, string> = {
+  medium: "Быстрые и дешёвые, для коротких и простых задач",
+  hi: "Идеальный выбор для большинства задач",
+  ultra: "Для комплексных задач и сложного анализа",
+}
+
 export const TIER_ORDER: ModelTier[] = ["ultra", "hi", "medium"]
 
 /** Какой тир соответствует уже выбранной модели (для подсветки текущего выбора). */

@@ -27,7 +27,8 @@ describe("theme preload", () => {
     run()
 
     expect(document.documentElement.dataset.theme).toBe("oc-2")
-    expect(document.documentElement.dataset.colorScheme).toBe("light")
+    // OurApp: дефолтная схема — тёмная, даже когда система светлая (matchMedia matches:false).
+    expect(document.documentElement.dataset.colorScheme).toBe("dark")
     expect(localStorage.getItem("opencode-theme-id")).toBe("oc-2")
     expect(localStorage.getItem("opencode-theme-css-light")).toBeNull()
     expect(localStorage.getItem("opencode-theme-css-dark")).toBeNull()
@@ -36,11 +37,13 @@ describe("theme preload", () => {
 
   test("keeps cached css for non-default themes", () => {
     localStorage.setItem("opencode-theme-id", "nightowl")
-    localStorage.setItem("opencode-theme-css-light", "--background-base:#fff;")
+    // OurApp: дефолт — тёмная схема, поэтому кэш берётся из ...-css-dark.
+    localStorage.setItem("opencode-theme-css-dark", "--background-base:#000;")
 
     run()
 
     expect(document.documentElement.dataset.theme).toBe("nightowl")
-    expect(document.getElementById("oc-theme-preload")?.textContent).toContain("--background-base:#fff;")
+    expect(document.documentElement.dataset.colorScheme).toBe("dark")
+    expect(document.getElementById("oc-theme-preload")?.textContent).toContain("--background-base:#000;")
   })
 })

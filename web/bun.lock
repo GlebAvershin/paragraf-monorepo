@@ -658,6 +658,7 @@
       "dependencies": {
         "@fontsource-variable/jetbrains-mono": "5.2.6",
         "@fontsource-variable/onest": "5.2.6",
+        "@fontsource/ibm-plex-sans": "5.2.6",
         "@fontsource/ibm-plex-serif": "5.2.6",
         "@kobalte/core": "catalog:",
         "@opencode-ai/core": "workspace:*",
@@ -1298,6 +1299,8 @@
     "@fontsource-variable/onest": ["@fontsource-variable/onest@5.2.6", "", {}, "sha512-zTa/6OKxrO6zJbsmNcbW5/2pVXITB975/hhxUQ/auwgosWimMoFnOVxix9QGoOzLWwnY7A4FChlPYpW56rP7/Q=="],
 
     "@fontsource/ibm-plex-mono": ["@fontsource/ibm-plex-mono@5.2.5", "", {}, "sha512-G09N3GfuT9qj3Ax2FDZvKqZttzM3v+cco2l8uXamhKyXLdmlaUDH5o88/C3vtTHj2oT7yRKsvxz9F+BXbWKMYA=="],
+
+    "@fontsource/ibm-plex-sans": ["@fontsource/ibm-plex-sans@5.2.6", "", {}, "sha512-yclktpagJncROwdWHHEfPsrIfoo3uiIeDFchvmjNmTW/YMBfLYWJnUv19EAqPNhGizdtmcH9FjzOR2094Z2uPg=="],
 
     "@fontsource/ibm-plex-serif": ["@fontsource/ibm-plex-serif@5.2.6", "", {}, "sha512-/FyBI9qciE6QQjF0Q2Uul68tz9vPsGZgh13ftKcyHsGkP8TvcW+2H77KurT7rN3usWHEbGgjoUkSzUEG7z+fRQ=="],
 

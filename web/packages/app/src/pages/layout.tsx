@@ -2366,11 +2366,15 @@ export default function Layout(props: ParentProps) {
     return (
       <div class="relative bg-v2-background-bg-deep flex-1 min-h-0 min-w-0 flex flex-col select-none [&_input]:select-text [&_textarea]:select-text [&_[contenteditable]]:select-text">
         {autoselecting() ?? ""}
-        <Titlebar update={titlebarUpdate} />
+        {/* OurApp: полоса вкладок (Titlebar) — только в воркспейсе (маршруты с :dir).
+            На главной/кредитах/истории/помощи и т.п. свою шапку рисует AppTopbar. */}
+        <Show when={params.dir}>
+          <Titlebar update={titlebarUpdate} />
+        </Show>
         <main
           class="flex-1 min-h-0 min-w-0 overflow-x-hidden flex flex-col items-start contain-strict bg-v2-background-bg-base"
           classList={{
-            "m-2 mt-0 rounded-[10px] shadow-[var(--v2-elevation-raised)] overflow-hidden": !!params.id || !params.dir,
+            "m-2 mt-0 rounded-[10px] shadow-[var(--v2-elevation-raised)] overflow-hidden": !!params.id,
           }}
         >
           <Show when={!autoselecting.loading} fallback={<div class="size-full" />}>

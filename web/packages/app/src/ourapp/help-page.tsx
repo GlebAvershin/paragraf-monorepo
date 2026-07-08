@@ -49,6 +49,18 @@ const FAQ: FaqItem[] = [
   },
 ]
 
+/**
+ * Разбить ответ на отдельные предложения, чтобы не показывать «полотно» текста.
+ * Делим по границе предложения: пробел после . ! ? перед заглавной буквой/«.
+ * Десятичные числа («×1.0») и сокращения без пробела после точки не рвутся.
+ */
+function splitSentences(text: string): string[] {
+  return text
+    .split(/(?<=[.!?…])\s+(?=[А-ЯA-ZЁ«])/u)
+    .map((s) => s.trim())
+    .filter(Boolean)
+}
+
 export const HelpPage: Component = () => {
   const [open, setOpen] = createSignal<number | null>(0)
   const toggle = (i: number) => setOpen(open() === i ? null : i)
@@ -86,7 +98,11 @@ export const HelpPage: Component = () => {
                   </span>
                 </button>
                 <Show when={open() === i()}>
-                  <div class="ourapp-faq__a">{item.a}</div>
+                  <div class="ourapp-faq__a">
+                    <For each={splitSentences(item.a)}>
+                      {(sentence) => <p class="ourapp-faq__sentence">{sentence}</p>}
+                    </For>
+                  </div>
                 </Show>
               </div>
             )}
