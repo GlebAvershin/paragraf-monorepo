@@ -73,17 +73,27 @@ export function DotWaveBackground(props: { capsules?: boolean }) {
     const ripples: Ripple[] = []
     let nextRipple = 0
     const makeRipple = (t: number): Ripple => {
-      const count = 12 + Math.floor(Math.random() * 12) // «больше» мелких цифр
+      const count = 12 + Math.floor(Math.random() * 14) // «больше» мелких цифр
+      // Случайная неправильная форма облачка: свои радиусы разброса + полярное
+      // распределение с джиттером — каждое облачко отличается по форме.
+      const spreadX = 46 + Math.random() * 96
+      const spreadY = 24 + Math.random() * 62
       const dots: RippleDot[] = []
       for (let i = 0; i < count; i++) {
-        dots.push({ dx: (Math.random() - 0.5) * 78, dy: (Math.random() - 0.5) * 48, seed: Math.random() * 12 })
+        const ang = Math.random() * Math.PI * 2
+        const rad = Math.pow(Math.random(), 0.7)
+        dots.push({
+          dx: Math.cos(ang) * rad * spreadX + (Math.random() - 0.5) * 14,
+          dy: Math.sin(ang) * rad * spreadY + (Math.random() - 0.5) * 12,
+          seed: Math.random() * 12,
+        })
       }
       return {
         cx: 40 + Math.random() * Math.max(1, width - 80),
-        cy: height * 0.55 + Math.random() * height * 0.32, // нижняя половина
+        cy: height * 0.55 + Math.random() * height * 0.3, // нижняя половина
         born: t,
-        ttl: 1 + Math.random(), // 1–2 с
-        vy: 26 + Math.random() * 26, // спуск к волне, px/с
+        ttl: 3 + Math.random(), // 3–4 с
+        vy: 16 + Math.random() * 20, // мягкий спуск к волне, px/с
         dots,
       }
     }
@@ -199,10 +209,11 @@ export function DotWaveBackground(props: { capsules?: boolean }) {
 }
 
 /**
- * Капсулы «+1 кредит», плавающие по волнам в НИЖНЕЙ части экрана (на заднем
- * фоне, не перекрывая UX — ловятся только сами пилюли). Клик → +1 к балансу
- * (creditBonus) и капсула лопается. Максимум 3 на экране, новая появляется раз
- * в 5 с. При reduced-motion отключены. Показываются только на главной.
+ * Капсула «+1 кредит», плавающая по волнам в НИЖНЕЙ части экрана (на заднем
+ * фоне, не перекрывая UX — ловится только сама пилюля). Клик → +1 к балансу
+ * (creditBonus) и капсула лопается. На экране максимум ОДНА; после лопания новая
+ * появляется в случайном месте только через 3 с. Reduced-motion → отключены.
+ * Показывается только на главной.
  */
 type Capsule = { id: number; left: number; top: number; dur: number; pop: boolean }
 
@@ -223,20 +234,12 @@ function CreditCapsules() {
   const [caps, setCaps] = createStore<Capsule[]>([makeCapsule()])
   const timers: number[] = []
 
-  // Новая капсула раз в 5 с, но не больше 3 одновременно.
-  const spawn = window.setInterval(() => {
-    setCaps(
-      produce((list) => {
-        if (list.length < 3) list.push(makeCapsule())
-      }),
-    )
-  }, 5000)
-
   const pop = (id: number) => {
     const i = caps.findIndex((c) => c.id === id)
     if (i < 0 || caps[i].pop) return
     addCreditBonus(1)
     setCaps(i, "pop", true)
+    // Убираем лопнутую после анимации…
     timers.push(
       window.setTimeout(() => {
         setCaps(produce((list) => {
@@ -245,10 +248,17 @@ function CreditCapsules() {
         }))
       }, 460),
     )
+    // …и спавним новую в случайном месте только через 3 с (максимум одна).
+    timers.push(
+      window.setTimeout(() => {
+        setCaps(produce((list) => {
+          if (list.length === 0) list.push(makeCapsule())
+        }))
+      }, 3000),
+    )
   }
 
   onCleanup(() => {
-    clearInterval(spawn)
     timers.forEach((t) => clearTimeout(t))
   })
 
