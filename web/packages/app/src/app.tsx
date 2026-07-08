@@ -9,7 +9,6 @@ import { FileComponentProvider } from "@opencode-ai/ui/context/file"
 import { MarkedProvider } from "@opencode-ai/ui/context/marked"
 import { File } from "@opencode-ai/ui/file"
 import { Font } from "@opencode-ai/ui/font"
-import { Splash } from "@opencode-ai/ui/logo"
 import { ThemeProvider } from "@opencode-ai/ui/theme/context"
 import { MetaProvider } from "@solidjs/meta"
 import { type BaseRouterProps, Navigate, Route, Router } from "@solidjs/router"
@@ -177,6 +176,25 @@ export function AppBaseProviders(props: ParentProps<{ locale?: Locale }>) {
   )
 }
 
+// OurApp: заменяет opencode-овский <Splash> (мелькал на каждой перезагрузке
+// страницы, пока идёт стартовая проверка сервера — поймано вживую 2026-07-08).
+function IsaacMark(props: { class?: string }) {
+  return (
+    <div class={`${props.class ?? ""} rounded-[22%] bg-[#0B5345] flex items-center justify-center shrink-0`}>
+      <span
+        style={{
+          "font-family": "var(--font-family-serif, 'IBM Plex Serif', serif)",
+          "font-size": "60%",
+          "font-weight": "500",
+          color: "#FBF9F4",
+        }}
+      >
+        I
+      </span>
+    </div>
+  )
+}
+
 function ConnectionGate(props: ParentProps<{ disableHealthCheck?: boolean }>) {
   const server = useServer()
   const checkServerHealth = useCheckServerHealth()
@@ -208,7 +226,7 @@ function ConnectionGate(props: ParentProps<{ disableHealthCheck?: boolean }>) {
     <Suspense
       fallback={
         <div class="h-dvh w-screen flex flex-col items-center justify-center bg-background-base">
-          <Splash class="w-16 h-20 opacity-50 animate-pulse" />
+          <IsaacMark class="w-16 h-20 opacity-50 animate-pulse" />
         </div>
       }
     >
@@ -216,7 +234,7 @@ function ConnectionGate(props: ParentProps<{ disableHealthCheck?: boolean }>) {
         when={checkMode() === "blocking" ? !startupHealthCheck.loading : startupHealthCheck.state !== "pending"}
         fallback={
           <div class="h-dvh w-screen flex flex-col items-center justify-center bg-background-base">
-            <Splash class="w-16 h-20 opacity-50 animate-pulse" />
+            <IsaacMark class="w-16 h-20 opacity-50 animate-pulse" />
           </div>
         }
       >*/}
@@ -257,7 +275,7 @@ function ConnectionError(props: { onRetry?: () => void; onServerSelected?: (key:
   return (
     <div class="h-dvh w-screen flex flex-col items-center justify-center bg-background-base gap-6 p-6">
       <div class="flex flex-col items-center max-w-md text-center">
-        <Splash class="w-12 h-15 mb-4" />
+        <IsaacMark class="w-12 h-15 mb-4" />
         <p class="text-14-regular text-text-base">
           {unreachable()[0]}
           <span class="text-text-strong font-medium">{name()}</span>
