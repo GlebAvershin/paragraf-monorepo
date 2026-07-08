@@ -25,7 +25,7 @@ const HAMBURGER_ITEMS: DesktopMenuEntry[] = [
   { type: "item", label: "Перезагрузить", action: "view.reload" },
   { type: "separator" },
   { type: "item", label: "Экспорт логов…", command: "logs.export" },
-  { type: "item", label: "Написать в поддержку", href: "mailto:support@isaac-ai.ru" },
+  { type: "item", label: "Написать в поддержку", href: "mailto:isaac.tech.russia@yandex.com" },
 ]
 
 export function WindowsAppMenu(props: {

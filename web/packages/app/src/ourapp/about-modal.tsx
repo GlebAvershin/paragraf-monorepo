@@ -13,7 +13,7 @@ const APP_VERSION =
     (import.meta as { env?: Record<string, string> }).env?.VITE_OURAPP_VERSION) ||
   "0.1.0"
 
-const SUPPORT_EMAIL = "support@isaac-ai.ru"
+const SUPPORT_EMAIL = "isaac.tech.russia@yandex.com"
 const SITE_URL = "https://isaac-ai.ru"
 const OFFER_URL = "https://isaac-ai.ru/offer"
 const PRIVACY_URL = "https://isaac-ai.ru/privacy"

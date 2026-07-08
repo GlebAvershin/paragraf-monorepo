@@ -178,7 +178,7 @@ export const DESKTOP_MENU: DesktopMenu[] = [
     items: [
       { type: "item", label: "Экспорт логов…", command: "logs.export" },
       { type: "separator" },
-      { type: "item", label: "Написать в поддержку", href: "mailto:support@isaac-ai.ru" },
+      { type: "item", label: "Написать в поддержку", href: "mailto:isaac.tech.russia@yandex.com" },
     ],
   },
 ]
