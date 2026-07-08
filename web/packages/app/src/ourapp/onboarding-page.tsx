@@ -139,7 +139,7 @@ export const OnboardingPage: Component<{ onDone: () => void }> = (props) => {
             <button
               ref={runaway}
               type="button"
-              class="ourapp-btn ourapp-btn--ghost ourapp-onboarding__runaway"
+              class="ourapp-btn ourapp-btn--primary ourapp-onboarding__runaway"
               style={{ transform: `translate(${flee().x}px, ${flee().y}px)` }}
               onMouseEnter={dodge}
               onPointerDown={(e) => {

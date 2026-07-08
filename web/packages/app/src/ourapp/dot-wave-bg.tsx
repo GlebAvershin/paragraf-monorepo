@@ -7,14 +7,18 @@
  * см. index.css). Обёртка position:sticky + z-index:-1 держит канву за контентом
  * и в кадре при прокрутке. prefers-reduced-motion → один статичный кадр без rAF.
  */
-import { For, onCleanup, onMount } from "solid-js"
-import { createStore } from "solid-js/store"
+import { For, onCleanup, onMount, Show } from "solid-js"
+import { createStore, produce } from "solid-js/store"
 import { addCreditBonus } from "./credit-bonus"
 
 const COLS = 72
 const ROWS = 26
 
-export function DotWaveBackground() {
+/**
+ * @param capsules — показывать ли ловимые капсулы «+1 кредит» (только на главной).
+ *   Рябь из 0/1 рисуется на канве всегда (на всех экранах с этим фоном).
+ */
+export function DotWaveBackground(props: { capsules?: boolean }) {
   let canvas: HTMLCanvasElement | undefined
 
   onMount(() => {
@@ -60,11 +64,29 @@ export function DotWaveBackground() {
       my = -1e4
     }
 
-    // Периодическая «рябь» из 0/1 — намёк на идущие вычисления. Глифы всплывают
-    // в случайных точках, плавно проявляются и гаснут, слегка дрейфуя вверх.
-    type Glyph = { x: number; y: number; ch: string; born: number; ttl: number }
-    const glyphs: Glyph[] = []
-    let nextSpawn = 0
+    // «Рябь» из 0/1 — намёк на вычисления. Каждая рябь = облачко мелких цифр в
+    // несколько слоёв: цифры переливаются (0↔1) и мерцают, облачко плавно
+    // спускается к волне и гаснет за 1–2 с. Одновременно держим 2–3 ряби,
+    // только в нижней половине экрана.
+    type RippleDot = { dx: number; dy: number; seed: number }
+    type Ripple = { cx: number; cy: number; born: number; ttl: number; vy: number; dots: RippleDot[] }
+    const ripples: Ripple[] = []
+    let nextRipple = 0
+    const makeRipple = (t: number): Ripple => {
+      const count = 12 + Math.floor(Math.random() * 12) // «больше» мелких цифр
+      const dots: RippleDot[] = []
+      for (let i = 0; i < count; i++) {
+        dots.push({ dx: (Math.random() - 0.5) * 78, dy: (Math.random() - 0.5) * 48, seed: Math.random() * 12 })
+      }
+      return {
+        cx: 40 + Math.random() * Math.max(1, width - 80),
+        cy: height * 0.55 + Math.random() * height * 0.32, // нижняя половина
+        born: t,
+        ttl: 1 + Math.random(), // 1–2 с
+        vy: 26 + Math.random() * 26, // спуск к волне, px/с
+        dots,
+      }
+    }
 
     let lastT = 0
     const draw = (t: number) => {
@@ -106,34 +128,39 @@ export function DotWaveBackground() {
         }
       }
 
-      // Бинарная рябь поверх точек.
-      ctx.font = '600 12px "JetBrains Mono", ui-monospace, monospace'
+      // Бинарная рябь поверх точек: мелкие мерцающие 0/1, спускаются к волне.
+      ctx.font = '600 8px "JetBrains Mono", ui-monospace, monospace'
       ctx.textBaseline = "middle"
       ctx.textAlign = "center"
-      for (const g of glyphs) {
-        const age = t - g.born
-        if (age < 0 || age > g.ttl) continue
-        const p = age / g.ttl
-        const a = Math.sin(p * Math.PI) * 0.42
-        if (a <= 0.01) continue
-        ctx.fillStyle = `rgba(${cr}, ${cg}, ${cb}, ${a})`
-        ctx.fillText(g.ch, g.x, g.y - p * 22)
+      for (const r of ripples) {
+        const age = t - r.born
+        if (age < 0 || age > r.ttl) continue
+        const p = age / r.ttl
+        const baseA = Math.sin(p * Math.PI) // проявление/затухание
+        const descent = age * r.vy
+        for (const d of r.dots) {
+          // Переливание: символ и яркость меняются во времени (0↔1, мерцание).
+          const ch = Math.floor(t * 6 + d.seed) % 2 === 0 ? "0" : "1"
+          const flick = 0.5 + 0.5 * Math.sin(t * 8 + d.seed * 3)
+          const a = baseA * 0.4 * flick
+          if (a <= 0.02) continue
+          ctx.fillStyle = `rgba(${cr}, ${cg}, ${cb}, ${a})`
+          ctx.fillText(ch, r.cx + d.dx, r.cy + d.dy + descent)
+        }
       }
     }
 
     let raf = 0
     const loop = (ms: number) => {
       const t = ms / 1000
-      if (t >= nextSpawn) {
-        nextSpawn = t + 0.35 + Math.random() * 0.7
-        glyphs.push({
-          x: 20 + Math.random() * Math.max(1, width - 40),
-          y: height * 0.42 + Math.random() * height * 0.5,
-          ch: Math.random() < 0.5 ? "0" : "1",
-          born: t,
-          ttl: 1.6 + Math.random() * 1.3,
-        })
-        while (glyphs.length > 0 && t - glyphs[0].born > glyphs[0].ttl) glyphs.shift()
+      // Прополка отживших ряби.
+      for (let i = ripples.length - 1; i >= 0; i--) {
+        if (t - ripples[i].born > ripples[i].ttl) ripples.splice(i, 1)
+      }
+      // Держим 2–3 ряби одновременно.
+      if (t >= nextRipple && ripples.length < 3) {
+        nextRipple = t + 0.3 + Math.random() * 0.5
+        ripples.push(makeRipple(t))
       }
       draw(t)
       raf = requestAnimationFrame(loop)
@@ -164,25 +191,28 @@ export function DotWaveBackground() {
       <div class="ourapp-dotwave" aria-hidden="true">
         <canvas ref={canvas} />
       </div>
-      <CreditCapsules />
+      <Show when={props.capsules}>
+        <CreditCapsules />
+      </Show>
     </>
   )
 }
 
 /**
- * Капсулы, плавающие по волнам. Клик → +1 кредит к балансу (creditBonus) и
- * капсула лопается, затем возрождается в новой случайной точке. Отдельный
- * fixed-слой поверх фона, но ниже шапки/модалок; при reduced-motion отключён.
+ * Капсулы «+1 кредит», плавающие по волнам в НИЖНЕЙ части экрана (на заднем
+ * фоне, не перекрывая UX — ловятся только сами пилюли). Клик → +1 к балансу
+ * (creditBonus) и капсула лопается. Максимум 3 на экране, новая появляется раз
+ * в 5 с. При reduced-motion отключены. Показываются только на главной.
  */
-type Capsule = { id: number; left: number; top: number; dur: number; delay: number; pop: boolean }
+type Capsule = { id: number; left: number; top: number; dur: number; pop: boolean }
 
 const rnd = (a: number, b: number) => a + Math.random() * (b - a)
-const makeCapsule = (id: number): Capsule => ({
-  id,
-  left: rnd(6, 90),
-  top: rnd(16, 84),
-  dur: rnd(6, 10),
-  delay: rnd(0, 4),
+let capsuleSeq = 0
+const makeCapsule = (): Capsule => ({
+  id: capsuleSeq++,
+  left: rnd(8, 88),
+  top: rnd(66, 88), // нижняя часть экрана, над волной
+  dur: rnd(7, 11),
   pop: false,
 })
 
@@ -190,26 +220,42 @@ function CreditCapsules() {
   if (typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
     return null
   }
-  const [caps, setCaps] = createStore<Capsule[]>(Array.from({ length: 4 }, (_, i) => makeCapsule(i)))
+  const [caps, setCaps] = createStore<Capsule[]>([makeCapsule()])
   const timers: number[] = []
 
-  const pop = (i: number) => {
-    if (caps[i]?.pop) return
+  // Новая капсула раз в 5 с, но не больше 3 одновременно.
+  const spawn = window.setInterval(() => {
+    setCaps(
+      produce((list) => {
+        if (list.length < 3) list.push(makeCapsule())
+      }),
+    )
+  }, 5000)
+
+  const pop = (id: number) => {
+    const i = caps.findIndex((c) => c.id === id)
+    if (i < 0 || caps[i].pop) return
     addCreditBonus(1)
     setCaps(i, "pop", true)
     timers.push(
       window.setTimeout(() => {
-        setCaps(i, { ...makeCapsule(caps[i].id), pop: false })
-      }, 480),
+        setCaps(produce((list) => {
+          const j = list.findIndex((c) => c.id === id)
+          if (j >= 0) list.splice(j, 1)
+        }))
+      }, 460),
     )
   }
 
-  onCleanup(() => timers.forEach((t) => clearTimeout(t)))
+  onCleanup(() => {
+    clearInterval(spawn)
+    timers.forEach((t) => clearTimeout(t))
+  })
 
   return (
     <div class="ourapp-capsules" aria-hidden="true">
       <For each={caps}>
-        {(c, i) => (
+        {(c) => (
           <button
             type="button"
             class="ourapp-capsule"
@@ -218,10 +264,9 @@ function CreditCapsules() {
               left: `${c.left}%`,
               top: `${c.top}%`,
               "animation-duration": `${c.dur}s`,
-              "animation-delay": `${c.delay}s`,
             }}
             title="+1 кредит"
-            onClick={() => pop(i())}
+            onClick={() => pop(c.id)}
           >
             +1
           </button>
