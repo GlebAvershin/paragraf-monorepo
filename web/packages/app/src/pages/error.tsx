@@ -213,9 +213,7 @@ function formatError(error: unknown, t: Translator): string {
   return formatErrorChain(error, t, 0)
 }
 
-// TODO(plans): PLACEHOLDER — заменить на реальный email поддержки Параграфа, когда он появится.
-// Раньше экран ошибки вёл на фидбэк-канал opencode (Discord) — для нашего продукта это неуместно.
-const SUPPORT_EMAIL = "support@paragraf.example"
+const SUPPORT_EMAIL = "isaac.tech.russia@yandex.com"
 
 interface ErrorPageProps {
   error: unknown
