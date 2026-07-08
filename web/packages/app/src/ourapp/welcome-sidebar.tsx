@@ -10,11 +10,12 @@
  * Кликаемые элементы — proof-of-concept (фокус на визуале). Привязка к
  * реальной session-list, кредитному API и роутеру — следующая итерация.
  */
-import { createMemo, createResource, For, type Component } from "solid-js"
+import { createMemo, createResource, createSignal, For, type Component } from "solid-js"
 import { useNavigate } from "@solidjs/router"
 import { Icon } from "@opencode-ai/ui/icon"
+import { DropdownMenu } from "@opencode-ai/ui/dropdown-menu"
 import { scenariosFor, type Scenario } from "./scenarios"
-import { verticalLabel, type Vertical } from "./verticals"
+import { isVerticalEnabled, saveVertical, VERTICAL_ORDER, verticalLabel, type Vertical } from "./verticals"
 import { billingApi, daysUntil } from "./billing-api"
 
 export interface WelcomeSidebarRecentSession {
@@ -59,7 +60,17 @@ export const WelcomeSidebar: Component<WelcomeSidebarProps> = (props) => {
   const navigate = useNavigate()
   // Показываем все сценарии вертикали (их 7) — лимит .slice(0,5) скрывал новые.
   const list = createMemo(() => scenariosFor(props.vertical))
-  const currentLabel = () => verticalLabel(props.vertical)
+
+  // Выпадашка ролей (как в шапке на главной). На тест-период включён только
+  // «Технолог», остальные — «· скоро». Смена шлёт "ourapp:vertical-changed",
+  // тот же событийный контракт, что и AppTopbar.
+  const [vertical, setVertical] = createSignal<Vertical>(props.vertical)
+  const [menuOpen, setMenuOpen] = createSignal(false)
+  const onVerticalChange = (v: Vertical) => {
+    setVertical(v)
+    saveVertical(v)
+    window.dispatchEvent(new Event("ourapp:vertical-changed"))
+  }
 
   // Авто-fetch /limits если props.credits не передан явно.
   // Грейсфул: если billing-сервер недоступен — fallback на «— / —».
@@ -94,7 +105,34 @@ export const WelcomeSidebar: Component<WelcomeSidebarProps> = (props) => {
         <button type="button" class="ourapp-sidebar__brand" title="На главную" onClick={() => navigate("/")}>
           Isaac
         </button>
-        <div class="ourapp-sidebar__role">{currentLabel()}</div>
+        <DropdownMenu gutter={4} placement="bottom-start" open={menuOpen()} onOpenChange={setMenuOpen}>
+          <DropdownMenu.Trigger
+            as="button"
+            type="button"
+            class="ourapp-sidebar__role ourapp-sidebar__role--menu"
+            aria-expanded={menuOpen()}
+          >
+            {verticalLabel(vertical())}
+            <Icon name="chevron-down" class="size-3" />
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Portal>
+            <DropdownMenu.Content style={{ "min-width": "160px" }}>
+              <For each={VERTICAL_ORDER}>
+                {(v) => (
+                  <DropdownMenu.Item
+                    disabled={!isVerticalEnabled(v)}
+                    onSelect={() => isVerticalEnabled(v) && onVerticalChange(v)}
+                  >
+                    <DropdownMenu.ItemLabel>
+                      {verticalLabel(v)}
+                      {!isVerticalEnabled(v) && " · скоро"}
+                    </DropdownMenu.ItemLabel>
+                  </DropdownMenu.Item>
+                )}
+              </For>
+            </DropdownMenu.Content>
+          </DropdownMenu.Portal>
+        </DropdownMenu>
       </div>
 
       <div class="ourapp-sidebar__section">

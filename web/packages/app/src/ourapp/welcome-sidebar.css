@@ -66,6 +66,26 @@
   font-weight: 500;
 }
 
+/* Роль как выпадашка (аналог шапки на главной). */
+.ourapp-sidebar__role--menu {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: 0;
+  padding: 2px 4px;
+  margin-top: 2px;
+  margin-left: -4px;
+  border-radius: var(--ourapp-radius-sm, 6px);
+  cursor: pointer;
+  transition: background 120ms var(--ourapp-ease, ease), color 120ms var(--ourapp-ease, ease);
+}
+
+.ourapp-sidebar__role--menu:hover {
+  background: var(--surface-base-hover, transparent);
+  color: var(--text-base);
+}
+
 .ourapp-sidebar__section {
   padding: 14px 10px 6px;
 }

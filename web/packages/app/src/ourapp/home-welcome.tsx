@@ -34,7 +34,6 @@ export interface HomeWelcomeProps {
 }
 
 export const HomeWelcome: Component<HomeWelcomeProps> = (props) => {
-  const recentVisible = () => props.recent.slice(0, 4)
   const currentLabel = () => verticalLabel(props.vertical)
   const heroLede = () => VERTICALS[props.vertical]?.heroLede ?? ""
   const scenarios = () => scenariosFor(props.vertical).slice(0, 6)
@@ -95,16 +94,14 @@ export const HomeWelcome: Component<HomeWelcomeProps> = (props) => {
           </div>
         </div>
 
-        <Show when={recentVisible().length > 0}>
+        <Show when={props.recent.length > 0}>
           <aside class="ourapp-landing__recent">
             <div class="ourapp-landing__recenthead">
               <h2 class="ourapp-landing__recenttitle">Продолжить работу</h2>
-              <span class="ourapp-landing__recentcount">
-                {props.recent.length} {props.recent.length === 1 ? "сессия" : "сессий"}
-              </span>
             </div>
-            <ul class="ourapp-landing__recentlist">
-              <For each={recentVisible()}>
+            {/* Показываем ~10 сессий, дальше — скролл по всей истории (ползунок справа). */}
+            <ul class="ourapp-landing__recentlist ourapp-landing__recentlist--scroll">
+              <For each={props.recent}>
                 {(session) => (
                   <li>
                     <button
@@ -135,10 +132,6 @@ export const HomeWelcome: Component<HomeWelcomeProps> = (props) => {
           </aside>
         </Show>
       </main>
-
-      <footer class="ourapp-landing__foot">
-        <span>1 кредит ≈ обработка ~2 000 токенов на Lite-модели · цена зависит от выбранной модели</span>
-      </footer>
     </div>
   )
 }

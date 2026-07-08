@@ -222,7 +222,6 @@ export function Titlebar(props: { update?: TitlebarUpdate }) {
           {(_) => {
             const globalSync = useGlobalSync()
             const navigate = useNavigate()
-            const homeMatch = useMatch(() => "/")
 
             const newSessionHref = () => {
               if (params.dir) return `/${params.dir}/session`
@@ -402,19 +401,13 @@ export function Titlebar(props: { update?: TitlebarUpdate }) {
                   "pl-4": !mac(),
                 }}
               >
+                {/* OurApp: кнопка-«домой» (grid-plus) убрана — на главную ведёт клик по
+                    бренду Isaac в левой панели (сайдбаре). Полоса вкладок теперь живёт
+                    ВНУТРИ колонки чата (см. session.tsx), правее сайдбара — не поверх него. */}
                 <ChannelIndicator />
                 <Show when={windows() || linux()}>
                   <WindowsAppMenu command={command} platform={platform} variant="v2" />
                 </Show>
-                <IconButtonV2
-                  variant="ghost-muted"
-                  size="large"
-                  as="a"
-                  href="/"
-                  class="!w-9"
-                  icon={<IconV2 name="grid-plus" />}
-                  state={!!homeMatch() ? "pressed" : undefined}
-                />
 
                 <div class="flex min-w-0 flex-1 flex-row items-center gap-1.5 overflow-hidden">
                   <div class="flex min-w-0 flex-row items-center gap-1.5 overflow-hidden">

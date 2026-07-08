@@ -1,7 +1,10 @@
 :root {
+  /* OurApp fork-patch: основной UI-шрифт — IBM Plex Sans (более официальный/
+     технический, под инженеров-технологов), с Onest как запасным. См. PATCHES.md. */
   --font-family-sans:
-    "Onest Variable", "Onest", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-family-sans--font-feature-settings: "ss01", "ss02", "cv01";
+    "IBM Plex Sans", "Onest Variable", "Onest", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+  --font-family-sans--font-feature-settings: normal;
   --font-family-serif: "IBM Plex Serif", "Cambria", "Times New Roman", serif;
   --font-family-serif--font-feature-settings: normal;
   --font-family-mono:

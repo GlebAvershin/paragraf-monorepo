@@ -162,9 +162,11 @@ accent, cream paper background, IBM Plex Serif для акцентов). Ист�
 - `packages/ui/src/theme/default-themes.ts` + `index.ts` — экспорт `ourappTheme`.
 - `packages/ui/src/theme/loader.ts` — special-case `themeId === "ourapp"` тоже
   считается дефолтом (рендерится в `:root`, без `[data-theme=...]`).
-- `packages/ui/src/styles/theme.css` — `--font-family-sans` теперь Onest Variable,
-  добавлен `--font-family-serif: IBM Plex Serif`. `--font-family-mono` теперь
-  JetBrains Mono.
+- `packages/ui/src/styles/theme.css` — `--font-family-sans` теперь **IBM Plex Sans**
+  (более официальный/технический шрифт под инженеров-технологов; 2026-07-08), с Onest
+  Variable как запасным; `--font-family-serif: IBM Plex Serif`; `--font-family-mono` —
+  JetBrains Mono. `--font-family-sans--font-feature-settings` сброшен на `normal`
+  (стилевые сеты `ss01/ss02/cv01` относились к Onest, не к Plex).
 - `packages/ui/src/styles/tailwind/index.css` — экспорт `--font-serif` для Tailwind.
 - `packages/ui/src/styles/ourapp-tokens.css` — **новый** файл. Содержит наши доп.
   токены (highlight gold, motion durations, paper-grain background-image, утилитарный
@@ -172,7 +174,8 @@ accent, cream paper background, IBM Plex Serif для акцентов). Ист�
 - `packages/ui/src/styles/index.css` — импорт шрифтов через `@fontsource/*` (offline-
   совместимо с Electron) + импорт `ourapp-tokens.css` в layer(theme).
 - `packages/ui/package.json` — новые deps: `@fontsource-variable/onest`,
-  `@fontsource-variable/jetbrains-mono`, `@fontsource/ibm-plex-serif`.
+  `@fontsource-variable/jetbrains-mono`, `@fontsource/ibm-plex-serif`,
+  `@fontsource/ibm-plex-sans` (2026-07-08, латиница+кириллица 400/500/600).
 
 **Что это даёт.** Все компоненты opencode (`button.css`, `card.css`, `text-field.css`
 и т.д.) автоматически подхватывают новые цвета через resolved theme + новые шрифты
@@ -198,6 +201,27 @@ virtual_key into `apiKey`.
 
 **Not a patch to upstream code** — this is project-level config that doesn't conflict
 with anything in upstream's empty `.opencode/opencode.jsonc`.
+
+### 7. UI/UX-правки под инженеров (2026-07-08)
+
+**Why.** Пакет мелких UX-правок по видео-ревью: тёмная тема по умолчанию и менее
+тёмный, консистентный фон диалогов. Всё остальное из этого ревью сделано в `ourapp/`
+(шапка, сценарии, помощь, главная) — здесь только точечные upstream-правки, которые
+нельзя вынести.
+
+**Изменения:**
+
+- `packages/ui/src/theme/context.tsx` — дефолтная `colorScheme` теперь `"dark"`
+  (было `"system"`), в двух местах (init + onMount). Если пользователь ещё не
+  выбрал светлую/тёмную/системную — стартуем в тёмной. Синхронно правится
+  `packages/app/public/oc-theme-preload.js` (тот же дефолт, чтобы не было мигания
+  при первой отрисовке) и тест `packages/app/src/theme-preload.test.ts`.
+- `packages/ui/src/components/dialog.css` — фон панели диалога
+  `--surface-raised-stronger-non-alpha` → `--surface-raised-base` (менее тёмный, тот
+  же raised-surface, что у сайдбара/панелей — консистентно).
+
+**Конфликты при upstream-merge.** Обе правки точечные (одна строка дефолта, одна
+строка фона) — конфликт маловероятен; при ребейзе сохранять НАШИ значения.
 
 ## Not patched (deliberately, things to add outside the fork)
 

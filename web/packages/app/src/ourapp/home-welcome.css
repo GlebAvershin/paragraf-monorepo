@@ -46,12 +46,25 @@
   gap: 10px;
 }
 
+/* Кнопка-бренд: клик ведёт на главную (как в воркспейс-сайдбаре).
+   display:inline-block — чтобы ::first-letter работал и на <button>. */
 .ourapp-landing__brandname {
+  display: inline-block;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
   font-family: var(--font-family-serif);
   font-size: 20px;
   font-weight: 500;
   color: light-dark(#1A1614, #EDE8DF);
   letter-spacing: -0.01em;
+  line-height: 1.1;
+  transition: opacity 200ms var(--ourapp-ease, ease);
+}
+
+.ourapp-landing__brandname:hover {
+  opacity: 0.75;
 }
 
 .ourapp-landing__brandname::first-letter {
@@ -378,13 +391,6 @@
   letter-spacing: -0.01em;
 }
 
-.ourapp-landing__recentcount {
-  font-size: 11px;
-  color: light-dark(#6B6660, #847E72);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
 .ourapp-landing__recentlist {
   list-style: none;
   margin: 0;
@@ -392,6 +398,28 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+}
+
+/* «Продолжить работу»: ~10 сессий видно, остальное — скролл с ползунком справа. */
+.ourapp-landing__recentlist--scroll {
+  max-height: 460px;
+  overflow-y: auto;
+  padding-right: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: light-dark(#D8D2C5, #3A342D) transparent;
+}
+
+.ourapp-landing__recentlist--scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.ourapp-landing__recentlist--scroll::-webkit-scrollbar-thumb {
+  background: light-dark(#D8D2C5, #3A342D);
+  border-radius: 999px;
+}
+
+.ourapp-landing__recentlist--scroll::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 .ourapp-landing__recentitem {
@@ -449,13 +477,3 @@
   color: light-dark(#6B6660, #847E72);
 }
 
-/* ---- Footer ---- */
-
-.ourapp-landing__foot {
-  padding: 16px 40px;
-  border-top: 1px solid light-dark(#E8E3DB, #2E2924);
-  font-size: 11px;
-  color: light-dark(#6B6660, #847E72);
-  text-align: center;
-  flex-shrink: 0;
-}

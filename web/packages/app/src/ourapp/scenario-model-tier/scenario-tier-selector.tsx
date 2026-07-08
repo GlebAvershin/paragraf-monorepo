@@ -5,7 +5,7 @@
 import { createSignal, For, type Component } from "solid-js"
 import { Icon } from "@opencode-ai/ui/icon"
 import { DropdownMenu } from "@opencode-ai/ui/dropdown-menu"
-import { TIER_LABEL, TIER_MODEL, TIER_ORDER, tierForModel, type ModelTier } from "./store"
+import { TIER_DESC, TIER_LABEL, TIER_MODEL, TIER_ORDER, tierForModel, type ModelTier } from "./store"
 
 export interface ScenarioTierSelectorModel {
   current: () => { id: string; provider: { id: string } } | undefined
@@ -35,14 +35,19 @@ export const ScenarioTierSelector: Component<{ model: ScenarioTierSelectorModel 
         <span>{activeTier() ? TIER_LABEL[activeTier()!] : "Сила"}</span>
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
-        <DropdownMenu.Content style={{ "min-width": "140px" }}>
+        <DropdownMenu.Content style={{ "min-width": "260px", "max-width": "300px" }}>
           <For each={TIER_ORDER}>
             {(tier) => (
               <DropdownMenu.Item onSelect={() => select(tier)}>
-                <DropdownMenu.ItemLabel>
-                  {TIER_LABEL[tier]}
-                  {activeTier() === tier ? " ✓" : ""}
-                </DropdownMenu.ItemLabel>
+                <div class="flex flex-col gap-y-0.5 py-0.5">
+                  <DropdownMenu.ItemLabel>
+                    {TIER_LABEL[tier]}
+                    {activeTier() === tier ? " ✓" : ""}
+                  </DropdownMenu.ItemLabel>
+                  <span class="text-[11px] leading-tight text-v2-text-text-faint whitespace-normal">
+                    {TIER_DESC[tier]}
+                  </span>
+                </div>
               </DropdownMenu.Item>
             )}
           </For>

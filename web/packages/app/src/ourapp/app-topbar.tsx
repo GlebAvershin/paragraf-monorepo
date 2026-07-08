@@ -23,9 +23,9 @@ export type AppTopbarActive = "home" | "credits" | "history" | "analytics" | "se
 
 // «Настройки» из nav переехали в правый край шапки: там теперь почта аккаунта
 // (клик → настройки) и полоска остатка кредитов (клик → /credits).
+// «Главная» убрана из nav — на главную ведёт клик по бренду «Isaac» (как в
+// воркспейс-сайдбаре). «Кредиты» убраны — остаток кредитов показан справа.
 const NAV_ITEMS: Array<{ id: AppTopbarActive; label: string; path: string }> = [
-  { id: "home", label: "Главная", path: "/" },
-  { id: "credits", label: "Кредиты", path: "/credits" },
   { id: "history", label: "История", path: "/history" },
   { id: "analytics", label: "Аналитика", path: "/analytics" },
   { id: "help", label: "Помощь", path: "/help" },
@@ -66,7 +66,14 @@ export const AppTopbar: Component<{ active: AppTopbarActive }> = (props) => {
     <header class="ourapp-landing__topbar">
       <div class="ourapp-landing__brandgroup">
         <div class="ourapp-landing__brand">
-          <span class="ourapp-landing__brandname">Isaac</span>
+          <button
+            type="button"
+            class="ourapp-landing__brandname"
+            title="На главную"
+            onClick={() => navigate("/")}
+          >
+            Isaac
+          </button>
           <DropdownMenu gutter={4} placement="bottom-start" open={menuOpen()} onOpenChange={setMenuOpen}>
             <DropdownMenu.Trigger
               as="button"

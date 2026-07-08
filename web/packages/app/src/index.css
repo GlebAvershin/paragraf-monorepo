@@ -16,6 +16,20 @@
   font-style: normal;
 }
 
+/* OurApp «AI»-курсор: буква A (как остриё-стрелка) нанизана на палочку-«I»,
+   наклонён как дефолтная стрелка; светлое ядро + тёмный контур — видно на любом
+   фоне. Размер обычной стрелки (20×22), без нижней перекладины у «I». Ставится
+   дефолтом (курсор наследуется), кнопки/поля со своим cursor:pointer/text не
+   трогает. Hotspot — на острие «A». */
+:root {
+  --ourapp-ai-cursor: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMiIgdmlld0JveD0iMCAwIDIwIDIyIj48ZyB0cmFuc2Zvcm09InJvdGF0ZSgtMTYgMTEgMykiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PGcgc3Ryb2tlPSIjMDg0NjNBIiBzdHJva2Utd2lkdGg9IjMiPjxwYXRoIGQ9Ik0xMSAzVjIwIi8+PHBhdGggZD0iTTExIDNMNiAxMyIvPjxwYXRoIGQ9Ik0xMSAzTDE2IDEzIi8+PHBhdGggZD0iTTggOUgxNCIvPjwvZz48ZyBzdHJva2U9IiNGNEZCRjgiIHN0cm9rZS13aWR0aD0iMS4yIj48cGF0aCBkPSJNMTEgM1YyMCIvPjxwYXRoIGQ9Ik0xMSAzTDYgMTMiLz48cGF0aCBkPSJNMTEgM0wxNiAxMyIvPjxwYXRoIGQ9Ik04IDlIMTQiLz48L2c+PC9nPjwvc3ZnPg==") 11 3;
+}
+
+html,
+body {
+  cursor: var(--ourapp-ai-cursor), default;
+}
+
 @layer components {
   @keyframes session-progress-whip {
     0% {
@@ -175,6 +189,7 @@
   top: 0;
   left: 0;
 }
+
 
 /* Без курсива нигде — включая markdown-курсив в ответах модели. */
 em,

@@ -171,6 +171,15 @@
   animation: ourapp-faq-fade 200ms var(--ourapp-ease, ease) both;
 }
 
+/* Каждое предложение ответа — отдельным абзацем, чтобы не было «полотна». */
+.ourapp-faq__sentence {
+  margin: 0;
+}
+
+.ourapp-faq__sentence + .ourapp-faq__sentence {
+  margin-top: 8px;
+}
+
 @keyframes ourapp-faq-fade {
   from {
     opacity: 0;

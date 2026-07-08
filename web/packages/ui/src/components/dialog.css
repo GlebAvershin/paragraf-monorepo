@@ -48,7 +48,9 @@
       /* padding: 8px; */
       /* padding: 8px 8px 0 8px; */
       border-radius: var(--radius-xl);
-      background: var(--surface-raised-stronger-non-alpha);
+      /* OurApp fork-patch: фон панели диалога — #161A1D в тёмной теме (по просьбе),
+         белый в светлой. Ранее был var(--surface-raised-base). См. PATCHES.md. */
+      background: light-dark(#FFFFFF, #161A1D);
       background-clip: padding-box;
       box-shadow: var(--shadow-lg-border-base);
 
