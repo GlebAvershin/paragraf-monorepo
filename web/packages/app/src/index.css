@@ -176,6 +176,82 @@
   left: 0;
 }
 
+/* ---- Капсулы кредитов, плавающие по волнам (пасхалка) ---- */
+.ourapp-capsules {
+  position: fixed;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.ourapp-capsule {
+  position: absolute;
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid light-dark(rgba(11, 83, 69, 0.45), rgba(38, 196, 150, 0.5));
+  background: light-dark(rgba(11, 83, 69, 0.1), rgba(38, 196, 150, 0.14));
+  color: light-dark(#0B5345, #2FD8A6);
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  backdrop-filter: blur(2px);
+  box-shadow: 0 2px 10px light-dark(rgba(11, 83, 69, 0.15), rgba(0, 0, 0, 0.4));
+  animation: ourapp-capsule-float 8s ease-in-out infinite;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.ourapp-capsule:hover {
+  transform: scale(1.15);
+  box-shadow: 0 4px 16px light-dark(rgba(11, 83, 69, 0.25), rgba(38, 196, 150, 0.3));
+}
+
+.ourapp-capsule--pop {
+  animation: ourapp-capsule-pop 460ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  pointer-events: none;
+}
+
+@keyframes ourapp-capsule-float {
+  0% {
+    transform: translate(0, 0) rotate(-2deg);
+  }
+  50% {
+    transform: translate(10px, -16px) rotate(2deg);
+  }
+  100% {
+    transform: translate(0, 0) rotate(-2deg);
+  }
+}
+
+@keyframes ourapp-capsule-pop {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  35% {
+    transform: scale(1.55);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(0);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ourapp-capsule {
+    animation: none;
+  }
+}
+
 /* Без курсива нигде — включая markdown-курсив в ответах модели. */
 em,
 i,

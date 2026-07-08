@@ -2366,11 +2366,9 @@ export default function Layout(props: ParentProps) {
     return (
       <div class="relative bg-v2-background-bg-deep flex-1 min-h-0 min-w-0 flex flex-col select-none [&_input]:select-text [&_textarea]:select-text [&_[contenteditable]]:select-text">
         {autoselecting() ?? ""}
-        {/* OurApp: полоса вкладок (Titlebar) — только в воркспейсе (маршруты с :dir).
-            На главной/кредитах/истории/помощи и т.п. свою шапку рисует AppTopbar. */}
-        <Show when={params.dir}>
-          <Titlebar update={titlebarUpdate} />
-        </Show>
+        {/* OurApp: глобальной полосы вкладок над контентом больше нет. В воркспейсе
+            (session.tsx) вкладки живут ВНУТРИ колонки чата, правее сайдбара — сам
+            сайдбар тянется до самого верха. На остальных страницах шапка — AppTopbar. */}
         <main
           class="flex-1 min-h-0 min-w-0 overflow-x-hidden flex flex-col items-start contain-strict bg-v2-background-bg-base"
           classList={{

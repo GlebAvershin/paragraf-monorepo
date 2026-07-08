@@ -236,6 +236,15 @@
   margin-top: 16px;
 }
 
+/* Кнопка-шутка «Авторизация» — убегает от курсора по всему экрану. */
+.ourapp-onboarding__runaway {
+  position: relative;
+  z-index: 20;
+  cursor: default;
+  will-change: transform;
+  transition: transform 140ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 .ourapp-onboarding__foot {
   font-size: 12px;
   color: light-dark(#6B6660, #847E72);

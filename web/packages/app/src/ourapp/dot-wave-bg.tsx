@@ -7,7 +7,9 @@
  * см. index.css). Обёртка position:sticky + z-index:-1 держит канву за контентом
  * и в кадре при прокрутке. prefers-reduced-motion → один статичный кадр без rAF.
  */
-import { onCleanup, onMount } from "solid-js"
+import { For, onCleanup, onMount } from "solid-js"
+import { createStore } from "solid-js/store"
+import { addCreditBonus } from "./credit-bonus"
 
 const COLS = 72
 const ROWS = 26
@@ -58,6 +60,12 @@ export function DotWaveBackground() {
       my = -1e4
     }
 
+    // Периодическая «рябь» из 0/1 — намёк на идущие вычисления. Глифы всплывают
+    // в случайных точках, плавно проявляются и гаснут, слегка дрейфуя вверх.
+    type Glyph = { x: number; y: number; ch: string; born: number; ttl: number }
+    const glyphs: Glyph[] = []
+    let nextSpawn = 0
+
     let lastT = 0
     const draw = (t: number) => {
       lastT = t
@@ -97,11 +105,37 @@ export function DotWaveBackground() {
           ctx.fill()
         }
       }
+
+      // Бинарная рябь поверх точек.
+      ctx.font = '600 12px "JetBrains Mono", ui-monospace, monospace'
+      ctx.textBaseline = "middle"
+      ctx.textAlign = "center"
+      for (const g of glyphs) {
+        const age = t - g.born
+        if (age < 0 || age > g.ttl) continue
+        const p = age / g.ttl
+        const a = Math.sin(p * Math.PI) * 0.42
+        if (a <= 0.01) continue
+        ctx.fillStyle = `rgba(${cr}, ${cg}, ${cb}, ${a})`
+        ctx.fillText(g.ch, g.x, g.y - p * 22)
+      }
     }
 
     let raf = 0
     const loop = (ms: number) => {
-      draw(ms / 1000)
+      const t = ms / 1000
+      if (t >= nextSpawn) {
+        nextSpawn = t + 0.35 + Math.random() * 0.7
+        glyphs.push({
+          x: 20 + Math.random() * Math.max(1, width - 40),
+          y: height * 0.42 + Math.random() * height * 0.5,
+          ch: Math.random() < 0.5 ? "0" : "1",
+          born: t,
+          ttl: 1.6 + Math.random() * 1.3,
+        })
+        while (glyphs.length > 0 && t - glyphs[0].born > glyphs[0].ttl) glyphs.shift()
+      }
+      draw(t)
       raf = requestAnimationFrame(loop)
     }
 
@@ -126,8 +160,73 @@ export function DotWaveBackground() {
   })
 
   return (
-    <div class="ourapp-dotwave" aria-hidden="true">
-      <canvas ref={canvas} />
+    <>
+      <div class="ourapp-dotwave" aria-hidden="true">
+        <canvas ref={canvas} />
+      </div>
+      <CreditCapsules />
+    </>
+  )
+}
+
+/**
+ * Капсулы, плавающие по волнам. Клик → +1 кредит к балансу (creditBonus) и
+ * капсула лопается, затем возрождается в новой случайной точке. Отдельный
+ * fixed-слой поверх фона, но ниже шапки/модалок; при reduced-motion отключён.
+ */
+type Capsule = { id: number; left: number; top: number; dur: number; delay: number; pop: boolean }
+
+const rnd = (a: number, b: number) => a + Math.random() * (b - a)
+const makeCapsule = (id: number): Capsule => ({
+  id,
+  left: rnd(6, 90),
+  top: rnd(16, 84),
+  dur: rnd(6, 10),
+  delay: rnd(0, 4),
+  pop: false,
+})
+
+function CreditCapsules() {
+  if (typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    return null
+  }
+  const [caps, setCaps] = createStore<Capsule[]>(Array.from({ length: 4 }, (_, i) => makeCapsule(i)))
+  const timers: number[] = []
+
+  const pop = (i: number) => {
+    if (caps[i]?.pop) return
+    addCreditBonus(1)
+    setCaps(i, "pop", true)
+    timers.push(
+      window.setTimeout(() => {
+        setCaps(i, { ...makeCapsule(caps[i].id), pop: false })
+      }, 480),
+    )
+  }
+
+  onCleanup(() => timers.forEach((t) => clearTimeout(t)))
+
+  return (
+    <div class="ourapp-capsules" aria-hidden="true">
+      <For each={caps}>
+        {(c, i) => (
+          <button
+            type="button"
+            class="ourapp-capsule"
+            classList={{ "ourapp-capsule--pop": c.pop }}
+            style={{
+              left: `${c.left}%`,
+              top: `${c.top}%`,
+              "animation-duration": `${c.dur}s`,
+              "animation-delay": `${c.delay}s`,
+            }}
+            title="+1 кредит"
+            onClick={() => pop(i())}
+          >
+            +1
+          </button>
+        )}
+      </For>
     </div>
   )
 }

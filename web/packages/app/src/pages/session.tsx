@@ -62,6 +62,7 @@ import { useSessionCommands } from "@/pages/session/use-session-commands"
 import { useSessionHashScroll } from "@/pages/session/use-session-hash-scroll"
 import { shouldUseV2NewSessionPage } from "@/pages/session/new-session-layout"
 import { WelcomeSidebar, type WelcomeSidebarRecentSession } from "@/ourapp/welcome-sidebar"
+import { Titlebar } from "@/components/titlebar"
 import { type Scenario } from "@/ourapp/scenario-library"
 import { loadVertical } from "@/ourapp/verticals"
 import { sortedRootSessions } from "@/pages/layout/helpers"
@@ -1843,6 +1844,11 @@ export default function Page() {
             width: sessionPanelWidth(),
           }}
         >
+          {/* OurApp: полоса вкладок теперь ЗДЕСЬ — правее сайдбара, над окном чата
+              (а не поверх всего). Сайдбар слева тянется во весь рост. */}
+          <Show when={isDesktop()}>
+            <Titlebar />
+          </Show>
           <div class="flex-1 min-h-0 overflow-hidden">
             <Switch>
               <Match when={params.id && mobileChanges()}>

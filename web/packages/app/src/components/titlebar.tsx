@@ -222,7 +222,6 @@ export function Titlebar(props: { update?: TitlebarUpdate }) {
           {(_) => {
             const globalSync = useGlobalSync()
             const navigate = useNavigate()
-            const homeMatch = useMatch(() => "/")
 
             const newSessionHref = () => {
               if (params.dir) return `/${params.dir}/session`
@@ -402,34 +401,15 @@ export function Titlebar(props: { update?: TitlebarUpdate }) {
                   "pl-4": !mac(),
                 }}
               >
-                {/* OurApp: левый блок шапки = продолжение левой панели (264px), чтобы
-                    она «доходила до верха», а вкладки сессий шли правее — над окном
-                    чата. Фон/бордер совпадают с .ourapp-sidebar. self-stretch + -my-2
-                    гасят вертикальный паддинг, чтобы блок занял всю высоту шапки. */}
-                <div
-                  class="flex self-stretch -my-2 shrink-0 items-center gap-1.5 pl-1 pr-2 max-[900px]:w-auto max-[900px]:border-r-0 max-[900px]:!bg-transparent"
-                  style={{
-                    width: "264px",
-                    background: "light-dark(#F6F2EB, #1F1B17)",
-                    "border-right": "1px solid light-dark(#E8E3DB, #2E2924)",
-                  }}
-                >
-                  <ChannelIndicator />
-                  <Show when={windows() || linux()}>
-                    <WindowsAppMenu command={command} platform={platform} variant="v2" />
-                  </Show>
-                  <IconButtonV2
-                    variant="ghost-muted"
-                    size="large"
-                    as="a"
-                    href="/"
-                    class="!w-9"
-                    icon={<IconV2 name="grid-plus" />}
-                    state={!!homeMatch() ? "pressed" : undefined}
-                  />
-                </div>
+                {/* OurApp: кнопка-«домой» (grid-plus) убрана — на главную ведёт клик по
+                    бренду Isaac в левой панели (сайдбаре). Полоса вкладок теперь живёт
+                    ВНУТРИ колонки чата (см. session.tsx), правее сайдбара — не поверх него. */}
+                <ChannelIndicator />
+                <Show when={windows() || linux()}>
+                  <WindowsAppMenu command={command} platform={platform} variant="v2" />
+                </Show>
 
-                <div class="flex min-w-0 flex-1 flex-row items-center gap-1.5 overflow-hidden pl-1.5">
+                <div class="flex min-w-0 flex-1 flex-row items-center gap-1.5 overflow-hidden">
                   <div class="flex min-w-0 flex-row items-center gap-1.5 overflow-hidden">
                     <For each={tabsEnriched()}>
                       {(tab, i) => (

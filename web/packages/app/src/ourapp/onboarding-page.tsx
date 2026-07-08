@@ -20,6 +20,24 @@ export const OnboardingPage: Component<{ onDone: () => void }> = (props) => {
   const [busy, setBusy] = createSignal(false)
   const [error, setError] = createSignal<string | null>(null)
 
+  // «Авторизация» — кнопка-шутка: некликабельна, убегает от курсора в случайное
+  // место экрана. transform от базового слота, диапазон ограничен вьюпортом,
+  // чтобы не улетала за край.
+  let runaway: HTMLButtonElement | undefined
+  const [flee, setFlee] = createSignal({ x: 0, y: 0 })
+  const dodge = () => {
+    const b = runaway?.getBoundingClientRect()
+    if (!b) return
+    const margin = 16
+    const baseX = b.left - flee().x
+    const baseY = b.top - flee().y
+    const maxX = Math.max(margin, window.innerWidth - b.width - margin)
+    const maxY = Math.max(margin, window.innerHeight - b.height - margin)
+    const targetX = margin + Math.random() * (maxX - margin)
+    const targetY = margin + Math.random() * (maxY - margin)
+    setFlee({ x: targetX - baseX, y: targetY - baseY })
+  }
+
   const login = async (e: Event) => {
     e.preventDefault()
     setError(null)
@@ -117,6 +135,22 @@ export const OnboardingPage: Component<{ onDone: () => void }> = (props) => {
               disabled={busy() || !email().includes("@") || !password()}
             >
               {busy() ? "Входим…" : "Войти →"}
+            </button>
+            <button
+              ref={runaway}
+              type="button"
+              class="ourapp-btn ourapp-btn--ghost ourapp-onboarding__runaway"
+              style={{ transform: `translate(${flee().x}px, ${flee().y}px)` }}
+              onMouseEnter={dodge}
+              onPointerDown={(e) => {
+                e.preventDefault()
+                dodge()
+              }}
+              onClick={(e) => e.preventDefault()}
+              tabindex={-1}
+              aria-hidden="true"
+            >
+              Авторизация
             </button>
           </div>
 
