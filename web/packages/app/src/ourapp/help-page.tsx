@@ -25,7 +25,7 @@ const FAQ: FaqItem[] = [
   },
   {
     q: "Какую модель выбрать?",
-    a: "Внизу окна чата выбирается модель. Базовые (GigaChat Lite) — быстрые и дешёвые, для коротких задач. Стандарт (GigaChat Pro, Claude Sonnet) — для большинства документов. Топовые (Claude Opus) — для сложного анализа и больших договоров.",
+    a: "Внизу окна чата выбирается модель. Базовые — быстрые и дешёвые, для коротких задач. Стандарт — для большинства документов. Топовые — для сложного анализа и больших договоров.",
   },
   {
     q: "Что такое кредиты?",
@@ -76,8 +76,8 @@ export const HelpPage: Component = () => {
         </h1>
         <p class="ourapp-settings__lede">
           Частые вопросы о работе с Isaac. Не нашли ответ — напишите нам на{" "}
-          <a href="mailto:support@isaac-ai.ru" class="ourapp-settings__link">
-            support@isaac-ai.ru
+          <a href="mailto:isaac.tech.russia@yandex.com" class="ourapp-settings__link">
+            isaac.tech.russia@yandex.com
           </a>
           .
         </p>
