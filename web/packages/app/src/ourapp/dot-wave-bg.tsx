@@ -58,50 +58,6 @@ export function DotWaveBackground() {
       my = -1e4
     }
 
-    // «Рябь» из 0/1 — намёк на вычисления. Каждая рябь = облачко мелких цифр в
-    // несколько слоёв: цифры переливаются (0↔1) и мерцают, облачко плавно
-    // спускается к волне и гаснет за 1–2 с. Одновременно держим 2–3 ряби,
-    // только в нижней половине экрана.
-    type RippleDot = { dx: number; dy: number; seed: number }
-    type Ripple = { cx: number; cy: number; born: number; ttl: number; vy: number; dots: RippleDot[] }
-    const ripples: Ripple[] = []
-    let nextRipple = 0
-    const makeRipple = (t: number): Ripple => {
-      const count = 12 + Math.floor(Math.random() * 14) // «больше» мелких цифр
-      // Случайная неправильная форма облачка: свои радиусы разброса + полярное
-      // распределение с джиттером — каждое облачко отличается по форме.
-      const spreadX = 46 + Math.random() * 96
-      const spreadY = 20 + Math.random() * 42
-      const dots: RippleDot[] = []
-      for (let i = 0; i < count; i++) {
-        const ang = Math.random() * Math.PI * 2
-        const rad = Math.pow(Math.random(), 0.7)
-        dots.push({
-          dx: Math.cos(ang) * rad * spreadX + (Math.random() - 0.5) * 14,
-          dy: Math.sin(ang) * rad * spreadY + (Math.random() - 0.5) * 12,
-          seed: Math.random() * 12,
-        })
-      }
-      const ttl = 3 + Math.random() // 3–4 с
-      const vy = 16 + Math.random() * 20 // мягкий спуск к волне, px/с
-      // Держим рябь строго в полосе, где колышется волна: сверху отступ 45%,
-      // снизу 15% (полоса 45%–85% высоты). cy выбираем так, чтобы облачко целиком
-      // (разброс по Y + весь спуск за жизнь) осталось внутри полосы.
-      const margin = spreadY + 12
-      const bandTop = height * 0.45
-      const bandBottom = height * 0.85
-      const cyMin = bandTop + margin
-      const cyMax = Math.max(cyMin, bandBottom - margin - vy * ttl)
-      return {
-        cx: 40 + Math.random() * Math.max(1, width - 80),
-        cy: cyMin + Math.random() * (cyMax - cyMin),
-        born: t,
-        ttl,
-        vy,
-        dots,
-      }
-    }
-
     let lastT = 0
     const draw = (t: number) => {
       lastT = t
@@ -141,42 +97,11 @@ export function DotWaveBackground() {
           ctx.fill()
         }
       }
-
-      // Бинарная рябь поверх точек: мелкие мерцающие 0/1, спускаются к волне.
-      ctx.font = '600 8px "JetBrains Mono", ui-monospace, monospace'
-      ctx.textBaseline = "middle"
-      ctx.textAlign = "center"
-      for (const r of ripples) {
-        const age = t - r.born
-        if (age < 0 || age > r.ttl) continue
-        const p = age / r.ttl
-        const baseA = Math.sin(p * Math.PI) // проявление/затухание
-        const descent = age * r.vy
-        for (const d of r.dots) {
-          // Переливание: символ и яркость меняются во времени (0↔1, мерцание).
-          const ch = Math.floor(t * 6 + d.seed) % 2 === 0 ? "0" : "1"
-          const flick = 0.5 + 0.5 * Math.sin(t * 8 + d.seed * 3)
-          const a = baseA * 0.4 * flick
-          if (a <= 0.02) continue
-          ctx.fillStyle = `rgba(${cr}, ${cg}, ${cb}, ${a})`
-          ctx.fillText(ch, r.cx + d.dx, r.cy + d.dy + descent)
-        }
-      }
     }
 
     let raf = 0
     const loop = (ms: number) => {
-      const t = ms / 1000
-      // Прополка отживших ряби.
-      for (let i = ripples.length - 1; i >= 0; i--) {
-        if (t - ripples[i].born > ripples[i].ttl) ripples.splice(i, 1)
-      }
-      // Держим 2–3 ряби одновременно.
-      if (t >= nextRipple && ripples.length < 3) {
-        nextRipple = t + 0.3 + Math.random() * 0.5
-        ripples.push(makeRipple(t))
-      }
-      draw(t)
+      draw(ms / 1000)
       raf = requestAnimationFrame(loop)
     }
 
