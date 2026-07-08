@@ -10,7 +10,7 @@ export const lawyerContractReview: Scenario = {
   lede: "Загрузите договор — получите пронумерованный список рисков со ссылкой на пункты и готовыми правками.",
   icon: "shield",
   feature: true,
-  preferredModel: "claude-sonnet",
+  preferredModel: "hi",
   // Аналитический отчёт о рисках, а не новый документ → показываем в чате.
   // Юзер при желании скачает .docx кнопкой, если ответ структурирован.
   resultAction: { type: "show_in_chat" },
@@ -64,7 +64,7 @@ export const lawyerContractDraft: Scenario = {
   title: "Составить договор",
   lede: "По параметрам сделки — готовый проект договора в Word.",
   icon: "pencil-line",
-  preferredModel: "claude-sonnet",
+  preferredModel: "hi",
   resultAction: { type: "generate_docx", filenameTemplate: "Договор {{contract_type}}" },
   steps: [
     {
@@ -120,7 +120,7 @@ export const lawyerClaim: Scenario = {
   title: "Подготовить претензию",
   lede: "Досудебная претензия по форме РФ со ссылками на ГК.",
   icon: "comment",
-  preferredModel: "claude-sonnet",
+  preferredModel: "hi",
   resultAction: { type: "generate_docx", filenameTemplate: "Претензия — {{recipient}}" },
   steps: [
     { id: "recipient", type: "text", label: "Кому адресована претензия", required: true, placeholder: "Наименование, ИНН" },
@@ -155,7 +155,7 @@ export const lawyerCompareVersions: Scenario = {
   title: "Сравнить две редакции",
   lede: "Что изменилось между версиями договора и в чью пользу.",
   icon: "review",
-  preferredModel: "claude-sonnet",
+  preferredModel: "hi",
   // Сравнительный отчёт (таблица различий), а не новый документ → в чате.
   resultAction: { type: "show_in_chat" },
   steps: [
@@ -185,7 +185,7 @@ export const lawyerSummary: Scenario = {
   title: "Краткое содержание документа",
   lede: "Длинный документ — на одну страницу, с существенными пунктами.",
   icon: "bullet-list",
-  preferredModel: "gigachat-pro",
+  preferredModel: "medium",
   resultAction: { type: "show_in_chat" },
   steps: [
     { id: "document", type: "file_upload", label: "Загрузите документ", accept: [".pdf", ".docx", ".jpg", ".jpeg", ".png", ".webp"], required: true },
@@ -209,7 +209,7 @@ export const lawyerLawsuit: Scenario = {
   title: "Подготовить исковое заявление",
   lede: "По сути спора и требованиям — проект искового со ссылками на нормы и расчётом цены иска.",
   icon: "pencil-line",
-  preferredModel: "claude-opus",
+  preferredModel: "ultra",
   resultAction: { type: "generate_docx", filenameTemplate: "Исковое заявление" },
   steps: [
     {
@@ -278,7 +278,7 @@ export const lawyerCounterpartyCheck: Scenario = {
   title: "Проверка контрагента по реквизитам",
   lede: "По ИНН/ОГРН — структура анализа благонадёжности: на что смотреть, какие риски, что запросить.",
   icon: "magnifying-glass",
-  preferredModel: "claude-sonnet",
+  preferredModel: "hi",
   resultAction: { type: "show_in_chat" },
   steps: [
     {

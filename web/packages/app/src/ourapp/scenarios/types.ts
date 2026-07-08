@@ -6,9 +6,9 @@
  * через обычный sendFollowupDraft (реюз streaming/guard/billing).
  */
 
-export type Vertical = "lawyer" | "accountant" | "technologist"
+import type { ModelTier } from "../scenario-model-tier/store"
 
-export type RecommendedModel = "claude-sonnet" | "claude-opus" | "gigachat-pro" | "gigachat-max"
+export type Vertical = "lawyer" | "accountant" | "technologist"
 
 /** Что делать с результатом после ответа модели. */
 export type ResultAction =
@@ -33,8 +33,8 @@ export interface Scenario {
   steps: ScenarioStep[]
   /** Шаблон системного промпта. Подставляются ответы как {{step_id}}. */
   promptTemplate: string
-  /** Рекомендуемая модель (если не указана — юзер выбирает сам). */
-  preferredModel?: RecommendedModel
+  /** Рекомендуемый тир модели (если не указан — дефолт "hi", см. scenario-model-tier). */
+  preferredModel?: ModelTier
   /** Что делать с результатом. */
   resultAction: ResultAction
 }

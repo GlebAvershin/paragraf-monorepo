@@ -20,7 +20,6 @@ import { setCursorPosition } from "./editor-dom"
 import { guardSendCredits } from "@/ourapp/low-balance-guard"
 import { formatServerError } from "@/utils/server-errors"
 import { getAutoModelEnabled } from "@/ourapp/auto-model/store"
-import { getDeepThinkingEnabled, isReasoningModel, DEEP_THINKING_VARIANT } from "@/ourapp/deep-thinking/store"
 import { loadVertical } from "@/ourapp/verticals"
 
 type PendingPrompt = {
@@ -455,13 +454,7 @@ export function createPromptSubmit(input: PromptSubmitInput) {
     const model = autoEnabled
       ? { modelID: "auto", providerID: "auto" }
       : { modelID: currentModel.id, providerID: currentModel.provider.id }
-    // «Углублённо»: для ручной reasoning-модели Claude шлём variant "high". Для «Авто»
-    // тоже шлём high — gateway применит thinking ТОЛЬКО если выбранная модель reasoning-
-    // Claude (thinkingEffort гейтит по коду), иначе проигнорирует.
-    let autoVariant = autoEnabled ? undefined : variant
-    if (getDeepThinkingEnabled() && (autoEnabled || isReasoningModel(model.modelID))) {
-      autoVariant = DEEP_THINKING_VARIANT
-    }
+    const autoVariant = autoEnabled ? undefined : variant
     // OurApp: вертикаль «Технолог» (база знаний ГОСТ) заземляет ответы — шлём agent="gost", движок
     // дёргает gost-rag, подмешивает выдержки и отдаёт источники под ответом. Иначе — агент как обычно.
     const agent = loadVertical() === "technologist" ? "gost" : currentAgent.name

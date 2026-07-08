@@ -408,7 +408,7 @@ async function consumeAnswerStream(
       }
       if (json?.type === "text" && json.delta) await handlers.onText(json.delta)
       else if (json?.type === "reasoning" && json.delta) await handlers.onReasoning(json.delta)
-      else if (json?.type === "model" && json.model) await handlers.onModel?.(json.model, json.provider ?? "anthropic")
+      else if (json?.type === "model" && json.model) await handlers.onModel?.(json.model, json.provider ?? "ourapp-ru")
       else if (json?.type === "doc" && json.text) await handlers.onDoc?.(json.text)
       else if (json?.type === "error") throw new Error(json.message || "gateway error")
       else if (json?.type === "done") return

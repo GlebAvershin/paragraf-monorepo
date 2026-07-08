@@ -137,7 +137,7 @@ const promptArgs = (userId: string, token: string, sessionID: string, body: Prom
   token,
   sessionID,
   messageID: body.messageID,
-  model: body.model ?? { providerID: "anthropic", modelID: "claude-sonnet" },
+  model: body.model ?? { providerID: "ourapp-ru", modelID: "gigachat-pro" },
   agent: body.agent,
   variant: body.variant,
   parts: Array.isArray(body.parts) ? body.parts : [],

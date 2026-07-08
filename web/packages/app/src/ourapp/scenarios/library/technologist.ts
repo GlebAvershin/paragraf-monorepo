@@ -19,7 +19,7 @@ export const technologistGostFind: Scenario = {
   lede: "Опишите деталь или задачу и условия эксплуатации — подскажем, какой ГОСТ это описывает.",
   icon: "magnifying-glass",
   feature: true,
-  preferredModel: "claude-sonnet",
+  preferredModel: "hi",
   resultAction: { type: "show_in_chat" },
   steps: [
     {
@@ -53,7 +53,7 @@ export const technologistGostLookup: Scenario = {
   icon: "book-open",
   feature: false,
   // Аналитический разбор, а не новый документ → показываем в чате.
-  preferredModel: "claude-sonnet",
+  preferredModel: "hi",
   resultAction: { type: "show_in_chat" },
   steps: [
     {

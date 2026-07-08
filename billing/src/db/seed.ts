@@ -24,7 +24,7 @@ const seedPlans: (typeof schema.plans.$inferInsert)[] = [
     monthlyBudgetUsdCenti: 200, // $2 — verifies LiteLLM hardcap
     monthlyCredits: 30, // ≈ 2-3 задачи на Sonnet 1.5×
     monthlyTasksTarget: 3, // deprecated, оставлено для совместимости
-    allowedModels: ["claude-sonnet", "claude-haiku", "gigachat-pro", "gigachat-lite", "yandexgpt-pro", "yandexgpt-lite", "z-ai/glm-5.2", "deepseek/deepseek-chat"],
+    allowedModels: ["gigachat-pro", "gigachat-lite", "yandexgpt-pro", "yandexgpt-lite", "z-ai/glm-5.2", "deepseek/deepseek-chat"],
     features: { trial: true, trialDays: 14 },
   },
   {
@@ -36,8 +36,6 @@ const seedPlans: (typeof schema.plans.$inferInsert)[] = [
     monthlyCredits: 500,
     monthlyTasksTarget: 60, // deprecated
     allowedModels: [
-      "claude-sonnet",
-      "claude-haiku",
       "gigachat-pro",
       "gigachat-max",
       "yandexgpt-pro",
@@ -55,9 +53,6 @@ const seedPlans: (typeof schema.plans.$inferInsert)[] = [
     monthlyCredits: 1700,
     monthlyTasksTarget: 200, // deprecated
     allowedModels: [
-      "claude-sonnet",
-      "claude-opus",
-      "claude-haiku",
       "gpt-4o",
       "gpt-4o-mini",
       "gigachat-pro",
@@ -77,9 +72,6 @@ const seedPlans: (typeof schema.plans.$inferInsert)[] = [
     monthlyCredits: 7000,
     monthlyTasksTarget: 800, // deprecated
     allowedModels: [
-      "claude-sonnet",
-      "claude-opus",
-      "claude-haiku",
       "gpt-4o",
       "gpt-4o-mini",
       "gigachat-pro",

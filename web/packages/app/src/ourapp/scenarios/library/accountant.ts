@@ -10,7 +10,7 @@ export const accPrimaryDocCheck: Scenario = {
   lede: "УПД, акт, счёт-фактура — реквизиты, корректность НДС, риски для вычета.",
   icon: "checklist",
   feature: true,
-  preferredModel: "claude-sonnet",
+  preferredModel: "hi",
   // Аналитика проверки реквизитов/НДС, а не новый документ → в чате.
   resultAction: { type: "show_in_chat" },
   steps: [
@@ -55,7 +55,7 @@ export const accFnsReply: Scenario = {
   title: "Ответ на требование ФНС",
   lede: "Структурированный ответ с правовыми основаниями.",
   icon: "comment",
-  preferredModel: "claude-sonnet",
+  preferredModel: "hi",
   resultAction: { type: "generate_docx", filenameTemplate: "Ответ на требование {{request_number}}" },
   steps: [
     {
@@ -94,7 +94,7 @@ export const accTaxCodeExplain: Scenario = {
   title: "Объяснить положение НК",
   lede: "Статья НК или письмо Минфина — простым языком с примерами.",
   icon: "glasses",
-  preferredModel: "gigachat-pro",
+  preferredModel: "medium",
   resultAction: { type: "show_in_chat" },
   steps: [
     { id: "norm", type: "text", label: "Статья НК РФ или письмо Минфина", required: true, placeholder: "Напр.: ст. 54.1 НК РФ" },
@@ -113,7 +113,7 @@ export const accCounterpartyCheck: Scenario = {
   title: "Сверка реквизитов контрагента",
   lede: "Проверка ИНН, КПП, ОГРН, банковских реквизитов на консистентность.",
   icon: "magnifying-glass",
-  preferredModel: "gigachat-pro",
+  preferredModel: "medium",
   resultAction: { type: "show_in_chat" },
   steps: [
     { id: "requisites", type: "long_text", label: "Реквизиты контрагента", required: true, hint: "ИНН, КПП, ОГРН, банк, БИК, р/с, корсчёт.", rows: 5 },
@@ -136,7 +136,7 @@ export const accExplanatoryNote: Scenario = {
   title: "Пояснительная записка к отчёту",
   lede: "К бухгалтерской/налоговой отчётности — структура и формулировки.",
   icon: "pencil-line",
-  preferredModel: "claude-sonnet",
+  preferredModel: "hi",
   resultAction: { type: "generate_docx", filenameTemplate: "Пояснительная записка {{period}}" },
   steps: [
     {
@@ -170,7 +170,7 @@ export const accTaxCalc: Scenario = {
   title: "Расчёт налогов УСН/ОСН",
   lede: "По режиму, выручке и расходам — пошаговый расчёт налога с пояснением формул и сроков уплаты.",
   icon: "checklist",
-  preferredModel: "claude-sonnet",
+  preferredModel: "hi",
   resultAction: { type: "show_in_chat" },
   steps: [
     {
@@ -236,7 +236,7 @@ export const accReconciliation: Scenario = {
   title: "Шаблон акта сверки",
   lede: "По контрагенту, периоду и итоговым суммам — готовый акт сверки взаиморасчётов в Word.",
   icon: "pencil-line",
-  preferredModel: "gigachat-pro",
+  preferredModel: "medium",
   resultAction: { type: "generate_docx", filenameTemplate: "Акт сверки — {{counterparty}}" },
   steps: [
     {

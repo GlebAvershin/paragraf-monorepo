@@ -6,8 +6,6 @@
  * скрытые от юзера ровно как попросил коллега («чтобы они не знали, что
  * это за модельки»).
  */
-import type { RecommendedModel } from "../scenarios/types"
-
 export type ModelTier = "medium" | "hi" | "ultra"
 
 export interface TierModelKey {
@@ -17,8 +15,8 @@ export interface TierModelKey {
 
 export const TIER_MODEL: Record<ModelTier, TierModelKey> = {
   medium: { providerID: "openrouter", modelID: "z-ai/glm-5.2" },
-  hi: { providerID: "anthropic", modelID: "claude-sonnet" },
-  ultra: { providerID: "anthropic", modelID: "claude-opus" },
+  hi: { providerID: "ourapp-ru", modelID: "gigachat-pro" },
+  ultra: { providerID: "ourapp-ru", modelID: "gigachat-max" },
 }
 
 export const TIER_LABEL: Record<ModelTier, string> = {
@@ -45,8 +43,6 @@ export function tierForModel(current: { id: string; provider: { id: string } } |
 }
 
 /** Дефолтный тир под preferredModel сценария — используется при старте сценарной сессии. */
-export function tierForPreferredModel(preferred: RecommendedModel | undefined): ModelTier {
-  if (preferred === "claude-opus") return "ultra"
-  if (preferred === "gigachat-pro" || preferred === "gigachat-max") return "medium"
-  return "hi"
+export function tierForPreferredModel(preferred: ModelTier | undefined): ModelTier {
+  return preferred ?? "hi"
 }

@@ -1,17 +1,16 @@
 /**
  * Каталог провайдеров/моделей для веб-пикера.
  *
- * На desktop модели приходят из глобального opencode.jsonc (провайдер `ourapp-ru`)
- * + каталога models.dev (Anthropic). На вебе источник — движок: рендерер дёргает
- * `GET /provider` (sdk.provider.list → normalizeProviderList) и ждёт форму
- * `{all: Provider[], default: Record<provider, model>, connected: string[]}`
- * (types.gen.ts ProviderListResponse).
+ * На вебе источник — движок: рендерер дёргает `GET /provider` (sdk.provider.list →
+ * normalizeProviderList) и ждёт форму `{all: Provider[], default: Record<provider,
+ * model>, connected: string[]}` (types.gen.ts ProviderListResponse).
  *
  * modelID здесь = алиас модели в шлюзе (litellm-config.yaml `model_name`): движок
  * в chat.ts шлёт его как `model` в /v1/chat/completions. Имена/тиры синхронны с
- * billing/seed.ts (ставки) и auto-model TIER_MODEL. Провайдер влияет на PII-режим
- * косвенно (маскирование в рендерере завязано на modelID `/^claude-/`), поэтому
- * РФ-модели держим под `ourapp-ru`, Claude — под `anthropic`.
+ * billing/seed.ts (ставки) и auto-model TIER_MODEL.
+ *
+ * Anthropic/Claude убраны из пула целиком (2026-07-08, продуктовое решение —
+ * больше не работаем с этим провайдером). Провайдер `ourapp-ru` — GigaChat.
  */
 
 type Capabilities = {
@@ -101,23 +100,18 @@ function model(input: {
   }
 }
 
-// Пул моделей. modelID = алиас шлюза. Подписи — Sonnet 4.6 / Opus 4.8 / Haiku 4.5.
-const anthropicModels: Model[] = [
-  model({ id: "claude-opus", providerID: "anthropic", name: "Claude Opus 4.8", reasoning: true, context: 200_000, output: 32_000, costIn: 5, costOut: 25, release: "2026-06-13" }),
-  model({ id: "claude-sonnet", providerID: "anthropic", name: "Claude Sonnet 4.6", reasoning: true, context: 200_000, output: 16_000, costIn: 3, costOut: 15, release: "2026-03-01" }),
-  model({ id: "claude-haiku", providerID: "anthropic", name: "Claude Haiku 4.5", reasoning: false, context: 200_000, output: 8_192, costIn: 1, costOut: 5, release: "2025-10-01" }),
-]
-
+// Пул моделей. modelID = алиас шлюза.
 // release: "" → невалидная дата → модель ВСЕГДА видна в пикере (context/models.tsx visible():
 // модели с валидной датой старше 6 мес. скрываются по умолчанию; наши продуктовые модели
 // должны показываться независимо от «свежести»).
 const ruModels: Model[] = [
+  model({ id: "gigachat-max", providerID: "ourapp-ru", name: "GigaChat Max", reasoning: false, attachment: false, context: 32_000, output: 4_096, release: "" }),
   model({ id: "gigachat-pro", providerID: "ourapp-ru", name: "GigaChat Pro", reasoning: false, attachment: false, context: 32_000, output: 4_096, release: "" }),
   model({ id: "gigachat-lite", providerID: "ourapp-ru", name: "GigaChat Lite", reasoning: false, attachment: false, context: 32_000, output: 4_096, release: "" }),
 ]
 
 // Дешёвые модели через OpenRouter (алиасы шлюза). NB: иностранные → PII-маскирование
-// в рендерере сейчас НЕ применяется (гейт завязан на /^claude-/) — учесть для 152-ФЗ до прода.
+// в рендерере сейчас не применяется к ним — учесть для 152-ФЗ до прода.
 const openrouterModels: Model[] = [
   model({ id: "z-ai/glm-5.2", providerID: "openrouter", name: "GLM 5.2 (Zhipu)", reasoning: true, attachment: false, context: 200_000, output: 8_192, costIn: 0.6, costOut: 2.2, release: "" }),
   model({ id: "deepseek/deepseek-chat", providerID: "openrouter", name: "DeepSeek Chat", reasoning: false, attachment: false, context: 64_000, output: 8_192, costIn: 0.3, costOut: 1.2, release: "" }),
@@ -128,14 +122,6 @@ function byId(models: Model[]): Record<string, Model> {
 }
 
 export function providerList(): ProviderListResponse {
-  const anthropic: Provider = {
-    id: "anthropic",
-    name: "Anthropic",
-    source: "config",
-    env: [],
-    options: {},
-    models: byId(anthropicModels),
-  }
   const ru: Provider = {
     id: "ourapp-ru",
     name: "Российские модели",
@@ -153,8 +139,8 @@ export function providerList(): ProviderListResponse {
     models: byId(openrouterModels),
   }
   return {
-    all: [anthropic, ru, openrouter],
-    default: { anthropic: "claude-sonnet", "ourapp-ru": "gigachat-lite", openrouter: "deepseek/deepseek-chat" },
-    connected: ["anthropic", "ourapp-ru", "openrouter"],
+    all: [ru, openrouter],
+    default: { "ourapp-ru": "gigachat-lite", openrouter: "deepseek/deepseek-chat" },
+    connected: ["ourapp-ru", "openrouter"],
   }
 }

@@ -59,7 +59,6 @@ import {
 import { ScenarioTierSelector } from "@/ourapp/scenario-model-tier/scenario-tier-selector"
 import { tierForPreferredModel, TIER_MODEL } from "@/ourapp/scenario-model-tier/store"
 import { ModelTriggerLabel } from "@/ourapp/auto-model/model-trigger-label"
-import { DeepThinkingToggle } from "@/ourapp/deep-thinking/deep-thinking-toggle"
 import {
   canNavigateHistoryAtCursor,
   navigatePromptHistory,
@@ -1426,7 +1425,6 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
   const modelControl = () => (
     <Show when={!providersLoading()}>
       <Show when={!scenarioMode()} fallback={<ScenarioTierSelector model={local.model} />}>
-        <DeepThinkingToggle />
         <Show
           when={providers.paid().length > 0}
           fallback={
@@ -1891,9 +1889,6 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
                           when={!scenarioMode()}
                           fallback={<ScenarioTierSelector model={local.model} />}
                         >
-                          <DeepThinkingToggle
-                            style={providersShouldFadeIn() ? { animation: "fade-in 0.3s" } : undefined}
-                          />
                           <div
                             data-component="prompt-model-control"
                             style={providersShouldFadeIn() ? { animation: "fade-in 0.3s" } : undefined}
