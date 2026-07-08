@@ -7,18 +7,12 @@
  * см. index.css). Обёртка position:sticky + z-index:-1 держит канву за контентом
  * и в кадре при прокрутке. prefers-reduced-motion → один статичный кадр без rAF.
  */
-import { For, onCleanup, onMount, Show } from "solid-js"
-import { createStore, produce } from "solid-js/store"
-import { addCreditBonus } from "./credit-bonus"
+import { onCleanup, onMount } from "solid-js"
 
 const COLS = 72
 const ROWS = 26
 
-/**
- * @param capsules — показывать ли ловимые капсулы «+1 кредит» (только на главной).
- *   Рябь из 0/1 рисуется на канве всегда (на всех экранах с этим фоном).
- */
-export function DotWaveBackground(props: { capsules?: boolean }) {
+export function DotWaveBackground() {
   let canvas: HTMLCanvasElement | undefined
 
   onMount(() => {
@@ -207,91 +201,8 @@ export function DotWaveBackground(props: { capsules?: boolean }) {
   })
 
   return (
-    <>
-      <div class="ourapp-dotwave" aria-hidden="true">
-        <canvas ref={canvas} />
-      </div>
-      <Show when={props.capsules}>
-        <CreditCapsules />
-      </Show>
-    </>
-  )
-}
-
-/**
- * Капсула «+1 кредит», плавающая по волнам в НИЖНЕЙ части экрана (на заднем
- * фоне, не перекрывая UX — ловится только сама пилюля). Клик → +1 к балансу
- * (creditBonus) и капсула лопается. На экране максимум ОДНА; после лопания новая
- * появляется в случайном месте только через 3 с. Reduced-motion → отключены.
- * Показывается только на главной.
- */
-type Capsule = { id: number; left: number; top: number; dur: number; pop: boolean }
-
-const rnd = (a: number, b: number) => a + Math.random() * (b - a)
-let capsuleSeq = 0
-const makeCapsule = (): Capsule => ({
-  id: capsuleSeq++,
-  left: rnd(8, 88),
-  top: rnd(66, 88), // нижняя часть экрана, над волной
-  dur: rnd(7, 11),
-  pop: false,
-})
-
-function CreditCapsules() {
-  if (typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-    return null
-  }
-  const [caps, setCaps] = createStore<Capsule[]>([makeCapsule()])
-  const timers: number[] = []
-
-  const pop = (id: number) => {
-    const i = caps.findIndex((c) => c.id === id)
-    if (i < 0 || caps[i].pop) return
-    addCreditBonus(1)
-    setCaps(i, "pop", true)
-    // Убираем лопнутую после анимации…
-    timers.push(
-      window.setTimeout(() => {
-        setCaps(produce((list) => {
-          const j = list.findIndex((c) => c.id === id)
-          if (j >= 0) list.splice(j, 1)
-        }))
-      }, 460),
-    )
-    // …и спавним новую в случайном месте только через 3 с (максимум одна).
-    timers.push(
-      window.setTimeout(() => {
-        setCaps(produce((list) => {
-          if (list.length === 0) list.push(makeCapsule())
-        }))
-      }, 3000),
-    )
-  }
-
-  onCleanup(() => {
-    timers.forEach((t) => clearTimeout(t))
-  })
-
-  return (
-    <div class="ourapp-capsules" aria-hidden="true">
-      <For each={caps}>
-        {(c) => (
-          <button
-            type="button"
-            class="ourapp-capsule"
-            classList={{ "ourapp-capsule--pop": c.pop }}
-            style={{
-              left: `${c.left}%`,
-              top: `${c.top}%`,
-              "animation-duration": `${c.dur}s`,
-            }}
-            title="+1 кредит"
-            onClick={() => pop(c.id)}
-          >
-            +1
-          </button>
-        )}
-      </For>
+    <div class="ourapp-dotwave" aria-hidden="true">
+      <canvas ref={canvas} />
     </div>
   )
 }

@@ -17,7 +17,6 @@ import { DropdownMenu } from "@opencode-ai/ui/dropdown-menu"
 import { scenariosFor, type Scenario } from "./scenarios"
 import { isVerticalEnabled, saveVertical, VERTICAL_ORDER, verticalLabel, type Vertical } from "./verticals"
 import { billingApi, daysUntil } from "./billing-api"
-import { creditBonus } from "./credit-bonus"
 
 export interface WelcomeSidebarRecentSession {
   id: string
@@ -188,7 +187,7 @@ export const WelcomeSidebar: Component<WelcomeSidebarProps> = (props) => {
             <span class="ourapp-usage__numbers">
               {credits() ? (
                 <>
-                  <strong>{(credits()!.remaining + creditBonus()).toLocaleString("ru")}</strong>
+                  <strong>{credits()!.remaining.toLocaleString("ru")}</strong>
                   {" / "}
                   {credits()!.total.toLocaleString("ru")}
                 </>

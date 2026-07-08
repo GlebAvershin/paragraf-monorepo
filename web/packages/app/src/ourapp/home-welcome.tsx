@@ -40,7 +40,7 @@ export const HomeWelcome: Component<HomeWelcomeProps> = (props) => {
 
   return (
     <div class="ourapp-landing">
-      <DotWaveBackground capsules />
+      <DotWaveBackground />
       <AppTopbar active="home" />
 
       <main class="ourapp-landing__main">

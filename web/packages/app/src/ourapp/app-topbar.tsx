@@ -12,7 +12,6 @@ import { DropdownMenu } from "@opencode-ai/ui/dropdown-menu"
 import { Icon } from "@opencode-ai/ui/icon"
 import { billingApi, type LimitsResponse, type MeResponse } from "./billing-api"
 import { isVerticalEnabled, loadVertical, saveVertical, VERTICAL_ORDER, verticalLabel, type Vertical } from "./verticals"
-import { creditBonus } from "./credit-bonus"
 
 // Последние загруженные значения переживают перемонтирование шапки: навигация
 // между страницами монтирует AppTopbar заново, и без этого кэша блок
@@ -46,7 +45,7 @@ export const AppTopbar: Component<{ active: AppTopbarActive }> = (props) => {
     { initialValue: lastLimits ?? undefined },
   )
 
-  const creditsRemaining = () => (limits()?.credits.remaining ?? 0) + creditBonus()
+  const creditsRemaining = () => limits()?.credits.remaining ?? 0
   const creditsTotal = () => limits()?.credits.monthlyTotal ?? 0
   const creditsPct = () => {
     const total = creditsTotal()
