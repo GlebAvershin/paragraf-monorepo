@@ -77,7 +77,7 @@ export function DotWaveBackground(props: { capsules?: boolean }) {
       // Случайная неправильная форма облачка: свои радиусы разброса + полярное
       // распределение с джиттером — каждое облачко отличается по форме.
       const spreadX = 46 + Math.random() * 96
-      const spreadY = 24 + Math.random() * 62
+      const spreadY = 20 + Math.random() * 42
       const dots: RippleDot[] = []
       for (let i = 0; i < count; i++) {
         const ang = Math.random() * Math.PI * 2
@@ -88,12 +88,22 @@ export function DotWaveBackground(props: { capsules?: boolean }) {
           seed: Math.random() * 12,
         })
       }
+      const ttl = 3 + Math.random() // 3–4 с
+      const vy = 16 + Math.random() * 20 // мягкий спуск к волне, px/с
+      // Держим рябь строго в полосе, где колышется волна: сверху отступ 45%,
+      // снизу 15% (полоса 45%–85% высоты). cy выбираем так, чтобы облачко целиком
+      // (разброс по Y + весь спуск за жизнь) осталось внутри полосы.
+      const margin = spreadY + 12
+      const bandTop = height * 0.45
+      const bandBottom = height * 0.85
+      const cyMin = bandTop + margin
+      const cyMax = Math.max(cyMin, bandBottom - margin - vy * ttl)
       return {
         cx: 40 + Math.random() * Math.max(1, width - 80),
-        cy: height * 0.55 + Math.random() * height * 0.3, // нижняя половина
+        cy: cyMin + Math.random() * (cyMax - cyMin),
         born: t,
-        ttl: 3 + Math.random(), // 3–4 с
-        vy: 16 + Math.random() * 20, // мягкий спуск к волне, px/с
+        ttl,
+        vy,
         dots,
       }
     }

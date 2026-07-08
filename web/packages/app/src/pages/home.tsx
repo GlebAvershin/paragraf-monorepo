@@ -36,8 +36,11 @@ import { sessionPermissionRequest } from "@/pages/session/composer/session-reque
 
 const USE_HOME_DESIGN = import.meta.env.VITE_OPENCODE_CHANNEL !== "prod"
 // OurApp: правая колонка «Продолжить работу» показывает ~10 сессий и скроллит по
-// всей истории — поэтому грузим заметно больше, чем помещается на экране.
-const HOME_SESSION_LIMIT = 50
+// всей истории — поэтому грузим заметно больше, чем помещается на экране. Это же
+// число поднимаем как store.limit при загрузке (иначе в лёгком sync-кэше
+// сайдбара всего SESSION_CACHE_LIMIT=40, и до захода на «Историю» список на
+// главной был коротким/непрокручиваемым — см. loadSessions ниже).
+const HOME_SESSION_LIMIT = 200
 const HOME_ROW =
   "flex min-w-0 w-full shrink-0 cursor-default items-center rounded-[6px] border-0 bg-transparent text-left [font-weight:530] text-v2-text-text-muted transition-colors duration-[120ms] ease-in-out hover:bg-v2-overlay-simple-overlay-hover focus-visible:bg-v2-overlay-simple-overlay-hover focus-visible:outline-none"
 const HOME_PROJECT_NAV_ROW = `${HOME_ROW} h-8 gap-1.5 px-3 [&>span]:min-w-0 [&>span]:overflow-hidden [&>span]:text-ellipsis [&>span]:whitespace-nowrap`
@@ -96,7 +99,16 @@ function HomeDesign() {
   const sessionLoad = useQuery(() => ({
     queryKey: ["home", "sessions", ...projectDirectories()] as const,
     queryFn: async () => {
-      await Promise.all(projectDirectories().map((directory) => sync.project.loadSessions(directory)))
+      await Promise.all(
+        projectDirectories().map((directory) => {
+          // Поднимаем лимит стора ДО загрузки, иначе грузится только лёгкий
+          // кэш сайдбара (40) — и «Продолжить работу» на главной оставалась
+          // короткой/непрокручиваемой, пока не откроешь страницу «История».
+          const [store, setStore] = sync.child(directory, { bootstrap: false })
+          if (store.limit < HOME_SESSION_LIMIT) setStore("limit", HOME_SESSION_LIMIT)
+          return sync.project.loadSessions(directory)
+        }),
+      )
       return null
     },
   }))

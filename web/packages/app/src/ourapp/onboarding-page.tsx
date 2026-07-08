@@ -150,7 +150,7 @@ export const OnboardingPage: Component<{ onDone: () => void }> = (props) => {
               tabindex={-1}
               aria-hidden="true"
             >
-              Авторизация
+              Регистрация
             </button>
           </div>
 
