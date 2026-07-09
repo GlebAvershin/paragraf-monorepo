@@ -42,7 +42,23 @@ export function tierForModel(current: { id: string; provider: { id: string } } |
   )
 }
 
-/** Дефолтный тир под preferredModel сценария — используется при старте сценарной сессии. */
-export function tierForPreferredModel(preferred: ModelTier | undefined): ModelTier {
-  return preferred ?? "hi"
+// Уровень ответа по умолчанию — настраивается в Settings (карточка «Уровень
+// ответа»), применяется как стартовый тир при запуске КАЖДОГО сценария.
+// Раньше тир при старте зависел от preferredModel конкретного сценария —
+// юзеру было непонятно, почему один сценарий стартует на Ultra, а другой на
+// Medium (фидбек 2026-07-09). Теперь источник один и явный; поменять уровень
+// для конкретного диалога по-прежнему можно в чате (ScenarioTierSelector).
+const DEFAULT_TIER_KEY = "ourapp.scenario.defaultTier"
+const FALLBACK_TIER: ModelTier = "hi"
+
+export function getDefaultTier(): ModelTier {
+  if (typeof localStorage === "undefined") return FALLBACK_TIER
+  const stored = localStorage.getItem(DEFAULT_TIER_KEY)
+  if (stored === "medium" || stored === "hi" || stored === "ultra") return stored
+  return FALLBACK_TIER
+}
+
+export function setDefaultTier(tier: ModelTier): void {
+  if (typeof localStorage === "undefined") return
+  localStorage.setItem(DEFAULT_TIER_KEY, tier)
 }

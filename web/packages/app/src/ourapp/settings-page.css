@@ -97,6 +97,60 @@
   flex-wrap: wrap;
 }
 
+/* Уровень ответа по умолчанию — карточка выбора тира (см. scenario-model-tier). */
+.ourapp-tier-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ourapp-tier-option {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  text-align: left;
+  padding: 12px 14px;
+  border: 1px solid light-dark(#E8E3DB, #2E2924);
+  border-radius: var(--ourapp-radius-md, 10px);
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 120ms var(--ourapp-ease, ease), background 120ms var(--ourapp-ease, ease);
+}
+
+.ourapp-tier-option:hover {
+  border-color: light-dark(#D8D2C5, #3A342D);
+}
+
+.ourapp-tier-option--active {
+  border-color: light-dark(#0B5345, #1A8A6B);
+  background: light-dark(rgba(11, 83, 69, 0.06), rgba(26, 138, 107, 0.12));
+}
+
+.ourapp-tier-option__label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: light-dark(#1A1614, #EDE8DF);
+}
+
+.ourapp-tier-option--active .ourapp-tier-option__label {
+  color: light-dark(#0B5345, #1A8A6B);
+}
+
+.ourapp-tier-option__check {
+  color: light-dark(#0B5345, #1A8A6B);
+}
+
+.ourapp-tier-option__desc {
+  font-size: 12px;
+  line-height: 1.5;
+  color: light-dark(#6B6660, #847E72);
+}
+
 /* Тема-адаптивная ссылка (напр. support-email на Помощи). */
 .ourapp-settings__link {
   color: light-dark(#0B5345, #1A8A6B);

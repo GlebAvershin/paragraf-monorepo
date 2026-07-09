@@ -9,14 +9,16 @@
  *
  * Layout — как credits-page (mockup-style + cream paper-grain).
  */
-import { createResource, createSignal, For, type Component } from "solid-js"
+import { createResource, createSignal, For, Show, type Component } from "solid-js"
 import { useTheme, type ColorScheme } from "@opencode-ai/ui/theme"
+import { Icon } from "@opencode-ai/ui/icon"
 import { billingApi } from "./billing-api"
 import { clearSession } from "./auth-storage"
 import { loadVertical, saveVertical, VERTICAL_ORDER, VERTICALS, type Vertical } from "./verticals"
 import { AboutModal } from "./about-modal"
 import { AppTopbar } from "./app-topbar"
 import { DotWaveBackground } from "./dot-wave-bg"
+import { getDefaultTier, setDefaultTier, TIER_DESC, TIER_LABEL, TIER_ORDER, type ModelTier } from "./scenario-model-tier/store"
 import "./about-modal.css"
 import "./pii.css"
 import { useLanguage } from "@/context/language"
@@ -28,6 +30,12 @@ export const SettingsPage: Component = () => {
   const [aboutOpen, setAboutOpen] = createSignal(false)
 
   const [vertical, setVertical] = createSignal<Vertical>(loadVertical())
+  const [defaultTier, setDefaultTierSignal] = createSignal<ModelTier>(getDefaultTier())
+
+  const updateDefaultTier = (tier: ModelTier) => {
+    setDefaultTierSignal(tier)
+    setDefaultTier(tier)
+  }
 
   const updateVertical = (v: Vertical) => {
     if (!VERTICALS[v].enabled) return
@@ -100,6 +108,34 @@ export const SettingsPage: Component = () => {
                   </button>
                 )
               }}
+            </For>
+          </div>
+        </section>
+
+        <section class="ourapp-settings__card">
+          <div class="ourapp-settings__label">Уровень ответа</div>
+          <p class="ourapp-settings__lede">
+            Насколько глубоко модель прорабатывает ответ при запуске сценария. Для
+            конкретного диалога уровень всегда можно поменять прямо в чате.
+          </p>
+          <div class="ourapp-tier-options">
+            <For each={TIER_ORDER}>
+              {(tier) => (
+                <button
+                  type="button"
+                  class="ourapp-tier-option"
+                  classList={{ "ourapp-tier-option--active": defaultTier() === tier }}
+                  onClick={() => updateDefaultTier(tier)}
+                >
+                  <span class="ourapp-tier-option__label">
+                    {TIER_LABEL[tier]}
+                    <Show when={defaultTier() === tier}>
+                      <Icon name="check" class="ourapp-tier-option__check size-3.5" />
+                    </Show>
+                  </span>
+                  <span class="ourapp-tier-option__desc">{TIER_DESC[tier]}</span>
+                </button>
+              )}
             </For>
           </div>
         </section>

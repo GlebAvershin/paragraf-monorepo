@@ -57,7 +57,7 @@ import {
   consumePendingScenarioSession,
 } from "@/ourapp/scenarios/scenario-session-tracker"
 import { ScenarioTierSelector } from "@/ourapp/scenario-model-tier/scenario-tier-selector"
-import { tierForPreferredModel, TIER_MODEL } from "@/ourapp/scenario-model-tier/store"
+import { getDefaultTier, TIER_MODEL } from "@/ourapp/scenario-model-tier/store"
 import { ModelTriggerLabel } from "@/ourapp/auto-model/model-trigger-label"
 import {
   canNavigateHistoryAtCursor,
@@ -620,7 +620,6 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
           displayText?: string
           autoSubmit?: boolean
           resultAction?: { type?: string }
-          preferredModel?: Parameters<typeof tierForPreferredModel>[0]
         }>
       ).detail
       const parts = detail?.parts
@@ -645,10 +644,11 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
         markPendingScenarioSession()
       }
       // OurApp: сценарные сессии выбирают модель по «силе» (Medium/Hi/Ultra),
-      // не по имени — см. scenario-model-tier/store.ts. Дефолт — тир под
-      // scenario.preferredModel.
+      // не по имени — см. scenario-model-tier/store.ts. Стартовый тир — из
+      // настроек юзера (Settings → «Уровень ответа»), одинаковый для всех
+      // сценариев; поменять для конкретного диалога можно в чате.
       setScenarioMode(true)
-      const tier = tierForPreferredModel(detail?.preferredModel)
+      const tier = getDefaultTier()
       local.model.set(TIER_MODEL[tier], { recent: true })
       // Курсор — в конец последней текстовой части.
       const lastText = [...parts].reverse().find((p) => p.type === "text")
