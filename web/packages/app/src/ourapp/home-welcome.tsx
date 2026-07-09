@@ -48,8 +48,10 @@ export const HomeWelcome: Component<HomeWelcomeProps> = (props) => {
 
       <main class="ourapp-landing__main">
         <Show when={scenarios().length > 0}>
-          <aside class="ourapp-landing__scen" data-hint="home-scenarios">
-            <div class="ourapp-landing__recenthead">
+          <aside class="ourapp-landing__scen">
+            {/* Якорь подсказки — заголовок колонки: плашка встаёт под ним слева,
+                не наезжая на hero. */}
+            <div class="ourapp-landing__recenthead" data-hint="home-scenarios">
               <h2 class="ourapp-landing__recenttitle">Сценарии</h2>
             </div>
             <ul class="ourapp-landing__recentlist">
@@ -99,7 +101,7 @@ export const HomeWelcome: Component<HomeWelcomeProps> = (props) => {
 
         <Show when={props.recent.length > 0}>
           <aside class="ourapp-landing__recent">
-            <div class="ourapp-landing__recenthead">
+            <div class="ourapp-landing__recenthead" data-hint="home-recent">
               <h2 class="ourapp-landing__recenttitle">Продолжить работу</h2>
             </div>
             {/* Показываем ~10 сессий, дальше — скролл по всей истории (ползунок справа). */}

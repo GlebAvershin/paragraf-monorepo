@@ -11,7 +11,7 @@
  * Тур показывается один раз (localStorage ourapp.hints.<tourId>.v1). Каждая
  * плашка стрелкой указывает на элемент, о котором рассказывает.
  */
-import { createSignal, For, onCleanup, onMount, type Component } from "solid-js"
+import { createMemo, createSignal, For, onCleanup, onMount, type Component } from "solid-js"
 import { Portal } from "solid-js/web"
 
 export interface HintDef {
@@ -40,8 +40,8 @@ interface ActiveHint extends HintDef {
 
 const doneKey = (tourId: string) => `ourapp.hints.${tourId}.v1`
 
-const FADE_MS = 450 // должен совпадать с transition в hint-tour.css
-const BATCH_LIFETIME_MS = 10000
+const FADE_MS = 900 // время растворения (карточка + белые пиксели), см. hint-tour.css
+const BATCH_LIFETIME_MS = 15000 // держим подсказки подольше — и на главной, и в воркспейсе
 const NEXT_BATCH_DELAY_MS = 650
 
 export const HintTour: Component<{ tourId: string; batches: HintDef[][] }> = (props) => {
@@ -190,10 +190,25 @@ export const HintTour: Component<{ tourId: string; batches: HintDef[][] }> = (pr
 }
 
 const GAP = 12
+const EDGE = 8 // минимальный отступ плашки от края вьюпорта
+const PIXEL_COUNT = 18
+
+interface DissolvePixel {
+  left: number
+  top: number
+  dx: number
+  dy: number
+  delay: number
+  size: number
+}
 
 const HintBubble: Component<{ hint: ActiveHint; index: number }> = (props) => {
+  let el!: HTMLDivElement
   const [shown, setShown] = createSignal(false)
+  const [size, setSize] = createSignal<{ w: number; h: number }>()
   onMount(() => {
+    // Размер нужен для точного позиционирования и клампа в границы экрана.
+    setSize({ w: el.offsetWidth, h: el.offsetHeight })
     // Стаггер появления внутри пачки — плашки проявляются одна за другой.
     const t = window.setTimeout(() => setShown(true), 120 + props.index * 320)
     onCleanup(() => clearTimeout(t))
@@ -203,35 +218,46 @@ const HintBubble: Component<{ hint: ActiveHint; index: number }> = (props) => {
   const align = () => props.hint.align ?? "center"
 
   const style = () => {
+    const s = size()
+    // До замера прячем за экраном (плашка и так с opacity 0).
+    if (!s) return { top: "-9999px", left: "-9999px" }
     const r = props.hint.rect
     const p = placement()
     let top = 0
     let left = 0
-    let transform = ""
     if (p === "bottom" || p === "top") {
-      top = p === "bottom" ? r.top + r.height + GAP : r.top - GAP
+      top = p === "bottom" ? r.top + r.height + GAP : r.top - GAP - s.h
       const a = align()
-      if (a === "center") {
-        left = r.left + r.width / 2
-        transform = "translateX(-50%)"
-      } else if (a === "end") {
-        left = r.left + r.width
-        transform = "translateX(-100%)"
-      } else {
-        left = r.left
-      }
-      if (p === "top") transform += " translateY(-100%)"
+      if (a === "center") left = r.left + r.width / 2 - s.w / 2
+      else if (a === "end") left = r.left + r.width - s.w
+      else left = r.left
     } else {
-      top = r.top + r.height / 2
-      transform = "translateY(-50%)"
-      left = p === "right" ? r.left + r.width + GAP : r.left - GAP
-      if (p === "left") transform += " translateX(-100%)"
+      top = r.top + r.height / 2 - s.h / 2
+      left = p === "right" ? r.left + r.width + GAP : r.left - GAP - s.w
     }
-    return { top: `${Math.round(top)}px`, left: `${Math.round(left)}px`, transform }
+    // Кламп в границы вьюпорта — плашка не уезжает за край экрана.
+    left = Math.min(Math.max(EDGE, left), window.innerWidth - s.w - EDGE)
+    top = Math.min(Math.max(EDGE, top), window.innerHeight - s.h - EDGE)
+    return { top: `${Math.round(top)}px`, left: `${Math.round(left)}px` }
   }
+
+  // Растворение «на беленькие пиксели»: при leaving создаём горсть белых
+  // квадратиков в случайных точках карточки — они разлетаются вверх и гаснут.
+  const pixels = createMemo<DissolvePixel[]>(() => {
+    if (!props.hint.leaving) return []
+    return Array.from({ length: PIXEL_COUNT }, () => ({
+      left: 4 + Math.random() * 92,
+      top: 6 + Math.random() * 86,
+      dx: (Math.random() - 0.5) * 52,
+      dy: -8 - Math.random() * 34,
+      delay: Math.random() * 220,
+      size: 3 + Math.random() * 2.5,
+    }))
+  })
 
   return (
     <div
+      ref={el}
       class={`ourapp-hint ourapp-hint--${placement()} ourapp-hint--align-${align()}`}
       classList={{
         "ourapp-hint--in": shown() && !props.hint.leaving,
@@ -244,20 +270,41 @@ const HintBubble: Component<{ hint: ActiveHint; index: number }> = (props) => {
       <span class="ourapp-hint__arrow" aria-hidden="true" />
       <div class="ourapp-hint__title">{props.hint.title}</div>
       <div class="ourapp-hint__text">{props.hint.text}</div>
+      <span class="ourapp-hint__pixels" aria-hidden="true">
+        <For each={pixels()}>
+          {(px) => (
+            <span
+              class="ourapp-hint__pixel"
+              style={{
+                left: `${px.left}%`,
+                top: `${px.top}%`,
+                width: `${px.size}px`,
+                height: `${px.size}px`,
+                "animation-delay": `${px.delay}ms`,
+                "--px-dx": `${px.dx}px`,
+                "--px-dy": `${px.dy}px`,
+              }}
+            />
+          )}
+        </For>
+      </span>
     </div>
   )
 }
 
-/* ---- Контент туров ---- */
+/* ---- Контент туров ----
+ * Пачки собраны так, чтобы плашки одной пачки НЕ перекрывали друг друга:
+ * соседние по экрану элементы (История/Аналитика, Кредиты/Профиль) разнесены
+ * по разным пачкам и спарены с элементами из другого конца экрана. */
 
-/** Главная: профессия и сценарии → история и аналитика → кредиты и профиль. */
+/** Главная: профессия + сценарии → история + кредиты → аналитика + профиль → последние сессии. */
 export const HOME_HINTS: HintDef[][] = [
   [
     {
       id: "home-vertical",
       target: '[data-hint="home-vertical"]',
       title: "Профессия",
-      text: "Выберите свою специальность — под неё подстроятся сценарии и подсказки Isaac.",
+      text: "Кнопка выбора профессии. От неё зависит, какие сценарии Isaac предложит на главной и в воркспейсе.",
       placement: "bottom",
       align: "start",
     },
@@ -265,8 +312,9 @@ export const HOME_HINTS: HintDef[][] = [
       id: "home-scenarios",
       target: '[data-hint="home-scenarios"]',
       title: "Сценарии",
-      text: "Готовые пошаговые мастера под типовые задачи. Нажмите на сценарий, чтобы начать.",
-      placement: "right",
+      text: "Сценарии — готовые формы под типовые рабочие задачи. Выберите сценарий, ответьте на несколько вопросов — и получите готовый результат.",
+      placement: "bottom",
+      align: "start",
     },
   ],
   [
@@ -274,34 +322,44 @@ export const HOME_HINTS: HintDef[][] = [
       id: "home-history",
       target: '[data-hint="home-nav-history"]',
       title: "История",
-      text: "Все ваши сессии: поиск, возврат к работе и экспорт в DOCX, PDF или MD.",
+      text: "Открывает список всех ваших сессий: можно найти нужную по названию, продолжить работу или выгрузить в DOCX, PDF, MD.",
       placement: "bottom",
       align: "start",
     },
     {
-      id: "home-analytics",
-      target: '[data-hint="home-nav-analytics"]',
-      title: "Аналитика",
-      text: "Расход кредитов по дням, моделям и сценариям — с выгрузкой в CSV.",
+      id: "home-credits",
+      target: '[data-hint="home-credits"]',
+      title: "Кредиты",
+      text: "Остаток кредитов на месяц — они списываются за каждый запрос. Клик откроет страницу с тарифами и пополнением.",
       placement: "bottom",
+      align: "end",
     },
   ],
   [
     {
-      id: "home-credits",
-      target: '[data-hint="home-credits"]',
-      title: "Кредиты",
-      text: "Остаток кредитов на месяц. Нажмите, чтобы открыть тарифы и пополнение.",
+      id: "home-analytics",
+      target: '[data-hint="home-nav-analytics"]',
+      title: "Аналитика",
+      text: "Диаграммы расхода кредитов: по дням, по моделям и по сценариям. Отчёт можно выгрузить в CSV.",
       placement: "bottom",
-      align: "end",
+      align: "start",
     },
     {
       id: "home-account",
       target: '[data-hint="home-account"]',
       title: "Профиль",
-      text: "Настройки аккаунта: тема оформления, защита данных, выход.",
+      text: "Ваш аккаунт. Внутри — тема оформления (светлая/тёмная), настройки защиты данных и кнопка выхода.",
       placement: "bottom",
       align: "end",
+    },
+  ],
+  [
+    {
+      id: "home-recent",
+      target: '[data-hint="home-recent"]',
+      title: "Последние сессии",
+      text: "Ваши недавние сессии. Кликните по любой, чтобы вернуться к незавершённой задаче — список прокручивается по всей истории.",
+      placement: "left",
     },
   ],
 ]
@@ -313,7 +371,7 @@ export const WORKSPACE_HINTS: HintDef[][] = [
       id: "ws-brand",
       target: '[data-hint="ws-brand"]',
       title: "На главную",
-      text: "Клик по имени Isaac возвращает на главный экран.",
+      text: "Клик по имени Isaac возвращает на главную страницу.",
       placement: "bottom",
       align: "start",
     },
@@ -321,7 +379,7 @@ export const WORKSPACE_HINTS: HintDef[][] = [
       id: "ws-scenarios",
       target: '[data-hint="ws-scenarios"]',
       title: "Сценарии",
-      text: "Выберите сценарий — мастер откроется в новой сессии и проведёт по шагам.",
+      text: "Список сценариев: клик открывает выбранный сценарий в новой сессии — останется заполнить несколько полей.",
       placement: "right",
     },
   ],
@@ -330,7 +388,7 @@ export const WORKSPACE_HINTS: HintDef[][] = [
       id: "ws-tier",
       target: '[data-hint="ws-tier"], [data-hint="ws-model"]',
       title: "Уровень модели",
-      text: "Сила ИИ под задачу: Medium — быстрые и простые, High — большинство задач, Ultra — сложный анализ.",
+      text: "Выбор уровня модели под задачу: Medium — быстрые простые запросы, High — большинство задач, Ultra — глубокий анализ. Менять можно перед каждым запросом.",
       placement: "top",
       align: "start",
     },

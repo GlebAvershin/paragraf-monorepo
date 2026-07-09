@@ -11,15 +11,16 @@
 }
 
 .ourapp-hint {
-  --hint-bg: light-dark(rgba(252, 250, 246, 0.78), rgba(22, 26, 29, 0.72));
+  /* Прозрачнее «стекло» — blur посильнее, чтобы текст оставался читаемым. */
+  --hint-bg: light-dark(rgba(252, 250, 246, 0.55), rgba(22, 26, 29, 0.5));
   --hint-border: light-dark(rgba(26, 22, 20, 0.14), rgba(255, 255, 255, 0.16));
   position: fixed;
   max-width: 264px;
   padding: 11px 14px 12px;
   border-radius: 14px;
   background: var(--hint-bg);
-  backdrop-filter: blur(16px) saturate(1.5);
-  -webkit-backdrop-filter: blur(16px) saturate(1.5);
+  backdrop-filter: blur(20px) saturate(1.5);
+  -webkit-backdrop-filter: blur(20px) saturate(1.5);
   border: 1px solid var(--hint-border);
   box-shadow:
     0 12px 32px light-dark(rgba(26, 22, 20, 0.16), rgba(0, 0, 0, 0.5)),
@@ -31,8 +32,8 @@
   opacity: 0;
   filter: blur(6px);
   transition:
-    opacity 450ms ease,
-    filter 450ms ease;
+    opacity 500ms ease,
+    filter 500ms ease;
 }
 
 .ourapp-hint--in {
@@ -40,9 +41,67 @@
   filter: none;
 }
 
+/* Растворение «на беленькие пиксели»: сам корень остаётся видимым (в нём летят
+   пиксели), а «стекло» и текст гаснут — фон/рамка/тень к прозрачному, текст и
+   стрелка расплываются. */
 .ourapp-hint--out {
-  opacity: 0 !important;
-  filter: blur(6px) !important;
+  opacity: 1 !important;
+  filter: none !important;
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: blur(0px) saturate(1) !important;
+  -webkit-backdrop-filter: blur(0px) saturate(1) !important;
+  transition:
+    background 600ms ease,
+    border-color 600ms ease,
+    box-shadow 600ms ease,
+    backdrop-filter 600ms ease;
+  pointer-events: none;
+}
+
+.ourapp-hint__title,
+.ourapp-hint__text,
+.ourapp-hint__arrow {
+  transition:
+    opacity 550ms ease,
+    filter 550ms ease;
+}
+
+.ourapp-hint--out .ourapp-hint__title,
+.ourapp-hint--out .ourapp-hint__text,
+.ourapp-hint--out .ourapp-hint__arrow {
+  opacity: 0;
+  filter: blur(4px);
+}
+
+/* ---- Белые пиксели растворения ---- */
+
+.ourapp-hint__pixels {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.ourapp-hint__pixel {
+  position: absolute;
+  border-radius: 1.5px;
+  background: #fff;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.85);
+  opacity: 0;
+  animation: ourapp-hint-pixel 640ms ease-out forwards;
+}
+
+@keyframes ourapp-hint-pixel {
+  0% {
+    opacity: 0.95;
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--px-dx, 0px), var(--px-dy, -20px)) scale(0.35);
+  }
 }
 
 .ourapp-hint__title {
@@ -122,5 +181,8 @@
   .ourapp-hint {
     transition: opacity 200ms ease;
     filter: none;
+  }
+  .ourapp-hint__pixel {
+    animation: none;
   }
 }
