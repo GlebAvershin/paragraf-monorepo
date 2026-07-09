@@ -71,7 +71,7 @@ export interface AdminEventsSummary {
   history: {
     distinctUsersClicked: number
     bySource: Array<{ source: string | null; count: number }>
-    byRank: Array<{ rank: number; count: number }>
+    byRank: Array<{ source: string | null; rank: number; count: number }>
     byAge: Array<{ bucket: string; count: number }>
   }
   newTask: { byResolved: Array<{ resolved: string; count: number }> }

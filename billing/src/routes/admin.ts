@@ -57,23 +57,26 @@ adminRoutes.get("/events/summary", requireAdmin, async (c) => {
     ORDER BY count DESC
   `)
 
-  // История — блок «История» в сайдбаре (кап 8) vs «Продолжить работу» на
-  // главной (кап 200) — различаем по metadata.source. Для каждого: сколько
-  // раз кликали, по какому rank (позиция в видимом списке) и насколько старую
-  // (по времени последней активности сессии на момент клика) сессию открыли.
+  // История — три источника (сайдбар, кап 8; «Продолжить работу» на главной,
+  // кап 200; страница /history, без капа) — различаем по metadata.source.
+  // Для каждого: сколько раз кликали, по какому rank (позиция в видимом
+  // списке) и насколько старую (по времени последней активности сессии на
+  // момент клика) сессию открыли. rank считаем ОТДЕЛЬНО по источнику — иначе
+  // безлимитная /history размывает гистограмму 8-капнутого сайдбара и портит
+  // ответ на «хватает ли восьми видимых сессий».
   const historyBySource = await db.execute<{ source: string; count: number }>(sql`
     SELECT metadata->>'source' AS source, COUNT(*)::int AS count
     FROM ui_events
     WHERE event_type = 'history_click' AND created_at BETWEEN ${fromIso} AND ${toIso}
     GROUP BY source
   `)
-  const historyByRank = await db.execute<{ rank: number; count: number }>(sql`
-    SELECT (metadata->>'rank')::int AS rank, COUNT(*)::int AS count
+  const historyByRank = await db.execute<{ source: string; rank: number; count: number }>(sql`
+    SELECT metadata->>'source' AS source, (metadata->>'rank')::int AS rank, COUNT(*)::int AS count
     FROM ui_events
     WHERE event_type = 'history_click' AND created_at BETWEEN ${fromIso} AND ${toIso}
       AND metadata ? 'rank'
-    GROUP BY rank
-    ORDER BY rank ASC
+    GROUP BY source, rank
+    ORDER BY source ASC, rank ASC
   `)
   const historyByAgeRaw = await db.execute<{ bucket: string; count: number }>(sql`
     SELECT

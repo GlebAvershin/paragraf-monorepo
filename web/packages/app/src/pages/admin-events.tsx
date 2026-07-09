@@ -35,6 +35,7 @@ const EVENT_TYPE_LABELS: Record<string, string> = {
 const HISTORY_SOURCE_LABELS: Record<string, string> = {
   sidebar_history: "Сайдбар «История» (топ-8)",
   home_continue: "Главная «Продолжить работу»",
+  history_page: "Страница /history (вся история)",
 }
 
 function formatDate(iso: string): string {
@@ -194,14 +195,23 @@ export const AdminEventsPage: Component = () => {
                     </table>
                     <h3>Позиция в списке (0 = самая свежая сессия)</h3>
                     <p class="ourapp-events__hint">
-                      Если клики концентрируются у позиций 6-7 (край видимого списка из 8) — сигнал, что стоит
-                      показывать больше сессий.
+                      Считается отдельно по источнику — у /history нет лимита видимости, поэтому её позиции
+                      не показательны. Смотрите на «Сайдбар «История»»: если там клики концентрируются у
+                      позиций 6-7 (край списка из 8) — сигнал, что стоит показывать больше сессий.
                     </p>
                     <table class="ourapp-events__table">
+                      <thead>
+                        <tr>
+                          <th>Откуда</th>
+                          <th>Позиция</th>
+                          <th>Кликов</th>
+                        </tr>
+                      </thead>
                       <tbody>
                         <For each={s().history.byRank}>
                           {(row) => (
                             <tr>
+                              <td>{(row.source && HISTORY_SOURCE_LABELS[row.source]) ?? row.source ?? "—"}</td>
                               <td>#{row.rank}</td>
                               <td class="ourapp-events__num">{row.count}</td>
                             </tr>

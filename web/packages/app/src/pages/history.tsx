@@ -18,6 +18,7 @@ import { sessionTitle } from "@/utils/session-title"
 import { exportSession, type ExportFormat } from "@/ourapp/session-export"
 import { AppTopbar } from "@/ourapp/app-topbar"
 import { DotWaveBackground } from "@/ourapp/dot-wave-bg"
+import { trackEvent } from "@/ourapp/events-api"
 import type { Part } from "@opencode-ai/sdk/v2"
 import "./history.css"
 
@@ -141,6 +142,13 @@ export const HistoryPage: Component = () => {
   }
 
   const open = (row: HistoryRow) => {
+    const rank = filtered().findIndex((r) => r.id === row.id)
+    void trackEvent("history_click", {
+      source: "history_page",
+      sessionId: row.id,
+      rank,
+      ageMs: Date.now() - row.updatedAt,
+    })
     navigate(`/${base64Encode(row.directory)}/session/${row.id}`)
   }
 

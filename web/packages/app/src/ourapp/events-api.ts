@@ -25,8 +25,9 @@ export const EVENT_TYPES = [
 
 export type UiEventType = (typeof EVENT_TYPES)[number]
 
-/** Источник клика по списку недавних сессий («История» в сайдбаре vs «Продолжить работу» на главной). */
-export type HistoryClickSource = "sidebar_history" | "home_continue"
+/** Источник клика по списку недавних сессий («История» в сайдбаре, «Продолжить работу» на
+ * главной, или полная страница /history). */
+export type HistoryClickSource = "sidebar_history" | "home_continue" | "history_page"
 
 export async function trackEvent(eventType: UiEventType, metadata?: Record<string, unknown>): Promise<void> {
   const token = getSessionToken()
