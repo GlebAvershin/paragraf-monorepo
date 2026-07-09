@@ -21,6 +21,7 @@ export const EVENT_TYPES = [
   "artifact_panel_view",
   "chat_tab_click",
   "chat_tab_new_click",
+  "source_link_click",
 ] as const
 
 export type UiEventType = (typeof EVENT_TYPES)[number]

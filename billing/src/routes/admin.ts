@@ -4,10 +4,11 @@
  * ручка нужна фронту, чтобы сопоставить user_id из engine с email из billing.
  *
  * GET /admin/events, /admin/events/summary — клик-аналитика (2026-07-09) для
- * коллеги-аналитика: /admin/events/summary отдаёт агрегаты под 5 конкретных вопросов
- * (история — кликают ли вообще/куда/насколько старую сессию открывают; «начать новую
- * задачу»; сценарии; просмотр side-панели документа; клики по вкладкам чата),
- * /admin/events — сырой постраничный фид для точечного разбора (join на email).
+ * коллеги-аналитика: /admin/events/summary отдаёт агрегаты под конкретные вопросы
+ * (история — кликают ли вообще/куда/насколько старую сессию открывают, с трёх
+ * источников: сайдбар/главная/страница /history; «начать новую задачу»; сценарии;
+ * просмотр side-панели документа; клики по вкладкам чата; переходы по источникам
+ * ГОСТ/СП под ответом), /admin/events — сырой постраничный фид (join на email).
  *
  * Гейтится requireAdmin (отдельный секрет ADMIN_TOKEN), не пользовательским JWT.
  */
@@ -136,6 +137,17 @@ adminRoutes.get("/events/summary", requireAdmin, async (c) => {
   const chatTabSwitch = byType.find((r) => r.eventType === "chat_tab_click")?.count ?? 0
   const chatTabNew = byType.find((r) => r.eventType === "chat_tab_new_click")?.count ?? 0
 
+  // Переходы по источникам (ГОСТ/СП-ссылки под ответом, source-viewer.tsx) —
+  // топ по doc_id, чтобы видеть, какие стандарты реально идут проверять.
+  const sourceLinkTop = await db.execute<{ docId: string; count: number }>(sql`
+    SELECT metadata->>'docId' AS "docId", COUNT(*)::int AS count
+    FROM ui_events
+    WHERE event_type = 'source_link_click' AND created_at BETWEEN ${fromIso} AND ${toIso}
+    GROUP BY "docId"
+    ORDER BY count DESC
+    LIMIT 30
+  `)
+
   return c.json({
     range: { from: fromIso, to: toIso },
     byType,
@@ -149,6 +161,7 @@ adminRoutes.get("/events/summary", requireAdmin, async (c) => {
     scenarios: { top: scenarioTop },
     artifactPanel: { bySource: artifactBySource },
     chatTabs: { switchClicks: chatTabSwitch, newTabClicks: chatTabNew },
+    sourceLinks: { top: sourceLinkTop },
   })
 })
 

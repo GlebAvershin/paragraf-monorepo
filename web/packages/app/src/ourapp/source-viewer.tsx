@@ -14,6 +14,7 @@
 import { For, Show, type Component } from "solid-js"
 import { Icon } from "@opencode-ai/ui/icon"
 import { GOST_SOURCES, type SourceKind } from "./gost-sources"
+import { trackEvent } from "./events-api"
 
 export interface SourceView {
   kind: SourceKind
@@ -82,6 +83,13 @@ export const SourceViewer: Component<{ sources: Source[] }> = (props) => (
                 rel="noreferrer"
                 title={`${s.title || s.doc_id}${s.view.kind === "external" ? " · внешний портал" : ""}`}
                 class={`${ITEM} bg-[var(--ourapp-bg-surface,#fff)] hover:bg-[var(--ourapp-bg-surface-alt,#F6F2EB)] text-[var(--text-secondary,#4A453F)]`}
+                onClick={() =>
+                  void trackEvent("source_link_click", {
+                    docId: s.doc_id,
+                    kind: s.view.kind,
+                    clausePath: s.clause_path ?? null,
+                  })
+                }
               >
                 <Icon name="open-file" size="small" />
                 <span>

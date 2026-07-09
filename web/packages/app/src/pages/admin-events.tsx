@@ -6,13 +6,14 @@
  * навигации, открывается напрямую по URL /admin/click-analytics (НЕ /admin/events —
  * этот путь занят billing-API, см. admin-events-route.tsx).
  *
- * Отвечает на 5 конкретных вопросов аналитика:
- *   1) «История» в сайдбаре/на главной — кликают ли вообще, куда, насколько
- *      старую сессию открывают (нужно ли показывать больше 8 недавних).
+ * Отвечает на конкретные вопросы аналитика:
+ *   1) «История» (сайдбар / главная / страница /history) — кликают ли вообще, куда,
+ *      насколько старую сессию открывают (нужно ли показывать больше 8 недавних).
  *   2) Как часто жмут «Начать новую задачу».
  *   3) Как часто кликают по сценариям (и по каким).
  *   4) Как часто открывают side-панель документа (карточка в чате vs кнопка «Предпросмотр»).
  *   5) Как часто переключают/открывают вкладки чата.
+ *   6) Как часто реально переходят по источникам ГОСТ/СП под ответом (какие чаще).
  */
 import { createResource, createSignal, For, Show, type Component } from "solid-js"
 import { adminApi, clearAdminToken, getAdminToken, setAdminToken, type AdminEventItem } from "@/ourapp/admin-api"
@@ -30,6 +31,7 @@ const EVENT_TYPE_LABELS: Record<string, string> = {
   artifact_panel_view: "Просмотр side-панели документа",
   chat_tab_click: "Переключение вкладки чата",
   chat_tab_new_click: "Новая вкладка чата",
+  source_link_click: "Переход по источнику ГОСТ/СП",
 }
 
 const HISTORY_SOURCE_LABELS: Record<string, string> = {
@@ -331,6 +333,37 @@ export const AdminEventsPage: Component = () => {
                           <td>Открыли новую вкладку</td>
                           <td class="ourapp-events__num">{s().chatTabs.newTabClicks}</td>
                         </tr>
+                      </tbody>
+                    </table>
+                  </section>
+
+                  <section class="ourapp-events__card">
+                    <h2>6 · Переходы по источникам ГОСТ/СП</h2>
+                    <p class="ourapp-events__lede">
+                      Клики по ссылкам «Источники — открыть и проверить» под ответом — топ по конкретному
+                      документу.
+                    </p>
+                    <table class="ourapp-events__table">
+                      <thead>
+                        <tr>
+                          <th>Документ</th>
+                          <th>Переходов</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <For each={s().sourceLinks.top}>
+                          {(row) => (
+                            <tr>
+                              <td>{row.docId ?? "—"}</td>
+                              <td class="ourapp-events__num">{row.count}</td>
+                            </tr>
+                          )}
+                        </For>
+                        <Show when={s().sourceLinks.top.length === 0}>
+                          <tr>
+                            <td colSpan={2}>Переходов пока нет.</td>
+                          </tr>
+                        </Show>
                       </tbody>
                     </table>
                   </section>
