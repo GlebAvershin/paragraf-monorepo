@@ -12,6 +12,26 @@ import { getSessionToken } from "@/ourapp/auth-storage"
 import pkg from "../package.json"
 import { ServerConnection } from "./context/server"
 
+// Стейл-деплой: вкладка держит старый бандл, а на сервере после нового деплоя
+// ассеты уже переименованы (хэш в имени файла) — динамический import()/preload
+// CSS-чанка падает 404, и юзер утыкается в экран ошибки (поймано на проде
+// 2026-07-08, скриншот "Unable to preload CSS"). Vite шлёт vite:preloadError
+// как раз для этого случая — просто перезагружаем страницу, чтобы подтянуть
+// свежий бандл, вместо ручного «Перезапустить». Троттлинг через sessionStorage
+// (10с) — если бандл реально сломан (не просто устарел), не зацикливаемся
+// в бесконечные reload, а даём дойти до обычного экрана ошибки.
+if (typeof window !== "undefined") {
+  window.addEventListener("vite:preloadError", (event) => {
+    const key = "ourapp.preloadErrorReloadedAt"
+    const last = Number(sessionStorage.getItem(key) ?? 0)
+    const now = Date.now()
+    if (now - last < 10_000) return
+    sessionStorage.setItem(key, String(now))
+    event.preventDefault()
+    window.location.reload()
+  })
+}
+
 const DEFAULT_SERVER_URL_KEY = "opencode.settings.dat:defaultServerUrl"
 
 const getLocale = () => {
