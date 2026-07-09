@@ -9,7 +9,7 @@
 
 {$APP_DOMAIN} {
 	# ---- billing API (auth/кредиты/платежи) ----
-	@billing path /auth/* /me /limits /credits/* /usage/* /events /payments/* /webhooks/* /waitlist /admin/*
+	@billing path /auth/* /me /limits /credits/* /usage/* /events /payments/* /webhooks/* /waitlist /admin/users /admin/events /admin/events/summary
 	handle @billing {
 		reverse_proxy billing:3000 {
 			transport http {

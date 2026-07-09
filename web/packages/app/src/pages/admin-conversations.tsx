@@ -125,7 +125,7 @@ export const AdminConversationsPage: Component = () => {
                 value={search()}
                 onInput={(e) => setSearch(e.currentTarget.value)}
               />
-              <a href="/admin/events" class="ourapp-admin__eventsLink" title="Клик-аналитика">
+              <a href="/admin/click-analytics" class="ourapp-admin__eventsLink" title="Клик-аналитика">
                 Клики →
               </a>
               <button

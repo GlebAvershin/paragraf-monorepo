@@ -348,7 +348,7 @@ export function AppInterface(props: {
                     <Route path="/analytics" component={AnalyticsRoute} />
                     <Route path="/help" component={HelpRoute} />
                     <Route path="/admin/conversations" component={AdminConversationsRoute} />
-                    <Route path="/admin/events" component={AdminEventsRoute} />
+                    <Route path="/admin/click-analytics" component={AdminEventsRoute} />
                     <Route path="/:dir" component={DirectoryLayout}>
                       <Route path="/" component={() => <Navigate href="session" />} />
                       <Route path="/session/:id?" component={SessionRoute} />
