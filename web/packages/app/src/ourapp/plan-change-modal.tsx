@@ -204,10 +204,8 @@ export const PlanChangeModal: Component<PlanChangeModalProps> = (props) => {
                         <span class="ourapp-planmodal__badge">текущий</span>
                       </Show>
                     </div>
-                    <div class="ourapp-planmodal__price">
-                      {formatRubles(plan.priceRubKopeck)}&nbsp;₽
-                      <span class="ourapp-planmodal__priceMeta">/ мес</span>
-                    </div>
+                    {/* Цены на карточках не показываем — пока без подробностей,
+                        что сколько стоит (как и на кнопке докупки кредитов). */}
                     <div class="ourapp-planmodal__tagline">{plan.tagline}</div>
                     <ul class="ourapp-planmodal__features">
                       <For each={plan.features}>
