@@ -80,6 +80,16 @@ export const AdminConversationsPage: Component = () => {
     return res?.ok ? res.data : []
   })
 
+  // adminFetch() никогда не кидает исключение (см. admin-api.ts) — при 401 от
+  // requireAdmin возвращает {ok:false}, а не reject. Resource.error (только для
+  // thrown-ошибок) на это НЕ срабатывал, и неверный токен молча давал пустой
+  // список без единого слова объяснения (нашли вживую 2026-07-09).
+  const authFailed = createMemo(() => {
+    const u = usersRes()
+    const s = sessionsRes()
+    return (!!u && !u.ok) || (!!s && !s.ok)
+  })
+
   const submitToken = (e: Event) => {
     e.preventDefault()
     const t = tokenDraft().trim()
@@ -142,7 +152,7 @@ export const AdminConversationsPage: Component = () => {
                 ✕
               </button>
             </div>
-            <Show when={usersRes.error || sessionsRes.error}>
+            <Show when={authFailed()}>
               <div class="ourapp-admin__error">Ошибка загрузки — проверьте токен.</div>
             </Show>
             <Show when={totalSessions() !== undefined}>
