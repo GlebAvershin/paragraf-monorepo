@@ -199,12 +199,10 @@ export const SettingsPage: Component = () => {
           </div>
         </section>
 
-        <section class="ourapp-settings__card">
-          <div class="ourapp-settings__rowActions">
-            <button type="button" class="ourapp-btn" onClick={() => setAboutOpen(true)}>
-              О Isaac
-            </button>
-          </div>
+        <section class="ourapp-settings__card ourapp-settings__card--about">
+          <button type="button" class="ourapp-btn" onClick={() => setAboutOpen(true)}>
+            О Isaac
+          </button>
         </section>
       </main>
 

@@ -2369,12 +2369,9 @@ export default function Layout(props: ParentProps) {
         {/* OurApp: глобальной полосы вкладок над контентом больше нет. В воркспейсе
             (session.tsx) вкладки живут ВНУТРИ колонки чата, правее сайдбара — сам
             сайдбар тянется до самого верха. На остальных страницах шапка — AppTopbar. */}
-        <main
-          class="flex-1 min-h-0 min-w-0 overflow-x-hidden flex flex-col items-start contain-strict bg-v2-background-bg-base"
-          classList={{
-            "m-2 mt-0 rounded-[10px] shadow-[var(--v2-elevation-raised)] overflow-hidden": !!params.id,
-          }}
-        >
+        {/* OurApp: без m-2/rounded по периметру воркспейса — как на главной,
+            сайдбар и чат прижаты к краям окна без скруглений. */}
+        <main class="flex-1 min-h-0 min-w-0 overflow-x-hidden flex flex-col items-start contain-strict bg-v2-background-bg-base">
           <Show when={!autoselecting.loading} fallback={<div class="size-full" />}>
             {props.children}
           </Show>

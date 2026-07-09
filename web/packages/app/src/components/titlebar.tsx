@@ -668,9 +668,12 @@ function TabNavItem(props: {
 }) {
   const match = useMatch(() => props.href)
   const isActive = () => !!match()
+  // OurApp: крестик — обычный flex-элемент с зарезервированным местом (без
+  // absolute-оверлея с градиентом): длинное название режется многоточием ДО
+  // крестика, короткое видно целиком — правый край вкладки больше не «каша».
   return (
     <div
-      class="group relative flex h-7 min-w-24 max-w-60 flex-row items-center gap-1.5 overflow-hidden whitespace-nowrap rounded-[6px] bg-[var(--tab-bg)] pl-2.5 [--tab-bg:transparent] hover:[--tab-bg:var(--accent-muted)] data-[active='true']:[--tab-bg:var(--accent-muted)]"
+      class="group relative flex h-7 max-w-60 min-w-0 flex-row items-center whitespace-nowrap rounded-[6px] bg-[var(--tab-bg)] pl-2.5 pr-1 [--tab-bg:transparent] hover:[--tab-bg:var(--accent-muted)] data-[active='true']:[--tab-bg:var(--accent-muted)]"
       data-active={isActive()}
     >
       <a
@@ -679,27 +682,19 @@ function TabNavItem(props: {
           if (isActive()) return
           void trackEvent("chat_tab_click", { sessionId: props.sessionId ?? null })
         }}
-        class="flex h-full min-w-0 flex-1 flex-row items-center gap-1.5 overflow-hidden text-[13px] font-medium text-[var(--text-tertiary)] group-data-[active='true']:text-[var(--ourapp-accent)]"
+        class="flex h-full min-w-0 flex-1 flex-row items-center overflow-hidden text-[13px] font-medium text-[var(--text-tertiary)] group-data-[active='true']:text-[var(--ourapp-accent)]"
       >
         <span class="truncate">{props.title}</span>
       </a>
-
-      <div class="absolute right-0 inset-y-0 flex flex-row items-center pr-1 py-1 w-8 pl-2">
-        <div
-          class="absolute inset-0 bg-(image:--inactive-bg) group-hover:bg-(image:--active-bg) group-data-[active=true]:bg-(image:--active-bg)"
-          style={{
-            "--inactive-bg": "linear-gradient(to right, transparent 0%, var(--tab-bg) 80%)",
-            "--active-bg": "linear-gradient(90deg, transparent 0%, var(--tab-bg) 25%)",
-          }}
-        />
-        <IconButtonV2
-          size="small"
-          variant="ghost-muted"
-          class="opacity-0 group-hover:opacity-100 group-data-[active='true']:opacity-100"
-          onClick={props.onClose}
-          icon={<IconV2 name="xmark-small" />}
-        />
-      </div>
+      <IconButtonV2
+        size="small"
+        variant="ghost-muted"
+        class={`ml-1 shrink-0 ${
+          props.hideClose ? "invisible" : "opacity-0 group-hover:opacity-100 group-data-[active='true']:opacity-100"
+        }`}
+        onClick={props.onClose}
+        icon={<IconV2 name="xmark-small" />}
+      />
     </div>
   )
 }

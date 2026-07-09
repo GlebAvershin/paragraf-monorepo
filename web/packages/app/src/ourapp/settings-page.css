@@ -46,6 +46,13 @@
     0 1px 2px light-dark(rgba(26, 22, 20, 0.03), rgba(0, 0, 0, 0.3));
 }
 
+/* Компактная карточка «О Isaac»: меньше паддинг, кнопка по центру. */
+.ourapp-settings__card--about {
+  padding: 14px;
+  display: flex;
+  justify-content: center;
+}
+
 .ourapp-settings__label {
   font-size: 11px;
   text-transform: uppercase;

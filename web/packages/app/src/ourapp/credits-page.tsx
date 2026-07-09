@@ -276,7 +276,7 @@ export const CreditsPage: Component = () => {
                 disabled={busy()}
                 onClick={handleTopup}
               >
-                {busy() ? "Обрабатываем…" : "Докупить +500 кредитов · 1\u00A0290\u00A0₽"}
+                {busy() ? "Обрабатываем…" : "Докупить +500 кредитов"}
               </button>
               <button
                 type="button"

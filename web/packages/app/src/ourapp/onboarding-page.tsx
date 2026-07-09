@@ -159,9 +159,6 @@ export const OnboardingPage: Component<{ onDone: () => void }> = (props) => {
             </button>
           </div>
 
-          <div class="ourapp-onboarding__foot">
-            Нажимая, вы соглашаетесь с&nbsp;офертой и&nbsp;обработкой персональных данных (152-ФЗ).
-          </div>
         </form>
       </main>
     </div>
