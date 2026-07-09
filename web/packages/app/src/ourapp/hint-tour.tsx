@@ -8,8 +8,11 @@
  *   - клик по любой кнопке/ссылке → скрыть ВСЕ подсказки и завершить тур;
  *   - клик по самой подсказке → скрыть только её (когда пачка пуста — следующая);
  *   - появление — плавный fade+blur, исчезновение — растворение.
- * Тур показывается один раз (localStorage ourapp.hints.<tourId>.v1). Каждая
- * плашка стрелкой указывает на элемент, о котором рассказывает.
+ * Тур показывается один раз ЗА ВХОД (localStorage ourapp.hints.<tourId>.v1):
+ * при каждом успешном логине флаги сбрасываются (resetHintTours из
+ * onboarding-page), так что подсказки видит каждый вход в аккаунт — даже
+ * повторный на том же устройстве. Каждая плашка стрелкой указывает на элемент,
+ * о котором рассказывает.
  */
 import { createMemo, createSignal, For, onCleanup, onMount, type Component } from "solid-js"
 import { Portal } from "solid-js/web"
@@ -38,7 +41,23 @@ interface ActiveHint extends HintDef {
   leaving: boolean
 }
 
-const doneKey = (tourId: string) => `ourapp.hints.${tourId}.v1`
+const DONE_KEY_PREFIX = "ourapp.hints."
+const doneKey = (tourId: string) => `${DONE_KEY_PREFIX}${tourId}.v1`
+
+/**
+ * Сбросить флаги «тур просмотрен» — вызывается при успешном входе, чтобы
+ * подсказки показывались на каждый логин (а не один раз на устройство).
+ */
+export function resetHintTours(): void {
+  try {
+    const stale: string[] = []
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i)
+      if (key && key.startsWith(DONE_KEY_PREFIX)) stale.push(key)
+    }
+    stale.forEach((key) => localStorage.removeItem(key))
+  } catch {}
+}
 
 const FADE_MS = 900 // время растворения (карточка + белые пиксели), см. hint-tour.css
 const BATCH_LIFETIME_MS = 15000 // держим подсказки подольше — и на главной, и в воркспейсе
