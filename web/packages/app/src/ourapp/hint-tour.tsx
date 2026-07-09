@@ -328,6 +328,7 @@ export const HOME_HINTS: HintDef[][] = [
       align: "start",
     },
     {
+      // Плашка встаёт ПОД колонкой сценариев (пустая зона) и указывает вверх на список.
       id: "home-scenarios",
       target: '[data-hint="home-scenarios"]',
       title: "Сценарии",
@@ -374,11 +375,13 @@ export const HOME_HINTS: HintDef[][] = [
   ],
   [
     {
+      // ПОД колонкой «Продолжить работу» (пустая зона), не закрывая список и hero.
       id: "home-recent",
       target: '[data-hint="home-recent"]',
       title: "Последние сессии",
       text: "Ваши недавние сессии. Кликните по любой, чтобы вернуться к незавершённой задаче — список прокручивается по всей истории.",
-      placement: "left",
+      placement: "bottom",
+      align: "end",
     },
   ],
 ]
@@ -387,14 +390,16 @@ export const HOME_HINTS: HintDef[][] = [
 export const WORKSPACE_HINTS: HintDef[][] = [
   [
     {
+      // Компактная плашка (короткий текст), чтобы минимально накрывать сайдбар.
       id: "ws-brand",
       target: '[data-hint="ws-brand"]',
       title: "На главную",
-      text: "Клик по имени Isaac возвращает на главную страницу.",
+      text: "Клик по «Isaac» — возврат на главную.",
       placement: "bottom",
       align: "start",
     },
     {
+      // Справа от секции сценариев — над пустой зоной чата, не над сайдбаром.
       id: "ws-scenarios",
       target: '[data-hint="ws-scenarios"]',
       title: "Сценарии",
