@@ -27,12 +27,17 @@ export function ModelTriggerLabel() {
               style={{ "will-change": "opacity", transform: "translateZ(0)" }}
             />
           </Show>
-          <span class="truncate">{local.model.current()?.name ?? language.t("dialog.model.select.title")}</span>
+          {/* data-hint="ws-model" — якорь для онбординг-подсказки про выбор модели. */}
+          <span class="truncate" data-hint="ws-model">
+            {local.model.current()?.name ?? language.t("dialog.model.select.title")}
+          </span>
         </>
       }
     >
       <Icon name="brain" size="small" class="size-4 shrink-0 text-[#0B5345]" />
-      <span class="truncate text-[#0B5345]">Авто</span>
+      <span class="truncate text-[#0B5345]" data-hint="ws-model">
+        Авто
+      </span>
     </Show>
   )
 }

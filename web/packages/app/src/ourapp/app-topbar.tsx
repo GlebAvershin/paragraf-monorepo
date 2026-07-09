@@ -79,6 +79,7 @@ export const AppTopbar: Component<{ active: AppTopbarActive }> = (props) => {
               as="button"
               type="button"
               class="ourapp-landing__vertical"
+              data-hint="home-vertical"
               aria-expanded={menuOpen()}
             >
               {verticalLabel(vertical())}
@@ -110,6 +111,7 @@ export const AppTopbar: Component<{ active: AppTopbarActive }> = (props) => {
                 type="button"
                 class="ourapp-navpill"
                 classList={{ "ourapp-navpill--active": props.active === item.id }}
+                data-hint={`home-nav-${item.id}`}
                 aria-current={props.active === item.id ? "page" : undefined}
                 onClick={() => navigate(item.path)}
               >
@@ -125,6 +127,7 @@ export const AppTopbar: Component<{ active: AppTopbarActive }> = (props) => {
           <button
             type="button"
             class="ourapp-topbar__credits"
+            data-hint="home-credits"
             title="Остаток кредитов в этом месяце — подробнее на странице «Кредиты»"
             onClick={() => navigate("/credits")}
           >
@@ -140,6 +143,7 @@ export const AppTopbar: Component<{ active: AppTopbarActive }> = (props) => {
           type="button"
           class="ourapp-topbar__account"
           classList={{ "ourapp-topbar__account--active": props.active === "settings" }}
+          data-hint="home-account"
           title="Настройки аккаунта"
           onClick={() => navigate("/settings")}
         >

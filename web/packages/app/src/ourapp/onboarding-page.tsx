@@ -12,6 +12,7 @@ import { billingApi } from "./billing-api"
 import { setSessionToken } from "./auth-storage"
 import { usePlatform } from "@/context/platform"
 import { DotWaveBackground } from "./dot-wave-bg"
+import { resetHintTours } from "./hint-tour"
 
 export const OnboardingPage: Component<{ onDone: () => void }> = (props) => {
   const platform = usePlatform()
@@ -63,6 +64,10 @@ export const OnboardingPage: Component<{ onDone: () => void }> = (props) => {
       return
     }
     setSessionToken(res.data.token)
+    // Онбординг-подсказки показываем на КАЖДЫЙ вход: сбрасываем флаги
+    // «тур просмотрен» — после reload туры на главной и в воркспейсе
+    // запустятся заново.
+    resetHintTours()
     // На вебе пароль соединения с движком берётся из сохранённого JWT при
     // bootstrap (entry.tsx). Соединение уже создано без пароля → перезагружаем,
     // чтобы entry.tsx пересобрал его с JWT. На desktop (sidecar-auth) — обычный
