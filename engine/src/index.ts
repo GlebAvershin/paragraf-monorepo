@@ -23,7 +23,7 @@ import {
   updateSession,
 } from "./sessions.ts"
 import { subscribe } from "./bus.ts"
-import { runPrompt } from "./chat.ts"
+import { runPrompt, abortRun } from "./chat.ts"
 import { meta } from "./meta.ts"
 
 type Env = { Variables: { session: Auth; token: string } }
@@ -164,6 +164,14 @@ app.post("/session/:id/message", async (c) => {
   if (!session) return c.json({ error: "not_found" }, 404)
   const body = (await c.req.json().catch(() => ({}))) as PromptBody
   return c.json(await runPrompt(promptArgs(c.var.session.userId, c.var.token, sessionID, body)))
+})
+
+// Кнопка «Стоп» в композере (sdk.client.session.abort). Раньше эндпоинта не было
+// вовсе — SDK-вызов улетал в 404, рендерер молча глотал ошибку (.catch(()=>{})),
+// поэтому «Стоп» визуально ничего не делал (поймано на проде 2026-07-09).
+app.post("/session/:id/abort", (c) => {
+  const ok = abortRun(c.var.session.userId, c.req.param("id"))
+  return c.json(ok)
 })
 
 // Глобальные эндпоинты (рендерер ходит с префиксом /global).

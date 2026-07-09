@@ -23,6 +23,23 @@ import {
   type StoredPart,
 } from "./messages.ts"
 
+// Активные генерации — по ключу userId:sessionID, чтобы кнопка «Стоп» в композере
+// могла прервать именно этот стрим. Раньше движок вообще не реализовывал
+// /session/:id/abort (эндпоинт из контракта opencode), поэтому SDK-вызов
+// sdk.client.session.abort() улетал в 404 и молча проглатывался — кнопка «Стоп»
+// была нерабочей в браузере (поймано на проде 2026-07-09).
+const activeRuns = new Map<string, AbortController>()
+const runKey = (userId: string, sessionID: string) => `${userId}:${sessionID}`
+
+/** Прервать активную генерацию для сессии. Возвращает true, если такая была. */
+export function abortRun(userId: string, sessionID: string): boolean {
+  const key = runKey(userId, sessionID)
+  const controller = activeRuns.get(key)
+  if (!controller) return false
+  controller.abort()
+  return true
+}
+
 export interface PromptInput {
   userId: string
   token: string
@@ -192,6 +209,21 @@ async function maybeGenerateTitle(
 
 export async function runPrompt(input: PromptInput): Promise<{ info: StoredMessage; parts: StoredPart[] }> {
   const { userId, sessionID } = input
+  const key = runKey(userId, sessionID)
+  const controller = new AbortController()
+  activeRuns.set(key, controller)
+  try {
+    return await runPromptInner(input, controller.signal)
+  } finally {
+    if (activeRuns.get(key) === controller) activeRuns.delete(key)
+  }
+}
+
+async function runPromptInner(
+  input: PromptInput,
+  signal: AbortSignal,
+): Promise<{ info: StoredMessage; parts: StoredPart[] }> {
+  const { userId, sessionID } = input
   const now = Date.now()
   const agent = input.agent ?? "build"
   const query = input.parts
@@ -290,6 +322,7 @@ export async function runPrompt(input: PromptInput): Promise<{ info: StoredMessa
           sessionID,
           attachments: extractAttachments(input.parts),
         }),
+        signal,
       })
       if (!res.ok || !res.body) {
         const detail = await res.text().catch(() => "")
@@ -357,11 +390,19 @@ export async function runPrompt(input: PromptInput): Promise<{ info: StoredMessa
     // (сам запрос осмысленный, хоть в базе и не нашлось). fire-and-forget, чтобы не задерживать idle.
     void maybeGenerateTitle(userId, sessionID, key, query, asstPart.text as string).catch(() => {})
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err)
-    asstPart.text = (asstPart.text as string) + (asstPart.text ? "\n\n" : "") + `⚠️ ${msg}`
-    await updatePart(userId, asstPart)
-    publish(userId, { type: "message.part.updated", properties: { part: asstPart } })
-    asstMsg.error = { name: "ProviderError", data: { message: msg } }
+    // Отмена кнопкой «Стоп» — fetch с AbortSignal бросает именно это имя. Не
+    // дописываем "⚠️ ошибка" в текст (юзер сам остановил, это не сбой) — рендерер
+    // сам показывает "прервано" по asstMsg.error.name === "MessageAbortedError".
+    const aborted = err instanceof Error && err.name === "AbortError"
+    if (aborted) {
+      asstMsg.error = { name: "MessageAbortedError", data: {} }
+    } else {
+      const msg = err instanceof Error ? err.message : String(err)
+      asstPart.text = (asstPart.text as string) + (asstPart.text ? "\n\n" : "") + `⚠️ ${msg}`
+      await updatePart(userId, asstPart)
+      publish(userId, { type: "message.part.updated", properties: { part: asstPart } })
+      asstMsg.error = { name: "ProviderError", data: { message: msg } }
+    }
   }
 
   // 5. Финализация + idle.
