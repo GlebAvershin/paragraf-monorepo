@@ -18,7 +18,6 @@ export const EVENT_TYPES = [
   "history_click",
   "new_task_click",
   "scenario_pick",
-  "artifact_panel_view",
   "chat_tab_click",
   "chat_tab_new_click",
   "source_link_click",

@@ -76,7 +76,6 @@ export interface AdminEventsSummary {
   }
   newTask: { byResolved: Array<{ resolved: string; count: number }> }
   scenarios: { top: Array<{ scenarioId: string | null; source: string | null; count: number }> }
-  artifactPanel: { bySource: Array<{ source: string; count: number }> }
   chatTabs: { switchClicks: number; newTabClicks: number }
   sourceLinks: { top: Array<{ docId: string | null; count: number }> }
 }

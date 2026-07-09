@@ -47,7 +47,6 @@ import { isDocxSession, isChatOnlySession } from "@/ourapp/scenarios/docx-result
 import { downloadMarkdownAsPdf } from "@/ourapp/pdf-export"
 import { SourceViewer, extractSources, type Source } from "@/ourapp/source-viewer"
 import { SHOW_SESSION_CONTEXT_USAGE } from "@/ourapp/feature-flags"
-import { trackEvent } from "@/ourapp/events-api"
 import { useDialog } from "@opencode-ai/ui/context/dialog"
 import { createResizeObserver } from "@solid-primitives/resize-observer"
 import { useLanguage } from "@/context/language"
@@ -1047,7 +1046,6 @@ export function MessageTimeline(props: {
       if (busy()) return
       setBusy(true)
       setError(null)
-      void trackEvent("artifact_panel_view", { source: "preview_button", filename: docFilename() })
       try {
         const reg = (
           window as {

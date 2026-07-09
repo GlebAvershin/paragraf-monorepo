@@ -7,8 +7,8 @@
  * коллеги-аналитика: /admin/events/summary отдаёт агрегаты под конкретные вопросы
  * (история — кликают ли вообще/куда/насколько старую сессию открывают, с трёх
  * источников: сайдбар/главная/страница /history; «начать новую задачу»; сценарии;
- * просмотр side-панели документа; клики по вкладкам чата; переходы по источникам
- * ГОСТ/СП под ответом), /admin/events — сырой постраничный фид (join на email).
+ * клики по вкладкам чата; переходы по источникам ГОСТ/СП под ответом),
+ * /admin/events — сырой постраничный фид (join на email).
  *
  * Гейтится requireAdmin (отдельный секрет ADMIN_TOKEN), не пользовательским JWT.
  */
@@ -124,15 +124,6 @@ adminRoutes.get("/events/summary", requireAdmin, async (c) => {
     LIMIT 30
   `)
 
-  // Side-панель документа — сколько раз реально открыли явным кликом по карточке
-  // vs сколько раз она открылась автоматически сразу после генерации.
-  const artifactBySource = await db.execute<{ source: string; count: number }>(sql`
-    SELECT COALESCE(metadata->>'source', 'unknown') AS source, COUNT(*)::int AS count
-    FROM ui_events
-    WHERE event_type = 'artifact_panel_view' AND created_at BETWEEN ${fromIso} AND ${toIso}
-    GROUP BY source
-  `)
-
   // Вкладки чата — переключение между уже открытыми vs открытие новой вкладки.
   const chatTabSwitch = byType.find((r) => r.eventType === "chat_tab_click")?.count ?? 0
   const chatTabNew = byType.find((r) => r.eventType === "chat_tab_new_click")?.count ?? 0
@@ -159,7 +150,6 @@ adminRoutes.get("/events/summary", requireAdmin, async (c) => {
     },
     newTask: { byResolved: newTaskByResolved },
     scenarios: { top: scenarioTop },
-    artifactPanel: { bySource: artifactBySource },
     chatTabs: { switchClicks: chatTabSwitch, newTabClicks: chatTabNew },
     sourceLinks: { top: sourceLinkTop },
   })
