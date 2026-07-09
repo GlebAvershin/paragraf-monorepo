@@ -15,6 +15,7 @@ import { scenariosFor, type Scenario } from "./scenarios"
 import { AppTopbar } from "./app-topbar"
 import { VERTICALS, verticalLabel, type Vertical } from "./verticals"
 import { DotWaveBackground } from "./dot-wave-bg"
+import { HintTour, HOME_HINTS } from "./hint-tour"
 
 export interface HomeRecentSession {
   id: string
@@ -42,10 +43,12 @@ export const HomeWelcome: Component<HomeWelcomeProps> = (props) => {
     <div class="ourapp-landing">
       <DotWaveBackground />
       <AppTopbar active="home" />
+      {/* Онбординг-подсказки (один раз после авторизации). */}
+      <HintTour tourId="home" batches={HOME_HINTS} />
 
       <main class="ourapp-landing__main">
         <Show when={scenarios().length > 0}>
-          <aside class="ourapp-landing__scen">
+          <aside class="ourapp-landing__scen" data-hint="home-scenarios">
             <div class="ourapp-landing__recenthead">
               <h2 class="ourapp-landing__recenttitle">Сценарии</h2>
             </div>

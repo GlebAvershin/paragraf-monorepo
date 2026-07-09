@@ -1,0 +1,126 @@
+/* OurApp — онбординг-подсказки: «стеклянные» плашки (glassmorphism), но с
+ * достаточным контрастом, чтобы текст читался на любом фоне. Появление —
+ * плавный fade из лёгкого blur, исчезновение — растворение. Стрелка указывает
+ * на элемент, о котором подсказка. */
+
+.ourapp-hints {
+  position: fixed;
+  inset: 0;
+  z-index: 45; /* над контентом и шапкой (20), под диалогами (50) */
+  pointer-events: none;
+}
+
+.ourapp-hint {
+  --hint-bg: light-dark(rgba(252, 250, 246, 0.78), rgba(22, 26, 29, 0.72));
+  --hint-border: light-dark(rgba(26, 22, 20, 0.14), rgba(255, 255, 255, 0.16));
+  position: fixed;
+  max-width: 264px;
+  padding: 11px 14px 12px;
+  border-radius: 14px;
+  background: var(--hint-bg);
+  backdrop-filter: blur(16px) saturate(1.5);
+  -webkit-backdrop-filter: blur(16px) saturate(1.5);
+  border: 1px solid var(--hint-border);
+  box-shadow:
+    0 12px 32px light-dark(rgba(26, 22, 20, 0.16), rgba(0, 0, 0, 0.5)),
+    inset 0 1px 0 light-dark(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.08));
+  font-family: var(--font-family-sans);
+  color: light-dark(#1a1614, #ede8df);
+  pointer-events: auto;
+  cursor: pointer;
+  opacity: 0;
+  filter: blur(6px);
+  transition:
+    opacity 450ms ease,
+    filter 450ms ease;
+}
+
+.ourapp-hint--in {
+  opacity: 1;
+  filter: none;
+}
+
+.ourapp-hint--out {
+  opacity: 0 !important;
+  filter: blur(6px) !important;
+}
+
+.ourapp-hint__title {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: light-dark(#0b5345, #2fd8a6);
+  margin-bottom: 3px;
+}
+
+.ourapp-hint__text {
+  font-size: 12px;
+  line-height: 1.5;
+  color: light-dark(#2a2621, #cfc9bd);
+}
+
+/* ---- Стрелка-указатель на целевой элемент ---- */
+
+.ourapp-hint__arrow {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: var(--hint-bg);
+  border: 1px solid var(--hint-border);
+  transform: rotate(45deg);
+}
+
+/* Плашка ПОД целью → стрелка сверху. */
+.ourapp-hint--bottom .ourapp-hint__arrow {
+  top: -7px;
+  border-bottom: 0;
+  border-right: 0;
+}
+
+/* Плашка НАД целью → стрелка снизу. */
+.ourapp-hint--top .ourapp-hint__arrow {
+  bottom: -7px;
+  border-top: 0;
+  border-left: 0;
+}
+
+.ourapp-hint--bottom.ourapp-hint--align-center .ourapp-hint__arrow,
+.ourapp-hint--top.ourapp-hint--align-center .ourapp-hint__arrow {
+  left: 50%;
+  margin-left: -6px;
+}
+
+.ourapp-hint--bottom.ourapp-hint--align-start .ourapp-hint__arrow,
+.ourapp-hint--top.ourapp-hint--align-start .ourapp-hint__arrow {
+  left: 18px;
+}
+
+.ourapp-hint--bottom.ourapp-hint--align-end .ourapp-hint__arrow,
+.ourapp-hint--top.ourapp-hint--align-end .ourapp-hint__arrow {
+  right: 18px;
+}
+
+/* Плашка СПРАВА от цели → стрелка слева. */
+.ourapp-hint--right .ourapp-hint__arrow {
+  left: -7px;
+  top: 50%;
+  margin-top: -6px;
+  border-top: 0;
+  border-right: 0;
+}
+
+/* Плашка СЛЕВА от цели → стрелка справа. */
+.ourapp-hint--left .ourapp-hint__arrow {
+  right: -7px;
+  top: 50%;
+  margin-top: -6px;
+  border-bottom: 0;
+  border-left: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ourapp-hint {
+    transition: opacity 200ms ease;
+    filter: none;
+  }
+}

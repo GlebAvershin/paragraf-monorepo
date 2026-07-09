@@ -8,6 +8,7 @@
 @import "./ourapp/credits-page.css";
 @import "./ourapp/onboarding-page.css";
 @import "./ourapp/settings-page.css";
+@import "./ourapp/hint-tour.css";
 
 @font-face {
   font-family: "JetBrainsMono Nerd Font Mono";

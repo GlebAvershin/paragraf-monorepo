@@ -27,6 +27,7 @@ export const ScenarioTierSelector: Component<{ model: ScenarioTierSelectorModel 
       <DropdownMenu.Trigger
         as="button"
         type="button"
+        data-hint="ws-tier"
         title="Сила модели для этого сценария"
         aria-label="Сила модели"
         class="shrink-0 inline-flex items-center gap-x-1 h-8 px-2 rounded-md text-[13px] font-[440] leading-4 text-v2-text-text-faint hover:bg-v2-overlay-simple-overlay-hover transition-colors"

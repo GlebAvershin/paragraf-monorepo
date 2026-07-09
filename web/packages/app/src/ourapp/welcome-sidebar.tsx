@@ -102,7 +102,13 @@ export const WelcomeSidebar: Component<WelcomeSidebarProps> = (props) => {
   return (
     <aside class="ourapp-sidebar">
       <div class="ourapp-sidebar__header">
-        <button type="button" class="ourapp-sidebar__brand" title="На главную" onClick={() => navigate("/")}>
+        <button
+          type="button"
+          class="ourapp-sidebar__brand"
+          data-hint="ws-brand"
+          title="На главную"
+          onClick={() => navigate("/")}
+        >
           Isaac
         </button>
         <DropdownMenu gutter={4} placement="bottom-start" open={menuOpen()} onOpenChange={setMenuOpen}>
@@ -135,7 +141,7 @@ export const WelcomeSidebar: Component<WelcomeSidebarProps> = (props) => {
         </DropdownMenu>
       </div>
 
-      <div class="ourapp-sidebar__section">
+      <div class="ourapp-sidebar__section" data-hint="ws-scenarios">
         <div class="ourapp-sidebar__label">Сценарии</div>
         <For each={list()}>
           {(s, i) => (

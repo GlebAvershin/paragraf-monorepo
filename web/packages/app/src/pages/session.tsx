@@ -62,6 +62,7 @@ import { useSessionCommands } from "@/pages/session/use-session-commands"
 import { useSessionHashScroll } from "@/pages/session/use-session-hash-scroll"
 import { shouldUseV2NewSessionPage } from "@/pages/session/new-session-layout"
 import { WelcomeSidebar, type WelcomeSidebarRecentSession } from "@/ourapp/welcome-sidebar"
+import { HintTour, WORKSPACE_HINTS } from "@/ourapp/hint-tour"
 import { Titlebar } from "@/components/titlebar"
 import { type Scenario } from "@/ourapp/scenario-library"
 import { loadVertical } from "@/ourapp/verticals"
@@ -1766,6 +1767,8 @@ export default function Page() {
       <div class="flex-1 min-h-0 flex flex-col md:flex-row">
         {/* OurApp WelcomeSidebar — наш левый сайдбар для обоих режимов сессии. */}
         <Show when={isDesktop()}>
+          {/* Онбординг-подсказки воркспейса (один раз). */}
+          <HintTour tourId="workspace" batches={WORKSPACE_HINTS} />
           <WelcomeSidebar
             vertical={loadVertical()}
             onPickScenario={(s: Scenario) => {
