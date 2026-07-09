@@ -7,6 +7,7 @@
 import { type Component } from "solid-js"
 import { Icon } from "@opencode-ai/ui/icon"
 import { openArtifactPreview, type ArtifactInfo } from "./artifact-preview"
+import { trackEvent } from "./events-api"
 
 export interface ArtifactCardProps {
   filename: string
@@ -61,6 +62,7 @@ export const ArtifactCard: Component<ArtifactCardProps> = (props) => {
       text,
       blocks: props.blocks,
     }
+    void trackEvent("artifact_panel_view", { source: "card", filename: props.filename })
     openArtifactPreview(info)
   }
 

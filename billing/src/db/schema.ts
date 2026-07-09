@@ -339,6 +339,31 @@ export const magicLinkTokens = pgTable(
   }),
 )
 
+// ===== UI events (клик-аналитика для внутреннего дашборда, 2026-07-09) =====
+//
+// Отдельно от usage_events (там — расход кредитов на модели) и от audit_log
+// (там — security-аудит чувствительных операций). Это чистый product-аналитический
+// стрим: куда/сколько раз кликают в конкретных местах UI. eventType — свободный
+// текст (см. EVENT_TYPES в web/.../ourapp/events-api.ts), metadata — контекст
+// конкретного клика (sessionId/rank/ageMs/scenarioId/source и т.п.).
+
+export const uiEvents = pgTable(
+  "ui_events",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    eventType: text("event_type").notNull(),
+    metadata: jsonb("metadata").$type<Record<string, unknown>>().notNull().default({}),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    userIdx: index("ui_events_user_idx").on(t.userId),
+    typeCreatedIdx: index("ui_events_type_created_idx").on(t.eventType, t.createdAt),
+  }),
+)
+
 // ===== Waitlist (лендинг: менеджеры — Фаза 4) =====
 
 export const waitlistSignups = pgTable(
@@ -366,3 +391,4 @@ export type Payment = typeof payments.$inferSelect
 export type UsageEvent = typeof usageEvents.$inferSelect
 export type CreditGrant = typeof creditGrants.$inferSelect
 export type ModelRate = typeof modelRates.$inferSelect
+export type UiEvent = typeof uiEvents.$inferSelect

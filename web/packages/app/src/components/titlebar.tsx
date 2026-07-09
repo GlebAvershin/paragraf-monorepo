@@ -24,6 +24,7 @@ import { makeEventListener } from "@solid-primitives/event-listener"
 import { StatusPopover } from "./status-popover"
 import { SDKProvider } from "@/context/sdk"
 import { SHOW_STATUS_POPOVER } from "@/ourapp/feature-flags"
+import { trackEvent } from "@/ourapp/events-api"
 
 type TauriDesktopWindow = {
   startDragging?: () => Promise<void>
@@ -420,6 +421,7 @@ export function Titlebar(props: { update?: TitlebarUpdate }) {
                           <TabNavItem
                             href={tab.href}
                             title={tab.info.title}
+                            sessionId={tab.sessionId}
                             onClose={() => tabsStoreActions.removeTab(tab.href)}
                             hideClose={tabsEnriched().length < 2}
                           />
@@ -438,6 +440,7 @@ export function Titlebar(props: { update?: TitlebarUpdate }) {
                         icon={<IconV2 name="plus" />}
                         as="a"
                         href={newSessionHref()}
+                        onClick={() => void trackEvent("chat_tab_new_click")}
                         aria-label={language.t("command.session.new")}
                       />
                     }
@@ -659,6 +662,7 @@ function DesktopTitlebarIconButton(props: Parameters<typeof IconButtonV2>[0]) {
 function TabNavItem(props: {
   href: string
   title: string
+  sessionId?: string
   hideClose?: boolean
   onClose: () => void
 }) {
@@ -671,6 +675,10 @@ function TabNavItem(props: {
     >
       <a
         href={props.href}
+        onClick={() => {
+          if (isActive()) return
+          void trackEvent("chat_tab_click", { sessionId: props.sessionId ?? null })
+        }}
         class="flex h-full min-w-0 flex-1 flex-row items-center gap-1.5 overflow-hidden text-[13px] font-medium text-[var(--text-tertiary)] group-data-[active='true']:text-[var(--ourapp-accent)]"
       >
         <span class="truncate">{props.title}</span>

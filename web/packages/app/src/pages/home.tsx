@@ -33,6 +33,7 @@ import { sessionTitle } from "@/utils/session-title"
 import { pathKey } from "@/utils/path-key"
 import { messageAgentColor } from "@/utils/agent"
 import { sessionPermissionRequest } from "@/pages/session/composer/session-request-tree"
+import { trackEvent } from "@/ourapp/events-api"
 
 const USE_HOME_DESIGN = import.meta.env.VITE_OPENCODE_CHANNEL !== "prod"
 // OurApp: правая колонка «Продолжить работу» показывает ~10 сессий и скроллит по
@@ -156,6 +157,7 @@ function HomeDesign() {
 
   function openNewSession() {
     const project = selectedProject()
+    void trackEvent("new_task_click", { resolved: !!project })
     if (!project) {
       void chooseProject()
       return
@@ -166,6 +168,14 @@ function HomeDesign() {
   }
 
   function openSession(session: Session) {
+    const rank = records().findIndex((r) => r.session.id === session.id)
+    const ts = session.time.updated ?? session.time.created
+    void trackEvent("history_click", {
+      source: "home_continue",
+      sessionId: session.id,
+      rank,
+      ageMs: Date.now() - ts,
+    })
     const project = projectForSession(session, projects(), projectByID())
     layout.projects.open(project?.worktree ?? session.directory)
     server.projects.touch(project?.worktree ?? session.directory)
@@ -207,6 +217,7 @@ function HomeDesign() {
   // Правый main заменяем на ScenarioLibrary (как в design/preview.html mockup 02).
   // Клик по сценарию → открывается новая сессия + диспатчится scenario-pick.
   const onScenarioPick = (scenario: { id?: string; prompt: string; recommendedModel?: string }) => {
+    void trackEvent("scenario_pick", { scenarioId: scenario.id ?? null, source: "home" })
     const project = selectedProject()
     if (!project) {
       void chooseProject()

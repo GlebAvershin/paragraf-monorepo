@@ -63,6 +63,32 @@ export interface AdminMessageWithParts {
   parts: Array<Record<string, unknown>>
 }
 
+// ===== Клик-аналитика (2026-07-09) =====
+
+export interface AdminEventsSummary {
+  range: { from: string; to: string }
+  byType: Array<{ eventType: string; count: number }>
+  history: {
+    distinctUsersClicked: number
+    bySource: Array<{ source: string | null; count: number }>
+    byRank: Array<{ rank: number; count: number }>
+    byAge: Array<{ bucket: string; count: number }>
+  }
+  newTask: { byResolved: Array<{ resolved: string; count: number }> }
+  scenarios: { top: Array<{ scenarioId: string | null; source: string | null; count: number }> }
+  artifactPanel: { bySource: Array<{ source: string; count: number }> }
+  chatTabs: { switchClicks: number; newTabClicks: number }
+}
+
+export interface AdminEventItem {
+  id: number
+  userId: string
+  email: string | null
+  eventType: string
+  metadata: Record<string, unknown>
+  createdAt: string
+}
+
 export type AdminResult<T> = { ok: true; data: T } | { ok: false; error: string; status?: number }
 
 async function adminFetch<T>(base: string, path: string): Promise<AdminResult<T>> {
@@ -89,4 +115,14 @@ export const adminApi = {
     ),
   messages: (sessionID: string) =>
     adminFetch<AdminMessageWithParts[]>(ENGINE_BASE_URL, `/admin/sessions/${sessionID}/messages`),
+  eventsSummary: (from: Date, to: Date) =>
+    adminFetch<AdminEventsSummary>(
+      BILLING_BASE_URL,
+      `/admin/events/summary?from=${from.toISOString()}&to=${to.toISOString()}`,
+    ),
+  events: (type?: string, limit = 100) =>
+    adminFetch<{ items: AdminEventItem[] }>(
+      BILLING_BASE_URL,
+      `/admin/events?limit=${limit}${type ? `&type=${encodeURIComponent(type)}` : ""}`,
+    ),
 }

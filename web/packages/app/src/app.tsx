@@ -18,6 +18,7 @@ import HistoryRoute from "@/ourapp/history-route"
 import AnalyticsRoute from "@/ourapp/analytics-route"
 import HelpRoute from "@/ourapp/help-route"
 import AdminConversationsRoute from "@/ourapp/admin-conversations-route"
+import AdminEventsRoute from "@/ourapp/admin-events-route"
 import { OnboardingGate } from "@/ourapp/onboarding-gate"
 import { QueryClient, QueryClientProvider } from "@tanstack/solid-query"
 import { Effect } from "effect"
@@ -347,6 +348,7 @@ export function AppInterface(props: {
                     <Route path="/analytics" component={AnalyticsRoute} />
                     <Route path="/help" component={HelpRoute} />
                     <Route path="/admin/conversations" component={AdminConversationsRoute} />
+                    <Route path="/admin/events" component={AdminEventsRoute} />
                     <Route path="/:dir" component={DirectoryLayout}>
                       <Route path="/" component={() => <Navigate href="session" />} />
                       <Route path="/session/:id?" component={SessionRoute} />

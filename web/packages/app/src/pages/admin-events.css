@@ -1,0 +1,185 @@
+/* OurApp admin-events — внутренний инструмент разработчиков/аналитика, минимум полировки. */
+
+.ourapp-events {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  font-family: var(--font-family-sans);
+  color: light-dark(#1a1614, #ede8df);
+  background: light-dark(#fbf9f4, #15120f);
+  padding: 16px 20px 40px;
+}
+
+.ourapp-events__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.ourapp-events__head h1 {
+  font-size: 18px;
+  margin: 0;
+}
+
+.ourapp-events__headActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ourapp-events__headActions a {
+  font-size: 12px;
+  color: light-dark(#0b5345, #1a8a6b);
+  text-decoration: none;
+}
+
+.ourapp-events__headActions a:hover {
+  text-decoration: underline;
+}
+
+.ourapp-events__headActions button {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid light-dark(#d8d2c5, #3a342d);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.ourapp-events__pills {
+  display: flex;
+  gap: 4px;
+}
+
+.ourapp-events__pill {
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid light-dark(#d8d2c5, #3a342d);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.ourapp-events__pill--active {
+  background: #0b5345;
+  border-color: #0b5345;
+  color: #fbf9f4;
+}
+
+.ourapp-events__loading {
+  padding: 20px;
+  color: light-dark(#6b6660, #847e72);
+  font-size: 13px;
+}
+
+.ourapp-events__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.ourapp-events__card {
+  border: 1px solid light-dark(#e8e3db, #2e2924);
+  border-radius: 10px;
+  padding: 14px 16px;
+  background: light-dark(#fff, #1f1b17);
+}
+
+.ourapp-events__card h2 {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0 0 10px;
+}
+
+.ourapp-events__card h3 {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: light-dark(#6b6660, #847e72);
+  margin: 14px 0 6px;
+}
+
+.ourapp-events__lede {
+  font-size: 12px;
+  color: light-dark(#4a453f, #b5afa4);
+  margin: 0;
+}
+
+.ourapp-events__hint {
+  font-size: 11px;
+  color: light-dark(#6b6660, #847e72);
+  margin: 0 0 6px;
+}
+
+.ourapp-events__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.ourapp-events__table th {
+  text-align: left;
+  font-weight: 500;
+  color: light-dark(#6b6660, #847e72);
+  padding: 4px 6px;
+  border-bottom: 1px solid light-dark(#e8e3db, #2e2924);
+}
+
+.ourapp-events__table td {
+  padding: 4px 6px;
+  border-bottom: 1px solid light-dark(#f0ebe0, #2e2924);
+}
+
+.ourapp-events__num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
+.ourapp-events__feed {
+  border-top: 1px solid light-dark(#e8e3db, #2e2924);
+  padding-top: 16px;
+}
+
+.ourapp-events__feedHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.ourapp-events__feedHead h2 {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.ourapp-events__feedHead select {
+  padding: 5px 8px;
+  border-radius: 6px;
+  border: 1px solid light-dark(#d8d2c5, #3a342d);
+  background: light-dark(#fff, #25201b);
+  color: inherit;
+  font-family: inherit;
+  font-size: 12px;
+}
+
+.ourapp-events__feedScroll {
+  max-height: 480px;
+  overflow-y: auto;
+}
+
+.ourapp-events__meta {
+  font-family: var(--font-family-mono);
+  font-size: 11px;
+  color: light-dark(#6b6660, #847e72);
+  max-width: 420px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

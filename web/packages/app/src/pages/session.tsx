@@ -68,6 +68,7 @@ import { type Scenario } from "@/ourapp/scenario-library"
 import { loadVertical } from "@/ourapp/verticals"
 import { sortedRootSessions } from "@/pages/layout/helpers"
 import { ArtifactPreviewPanel, useArtifactPanel } from "@/ourapp/artifact-preview"
+import { trackEvent } from "@/ourapp/events-api"
 import { ScenarioWizardHost } from "@/ourapp/scenarios/scenario-wizard-host"
 import { openScenarioWizard } from "@/ourapp/scenarios/wizard-controller"
 import { sessionTitle } from "@/utils/session-title"
@@ -215,7 +216,8 @@ export default function Page() {
   // Точно тот же путь что в home.tsx: layout.projects.list() + globalSync.child().
   const sidebarRecentSessions = createMemo(() => {
     const projects = layout.projects.list()
-    if (projects.length === 0) return [] as Array<WelcomeSidebarRecentSession & { directory: string }>
+    if (projects.length === 0)
+      return [] as Array<WelcomeSidebarRecentSession & { directory: string; updatedAt: number }>
     const now = Date.now()
     const allSessions: ReturnType<typeof sortedRootSessions> = []
     for (const project of projects) {
@@ -243,6 +245,7 @@ export default function Page() {
       title: sessionTitle(session.title) || "Без названия",
       subtitle: session.title,
       directory: session.directory,
+      updatedAt: session.time.updated ?? session.time.created,
     }))
   })
 
@@ -1772,6 +1775,7 @@ export default function Page() {
           <WelcomeSidebar
             vertical={loadVertical()}
             onPickScenario={(s: Scenario) => {
+              void trackEvent("scenario_pick", { scenarioId: s.id, source: "sidebar" })
               // OurApp: сценарий из сайдбара всегда должен стартовать в НОВОЙ
               // сессии — иначе wizard/prompt-pick шлют в текущую активную сессию
               // (params.id уже задан) и склеивают несвязанные темы в одном чате
@@ -1795,9 +1799,17 @@ export default function Page() {
             recentSessions={sidebarRecentSessions()}
             activeSessionId={params.id}
             onOpenSession={(session) => {
-              const record = sidebarRecentSessions().find((r) => r.id === session.id)
+              const list = sidebarRecentSessions()
+              const rank = list.findIndex((r) => r.id === session.id)
+              const record = list[rank]
               const dir = record?.directory
               if (!dir) return
+              void trackEvent("history_click", {
+                source: "sidebar_history",
+                sessionId: session.id,
+                rank,
+                ageMs: Date.now() - record.updatedAt,
+              })
               navigate(`/${base64Encode(dir)}/session/${session.id}`)
             }}
             onOpenCredits={() => navigate("/credits")}

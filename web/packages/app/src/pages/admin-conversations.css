@@ -89,6 +89,18 @@
   font-size: 13px;
 }
 
+.ourapp-admin__eventsLink {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid light-dark(#d8d2c5, #3a342d);
+  color: light-dark(#0b5345, #1a8a6b);
+  text-decoration: none;
+  font-size: 12px;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+}
+
 .ourapp-admin__listHead button {
   padding: 6px 10px;
   border-radius: 6px;

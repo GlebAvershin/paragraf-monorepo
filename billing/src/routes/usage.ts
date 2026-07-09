@@ -16,12 +16,12 @@ import { requireSession } from "../lib/middleware.ts"
 
 export const usageRoutes = new Hono()
 
-interface DateRange {
+export interface DateRange {
   from: Date
   to: Date
 }
 
-function parseRange(query: Record<string, string | undefined>): DateRange {
+export function parseRange(query: Record<string, string | undefined>): DateRange {
   const now = new Date()
   const defaultFrom = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000) // -30 дней
   const fromParam = query.from
