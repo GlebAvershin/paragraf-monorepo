@@ -87,10 +87,11 @@ async function request<T>(path: string, opts?: RequestOptions): Promise<ApiResul
     const parsed = text ? safeJson(text) : null
     let result: ApiResult<T>
     if (!res.ok) {
-      const errorMsg =
+      const rawError =
         parsed && typeof parsed === "object" && "error" in parsed
-          ? String((parsed as { error: unknown }).error)
-          : `HTTP ${res.status}`
+          ? (parsed as { error: unknown }).error
+          : undefined
+      const errorMsg = extractErrorMessage(rawError) ?? `HTTP ${res.status}`
       result = {
         ok: false,
         status: res.status,
@@ -109,6 +110,25 @@ async function request<T>(path: string, opts?: RequestOptions): Promise<ApiResul
       error: err instanceof Error ? err.message : "Network error",
     }
   }
+}
+
+/**
+ * Достаёт читаемое сообщение из тела ошибки billing-роута. Обычно `error` — строка
+ * (наш код), но при провале zValidator (@hono/zod-validator) он падает СВОИМ
+ * дефолтным форматом — `error` там целый ZodError-объект ({issues:[{message}],...}),
+ * а не строка. Раньше это молча превращалось в String(object) → "[object Object]"
+ * (поймано вживую 2026-07-10 на /auth/login с email, не прошедшим z.string().email()).
+ */
+function extractErrorMessage(raw: unknown): string | undefined {
+  if (typeof raw === "string") return raw
+  if (raw && typeof raw === "object" && "issues" in raw) {
+    const issues = (raw as { issues?: unknown }).issues
+    if (Array.isArray(issues) && issues.length > 0) {
+      const first = issues[0] as { message?: unknown }
+      if (typeof first?.message === "string") return first.message
+    }
+  }
+  return undefined
 }
 
 function safeJson(text: string): unknown {
