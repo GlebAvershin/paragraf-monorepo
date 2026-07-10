@@ -129,6 +129,9 @@ type PromptBody = {
   model?: { providerID: string; modelID: string }
   agent?: string
   variant?: string
+  // OurApp-расширение: web шлёт "deep" для тира Ultra в Технологе — gost-rag декомпозирует
+  // запрос на под-вопросы (multi-query fusion). Тир — понятие web, движок знает только флаг.
+  retrieval?: string
   // file-части (image/*) — сканы: пересылаются в gateway на server-side OCR.
   parts?: Array<{ type: string; text?: string; mime?: string; url?: string; filename?: string }>
 }
@@ -140,6 +143,7 @@ const promptArgs = (userId: string, token: string, sessionID: string, body: Prom
   model: body.model ?? { providerID: "ourapp-ru", modelID: "gigachat-pro" },
   agent: body.agent,
   variant: body.variant,
+  retrieval: body.retrieval,
   parts: Array.isArray(body.parts) ? body.parts : [],
 })
 

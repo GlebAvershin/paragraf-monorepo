@@ -51,6 +51,8 @@ export interface PromptInput {
   agent?: string
   /** opencode-вариант (deep-thinking тумблер шлёт "high") — gateway-app транслирует в thinking. */
   variant?: string
+  /** OurApp: "deep" (тир Ultra в Технологе) — gost-rag декомпозирует запрос на под-вопросы. */
+  retrieval?: string
   parts: Array<{
     type: string
     text?: string
@@ -296,7 +298,11 @@ async function runPromptInner(
 
     // Заземление в ГОСТ: ретрив выдержек под запрос. null ⇒ сервис недоступен → отвечаем БЕЗ
     // заземления (не падаем). Пусто/ниже порога ⇒ честный abstain, без выдуманных пунктов.
-    const gost = groundingEnabled(agent) ? await retrieveGost(query, config.GOST_TOP_K) : null
+    // retrieval="deep" (тир Ultra) — планнер-декомпозиция на стороне gost-rag; ключ юзера
+    // передаётся, чтобы планнер-вызов списался с ЕГО кредитов (spend-logs → ETL).
+    const gost = groundingEnabled(agent)
+      ? await retrieveGost(query, config.GOST_TOP_K, { deep: input.retrieval === "deep", userKey: key })
+      : null
     const grounded = !!gost && gost.chunks.length > 0 && gost.top_score >= config.GOST_MIN_SCORE
     const abstain = !!gost && !grounded // успешно искали в базе, но релевантного нет
 
