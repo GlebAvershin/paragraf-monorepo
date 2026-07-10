@@ -62,8 +62,10 @@ export async function resolveSources(designations: string[]): Promise<GostSource
 }
 
 /** Ретрив выдержек ГОСТ под запрос. null ⇒ сервис недоступен/ошибка (движок деградирует без
- *  заземления). deep (тир Ultra) — декомпозиция на под-вопросы + fusion на стороне gost-rag;
- *  userKey — litellm-ключ юзера: планнер-вызов оплачивается его кредитами. */
+ *  заземления). userKey (litellm-ключ юзера) шлём ВСЕГДА: эмбеддинг запроса и (в deep) планнер
+ *  оплачиваются кредитами юзера — сервисного ключа нет (решение 2026-07-10; embedding-тир
+ *  метрится без пола, см. billing computeCredits.floorCredits). deep (тир Ultra) — декомпозиция
+ *  на под-вопросы + fusion на стороне gost-rag. */
 export async function retrieveGost(
   query: string,
   topK?: number,
@@ -76,7 +78,8 @@ export async function retrieveGost(
     body: JSON.stringify({
       query,
       ...(topK ? { top_k: topK } : {}),
-      ...(deep ? { deep: true, user_key: opts?.userKey } : {}),
+      ...(opts?.userKey ? { user_key: opts.userKey } : {}),
+      ...(deep ? { deep: true } : {}),
     }),
     signal: AbortSignal.timeout(deep ? DEEP_TIMEOUT_MS : TIMEOUT_MS),
   }).catch(() => null)

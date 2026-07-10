@@ -52,7 +52,10 @@ export const creditReasonEnum = pgEnum("credit_reason", [
   "topup", // докупка вне подписки — переносится на 1 след. месяц
 ])
 
-export const modelTierEnum = pgEnum("model_tier", ["lite", "mid", "top"])
+// "embedding" — служебный тир gost-rag-ретрива (метрится по факту, БЕЗ пола 1 кредит; см.
+// computeCredits.floorCredits). Добавление значения в enum = ручная миграция
+// drizzle/manual/2026-07-10-model-tier-embedding.sql (ALTER TYPE ... ADD VALUE).
+export const modelTierEnum = pgEnum("model_tier", ["lite", "mid", "top", "embedding"])
 
 // ===== Tariff plans (static catalog) =====
 

@@ -24,7 +24,7 @@ const seedPlans: (typeof schema.plans.$inferInsert)[] = [
     monthlyBudgetUsdCenti: 200, // $2 — verifies LiteLLM hardcap
     monthlyCredits: 30, // ≈ 2-3 задачи на Sonnet 1.5×
     monthlyTasksTarget: 3, // deprecated, оставлено для совместимости
-    allowedModels: ["gigachat-pro", "gigachat-lite", "yandexgpt-pro", "yandexgpt-lite", "z-ai/glm-5.2", "deepseek/deepseek-chat"],
+    allowedModels: ["gigachat-pro", "gigachat-lite", "yandexgpt-pro", "yandexgpt-lite", "z-ai/glm-5.2", "deepseek/deepseek-chat", "qwen/qwen3-embedding-8b"],
     features: { trial: true, trialDays: 14 },
   },
   {
@@ -42,6 +42,7 @@ const seedPlans: (typeof schema.plans.$inferInsert)[] = [
       "yandexgpt-lite",
       "z-ai/glm-5.2",
       "deepseek/deepseek-chat",
+      "qwen/qwen3-embedding-8b",
     ],
   },
   {
@@ -61,6 +62,7 @@ const seedPlans: (typeof schema.plans.$inferInsert)[] = [
       "yandexgpt-lite",
       "z-ai/glm-5.2",
       "deepseek/deepseek-chat",
+      "qwen/qwen3-embedding-8b",
     ],
   },
   {
@@ -81,6 +83,7 @@ const seedPlans: (typeof schema.plans.$inferInsert)[] = [
       "yandexgpt-lite",
       "z-ai/glm-5.2",
       "deepseek/deepseek-chat",
+      "qwen/qwen3-embedding-8b",
     ],
     features: { teamSeats: 5 },
   },
@@ -198,6 +201,18 @@ const seedRates: (typeof schema.modelRates.$inferInsert)[] = [
     displayNameRu: "GLM 5.2 (Zhipu)",
     providerPricePer1kInputUsdMicroCenti: 600,
     providerPricePer1kOutputUsdMicroCenti: 2200,
+  },
+  // ===== Embeddings — gost-rag-ретрив на ключе юзера (решение 2026-07-10) =====
+  // Тир "embedding" метрится ПО ФАКТУ без пола «минимум 1 кредит» (~0 кредитов за вызов,
+  // себестоимость в usage_events). Цена: siliconflow.com $0.04/1M input, output нет.
+  {
+    modelCode: "qwen/qwen3-embedding-8b",
+    provider: "siliconflow",
+    tier: "embedding",
+    multiplier: "1.00",
+    displayNameRu: "Qwen3 Embedding (ГОСТ-ретрив)",
+    providerPricePer1kInputUsdMicroCenti: 40,
+    providerPricePer1kOutputUsdMicroCenti: 0,
   },
   {
     modelCode: "deepseek/deepseek-chat",

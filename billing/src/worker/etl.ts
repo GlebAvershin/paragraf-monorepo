@@ -68,6 +68,7 @@ async function setLastProcessedAt(at: Date): Promise<void> {
 
 interface RatesCacheEntry {
   multiplier: number
+  tier: string
   pricePer1kInputMicroCenti: number
   pricePer1kOutputMicroCenti: number
   provider: string
@@ -84,6 +85,7 @@ async function loadRates(): Promise<void> {
   for (const r of rows) {
     ratesCache.set(r.modelCode, {
       multiplier: Number(r.multiplier),
+      tier: r.tier,
       pricePer1kInputMicroCenti: r.providerPricePer1kInputUsdMicroCenti,
       pricePer1kOutputMicroCenti: r.providerPricePer1kOutputUsdMicroCenti,
       provider: r.provider,
@@ -165,6 +167,9 @@ async function processLog(
     pricePer1kInputMicroCenti: rate.pricePer1kInputMicroCenti,
     pricePer1kOutputMicroCenti: rate.pricePer1kOutputMicroCenti,
     multiplier: rate.multiplier,
+    // embedding-тир (gost-rag-ретрив): по факту, без пола 1 кредит — иначе каждый /retrieve
+    // снимал бы скрытый кредит (deep-режим — до 5) при себестоимости ~$0.000002.
+    floorCredits: rate.tier === "embedding" ? 0 : 1,
   })
 
   await chargeCredits({
