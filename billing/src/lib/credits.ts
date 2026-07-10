@@ -167,10 +167,15 @@ export function computeCredits(input: {
   multiplier: number
   /** Кв. кредита в micro-centi USD. Default 60. */
   calibrationPerCreditMicroCenti?: number
+  /** Пол списания в кредитах. Default 1 (chat-модели). 0 — метрить по факту с округлением
+   *  (embedding-тир: вызов стоит ~$0.000002, пол в 1 кредит был бы 1000-кратной наценкой). */
+  floorCredits?: number
 }): number {
   const cal = input.calibrationPerCreditMicroCenti ?? 60
+  const floor = input.floorCredits ?? 1
   const providerCost =
     (input.inputTokens / 1000) * input.pricePer1kInputMicroCenti +
     (input.outputTokens / 1000) * input.pricePer1kOutputMicroCenti
-  return Math.max(1, Math.ceil((providerCost / cal) * input.multiplier))
+  const raw = (providerCost / cal) * input.multiplier
+  return floor > 0 ? Math.max(floor, Math.ceil(raw)) : Math.round(raw)
 }
