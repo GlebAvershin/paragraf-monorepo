@@ -54,4 +54,12 @@ describe("scenarios library", () => {
     const technologist = SCENARIOS.filter((s) => s.verticals.includes("technologist"))
     expect(technologist.length).toBeGreaterThanOrEqual(1)
   })
+
+  // Фидбек клиента 2026-07-10: полное практическое решение ОДНИМ ответом. Инвариант против
+  // молчаливого сноса раздела при следующем рефакторе шаблонов.
+  test("разбор ГОСТа требует «Итоговое решение» и полноту", () => {
+    const lookup = SCENARIOS.find((s) => s.id === "tech.gost.lookup")!
+    expect(lookup.promptTemplate).toContain("Итоговое решение")
+    expect(lookup.promptTemplate).toContain("Не ограничивайся буквальным вопросом")
+  })
 })

@@ -10,7 +10,7 @@
 import { config } from "./config.ts"
 import { publish } from "./bus.ts"
 import { getLitellmKey } from "./billing.ts"
-import { retrieveGost, type GostSource } from "./gostrag.ts"
+import { extractDesignations, resolveSources, retrieveGost, type GostSource } from "./gostrag.ts"
 import { getSession, updateSession } from "./sessions.ts"
 import {
   historyForGateway,
@@ -96,18 +96,56 @@ function groundingEnabled(agent: string | undefined): boolean {
   return config.GOST_RAG_ENABLED || agent === "gost"
 }
 
-function groundingSystemPrompt(context: string): string {
+/** Текст запроса для ретрива/планнера: БЕЗ synthetic-частей (полный шаблон сценария — модель его
+ *  видит в истории, но в эмбеддинг запроса и deep-планнеру должен уходить чистый вопрос юзера,
+ *  а не роль-бойлерплейт «Ты — инженер-нормоконтролёр…»). Экспортирован для тестов. */
+export function queryFromParts(parts: PromptInput["parts"]): string {
+  const clean = parts.filter((p) => p.type === "text" && p.text && !p.synthetic)
+  // Сценарий может прислать ТОЛЬКО synthetic-часть (без displayText) — тогда лучше шаблон, чем пусто.
+  const chosen = clean.length > 0 ? clean : parts.filter((p) => p.type === "text" && p.text)
+  return chosen
+    .map((p) => p.text)
+    .join(" ")
+    .trim()
+}
+
+// Иерархия источников + полнота (фидбек клиента 2026-07-10: полное практическое решение ОДНИМ
+// ответом вместо 4 уточняющих вопросов). «Практика с плашкой» легализована решением юзера —
+// раньше модель давала её вопреки промпту, теперь поведение стабилизировано правилами.
+// Экспортирована для тестов-инвариантов (test/grounding.test.ts).
+export function groundingSystemPrompt(context: string, subQueries?: string[]): string {
   return [
-    "Ты — инженерный ассистент. Отвечай СТРОГО на основе приведённых ниже выдержек из нормативных",
-    "документов (ГОСТ/СП/СанПиН/ТР ТС) и только на них.",
-    "Правила:",
-    "- Опирайся ТОЛЬКО на факты из выдержек; не достраивай по памяти и не обобщай за пределы текста.",
-    "- Каждое утверждение подкрепляй ссылкой на пункт в формате [ГОСТ NNNN-ГГГГ, п. X.Y], как в выдержках.",
-    "- Если в выдержках нет ответа — прямо скажи, что в базе ГОСТ это не найдено, и не выдумывай.",
-    "- НЕ комментируй саму выдержку: никаких «в выдержке не указано», «далее не приведено», «текст обрывается».",
-    "  Если конкретное значение в выдержке отсутствует — просто не приводи его (при необходимости сошлись на пункт",
-    "  целиком). Излагай ответ как связный факт, а не как пересказ обрезанной цитаты.",
-    "- Отвечай на русском, кратко и по существу.",
+    "Ты — инженерный ассистент по нормативной документации (ГОСТ/СП/СанПиН/ТР ТС).",
+    "",
+    "Иерархия источников — строго в этом порядке:",
+    "1. БАЗА: факты из выдержек ниже. Каждый факт из базы подкрепляй ссылкой на пункт в формате",
+    "   [ГОСТ NNNN-ГГГГ, п. X.Y], как в выдержках. Содержание пунктов по памяти не достраивай.",
+    "2. ПРАКТИКА: если нужного параметра в выдержках нет — дай типовое значение из производственной",
+    "   практики, ЯВНО пометив его: «⚠️ не из базы — проверьте по оригиналу стандарта». Значению из",
+    "   практики НИКОГДА не приписывай номер пункта или стандарта, которого нет в выдержках.",
+    "3. НЕ НАЙДЕНО: если ответа нет ни в базе, ни в практике — прямо скажи это и не выдумывай.",
+    "",
+    "Полнота: на практический вопрос (как сварить/установить/выбрать/оформить) закрой в ОДНОМ ответе",
+    "весь набор параметров, который понадобится для выполнения работы, а не только буквально",
+    "спрошенное. Пример для сварки: тип соединения и шва, сторона сварки (снаружи/изнутри), способ",
+    "(ручная/полуавтомат/аргон), сварочные материалы, катет и размеры, разделка/зазор, контроль",
+    "качества, обозначение шва в КД. Для других задач аналогично — предвосхищай очевидные следующие",
+    "вопросы. Чеклист — пример, а не форма: на простой справочный вопрос отвечай прямо и без таблиц.",
+    ...(subQueries && subQueries.length > 0
+      ? [
+          "",
+          "Запрос раскладывается на под-вопросы — закрой в ответе КАЖДЫЙ из них:",
+          ...subQueries.map((q, i) => `${i + 1}. ${q}`),
+        ]
+      : []),
+    "",
+    "Практический ответ завершай блоком «Итоговое решение»: 1–2 предложения человеческим языком,",
+    "затем таблица «Параметр | Значение | Основание» (номер пункта или «практика»).",
+    "",
+    "Оформление:",
+    "- НЕ комментируй саму выдержку: никаких «в выдержке не указано», «далее не приведено», «текст",
+    "  обрывается». Нет значения в базе — используй уровень ПРАКТИКА или не приводи его.",
+    "- Отвечай на русском, структурированно и по существу.",
     "",
     "=== Выдержки из стандартов ===",
     context,
@@ -228,11 +266,7 @@ async function runPromptInner(
   const { userId, sessionID } = input
   const now = Date.now()
   const agent = input.agent ?? "build"
-  const query = input.parts
-    .filter((p) => p.type === "text" && p.text)
-    .map((p) => p.text)
-    .join(" ")
-    .trim()
+  const query = queryFromParts(input.parts)
 
   // 1. Сообщение юзера + его текстовые части.
   const userMsg: StoredMessage = {
@@ -314,7 +348,7 @@ async function runPromptInner(
       // grounded ⇒ системный промпт с выдержками впереди истории; иначе обычная история.
       const history = await historyForGateway(userId, sessionID)
       const messages = grounded
-        ? [{ role: "system", content: groundingSystemPrompt(gost!.context) }, ...history]
+        ? [{ role: "system", content: groundingSystemPrompt(gost!.context, gost!.sub_queries) }, ...history]
         : history
       const res = await fetch(`${config.ANSWER_URL}/answer`, {
         method: "POST",
@@ -385,7 +419,16 @@ async function runPromptInner(
       // рендерера через listMessages/SSE без изменений контракта.
       if (grounded) {
         const shownSources = citedSources(asstPart.text as string, gost!.sources)
-        asstPart.metadata = { sources: shownSources, grounding: { top_score: gost!.top_score, grounded: true } }
+        // «Практика с плашкой»: модель упоминает стандарты не из ретрива (напр. ГОСТ 14771-76 из
+        // общих знаний) — дорезолвиваем их по карте источников, чтобы плашки были кликабельны.
+        // Fail-open: без /sources (старый gost-rag) просто ничего не добавится.
+        const known = new Set(shownSources.map((s) => s.doc_id))
+        const mentioned = extractDesignations(asstPart.text as string).filter((d) => !known.has(d))
+        const practice = (await resolveSources(mentioned)).filter((s) => s.available)
+        asstPart.metadata = {
+          sources: [...shownSources, ...practice],
+          grounding: { top_score: gost!.top_score, grounded: true },
+        }
         await updatePart(userId, asstPart)
         publish(userId, { type: "message.part.updated", properties: { part: asstPart } })
       }
