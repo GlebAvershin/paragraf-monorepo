@@ -27,6 +27,16 @@ let variant: string | undefined
 // Управляет loadVertical() в моке ниже: по умолчанию НЕ "technologist", чтобы agent брался
 // из currentAgent; тест gost-моста ставит "technologist".
 let activeVertical = "lawyer"
+// Текущая модель пикера (мока useLocal): тест deep-retrieve ставит модель тира Ultra.
+let currentModel = { id: "model", provider: { id: "provider" } }
+// Тела promptAsync как их получает engine — для проверки OurApp-полей (retrieval).
+const sentPrompts: Array<{ agent?: string; retrieval?: string }> = []
+
+// handleSubmit шлёт prompt fire-and-forget (void sendFollowupDraft) — дожидаемся, пока
+// фоновая цепочка (guard → worktree → promptAsync) дойдёт до мока promptAsync.
+const flushPrompts = async () => {
+  for (let i = 0; i < 20 && sentPrompts.length === 0; i++) await new Promise((r) => setTimeout(r, 0))
+}
 
 const promptValue: Prompt = [{ type: "text", content: "ls", start: 0, end: 2 }]
 
@@ -48,7 +58,10 @@ const clientFor = (directory: string) => {
         return { data: undefined }
       },
       prompt: async () => ({ data: undefined }),
-      promptAsync: async () => ({ data: undefined }),
+      promptAsync: async (body: { agent?: string; retrieval?: string }) => {
+        sentPrompts.push(body)
+        return { data: undefined }
+      },
       command: async () => ({ data: undefined }),
       abort: async () => ({ data: undefined }),
     },
@@ -77,6 +90,12 @@ beforeAll(async () => {
     showToast: () => 0,
   }))
 
+  // Гард кредитов делает реальный fetch к billing — в тестах пропускаем всегда,
+  // чтобы fire-and-forget sendFollowupDraft детерминированно доходил до promptAsync.
+  mock.module("@/ourapp/low-balance-guard", () => ({
+    guardSendCredits: async () => true,
+  }))
+
   mock.module("@opencode-ai/core/util/encode", () => ({
     base64Encode: (value: string) => value,
   }))
@@ -84,7 +103,7 @@ beforeAll(async () => {
   mock.module("@/context/local", () => ({
     useLocal: () => ({
       model: {
-        current: () => ({ id: "model", provider: { id: "provider" } }),
+        current: () => currentModel,
         variant: { current: () => variant },
       },
       agent: {
@@ -221,6 +240,8 @@ beforeEach(() => {
   selected = "/repo/worktree-a"
   variant = undefined
   activeVertical = "lawyer"
+  currentModel = { id: "model", provider: { id: "provider" } }
+  sentPrompts.length = 0
   for (const key of Object.keys(storedSessions)) delete storedSessions[key]
 })
 
@@ -348,6 +369,40 @@ describe("prompt submit worktree selection", () => {
 
     expect(optimistic).toHaveLength(1)
     expect(optimistic[0]).toMatchObject({ message: { agent: "gost" } })
+    // не-ultra модель ⇒ deep-retrieve не запрашивается
+    await flushPrompts()
+    expect(sentPrompts).toHaveLength(1)
+    expect(sentPrompts[0]!.retrieval).toBeUndefined()
+  })
+
+  test("sends retrieval \"deep\" for the Ultra tier in the technologist vertical", async () => {
+    params = { id: "session-1" }
+    activeVertical = "technologist"
+    const { TIER_MODEL } = await import("@/ourapp/scenario-model-tier/store")
+    currentModel = { id: TIER_MODEL.ultra.modelID, provider: { id: TIER_MODEL.ultra.providerID } }
+
+    const submit = createPromptSubmit({
+      info: () => ({ id: "session-1" }),
+      imageAttachments: () => [],
+      commentCount: () => 0,
+      autoAccept: () => false,
+      mode: () => "normal",
+      working: () => false,
+      editor: () => undefined,
+      queueScroll: () => undefined,
+      promptLength: (value) => value.reduce((sum, part) => sum + ("content" in part ? part.content.length : 0), 0),
+      addToHistory: () => undefined,
+      resetHistoryNavigation: () => undefined,
+      setMode: () => undefined,
+      setPopover: () => undefined,
+      onSubmit: () => undefined,
+    })
+
+    await submit.handleSubmit({ preventDefault: () => undefined } as unknown as Event)
+
+    await flushPrompts()
+    expect(sentPrompts).toHaveLength(1)
+    expect(sentPrompts[0]).toMatchObject({ agent: "gost", retrieval: "deep" })
   })
 
   test("seeds new sessions before optimistic prompts are added", async () => {
