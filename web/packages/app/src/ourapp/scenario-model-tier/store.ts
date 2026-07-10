@@ -14,9 +14,9 @@ export interface TierModelKey {
 }
 
 export const TIER_MODEL: Record<ModelTier, TierModelKey> = {
-  medium: { providerID: "openrouter", modelID: "z-ai/glm-5.2" },
-  hi: { providerID: "ourapp-ru", modelID: "gigachat-pro" },
-  ultra: { providerID: "ourapp-ru", modelID: "gigachat-max" },
+  medium: { providerID: "ourapp-ru", modelID: "gigachat-pro" },
+  hi: { providerID: "openrouter", modelID: "deepseek/deepseek-chat" },
+  ultra: { providerID: "openrouter", modelID: "z-ai/glm-5.2" },
 }
 
 export const TIER_LABEL: Record<ModelTier, string> = {
