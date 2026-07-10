@@ -38,7 +38,9 @@ export const config = {
   GOST_RAG_URL: process.env.GOST_RAG_URL ?? "http://localhost:8000",
   GOST_RAG_ENABLED: (process.env.GOST_RAG_ENABLED ?? "false") === "true",
   GOST_MIN_SCORE: Number(process.env.GOST_MIN_SCORE ?? 0), // < этого top_score → abstain; 0 = только при пустой выдаче
-  GOST_TOP_K: Number(process.env.GOST_TOP_K ?? 8),
+  // 24 = прод-валидированный k (Phase-0 гейт: k24 PASS, k16 near-tie fail; MIGRATION-1024.md),
+  // совпадает с серверным дефолтом /retrieve. На k=8 deep-fusion (Ultra) резался до 8 чанков.
+  GOST_TOP_K: Number(process.env.GOST_TOP_K ?? 24),
 
   // Хранилище сессий/сообщений (РФ-хостинг по 152-ФЗ). Своя БД, как у billing.
   DATABASE_URL: process.env.DATABASE_URL ?? "postgres://engine:engine@localhost:5434/engine",

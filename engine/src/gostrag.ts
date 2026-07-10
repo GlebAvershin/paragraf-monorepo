@@ -31,6 +31,35 @@ const TIMEOUT_MS = 15_000 // retrieve = эмбеддинг запроса + по
 // deep = ещё и планнер-вызов LLM (декомпозиция) + ретрив на под-вопрос; gost-rag сам падает в
 // одиночный путь по своему таймауту планнера, так что этот лимит — верхняя страховка.
 const DEEP_TIMEOUT_MS = 30_000
+const SOURCES_TIMEOUT_MS = 5_000 // /sources = чистый лукап по карте, без LLM/Qdrant
+
+// Обозначение стандарта в тексте ответа — тот же паттерн, что extractSources() в web
+// source-viewer.tsx (тире нормализуются в дефис, чтобы ключ совпал с картой источников).
+const DESIGNATION = /(?:ГОСТ\s+Р|ГОСТ|СНиП|СанПиН|СП|ТР\s+ТС)\s+\d+(?:[.\-‐-―/]\d+)*/g
+
+/** Уникальные обозначения ГОСТ/СП/… из текста ответа (для дорезолва «практических» ссылок). */
+export function extractDesignations(text: string): string[] {
+  const seen = new Set<string>()
+  for (const m of text.matchAll(DESIGNATION)) {
+    seen.add(m[0].replace(/\s+/g, " ").replace(/[‐-―]/g, "-").trim())
+  }
+  return [...seen]
+}
+
+/** Резолв обозначений в просматриваемые источники (gost-rag POST /sources — лукап по карте).
+ *  Fail-open: сервис недоступен/старый (без эндпоинта) ⇒ [] — плашки просто не дорезолвятся. */
+export async function resolveSources(designations: string[]): Promise<GostSource[]> {
+  if (designations.length === 0) return []
+  const res = await fetch(`${config.GOST_RAG_URL}/sources`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ designations }),
+    signal: AbortSignal.timeout(SOURCES_TIMEOUT_MS),
+  }).catch(() => null)
+  if (!res || !res.ok) return []
+  const json = (await res.json().catch(() => null)) as { sources?: GostSource[] } | null
+  return json?.sources ?? []
+}
 
 /** Ретрив выдержек ГОСТ под запрос. null ⇒ сервис недоступен/ошибка (движок деградирует без
  *  заземления). deep (тир Ultra) — декомпозиция на под-вопросы + fusion на стороне gost-rag;
