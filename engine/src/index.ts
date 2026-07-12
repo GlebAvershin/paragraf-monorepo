@@ -140,7 +140,7 @@ const promptArgs = (userId: string, token: string, sessionID: string, body: Prom
   token,
   sessionID,
   messageID: body.messageID,
-  model: body.model ?? { providerID: "ourapp-ru", modelID: "gigachat-pro" },
+  model: body.model ?? { providerID: "openrouter", modelID: "deepseek/deepseek-v4-flash" },
   agent: body.agent,
   variant: body.variant,
   retrieval: body.retrieval,

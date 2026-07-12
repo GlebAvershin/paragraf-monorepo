@@ -168,12 +168,12 @@ const GOST_ABSTAIN =
 // Заголовок сессии. После первого обмена генерируем краткий заголовок дешёвой моделью.
 // Запрос идёт через gateway-app (как и основной чат) — там же маскирование.
 //
-// РФ-модель, не claude-haiku: (1) claude-* алиасы идут через OpenRouter —
-// та же точка отказа, что у основного чата (см. инцидент с блокировкой
-// OpenRouter 2026-07-07, из-за которого генерация заголовков массово падала
-// в fallbackTitle); (2) для тривиальной задачи «заголовок в 3-6 слов»
-// GigaChat Lite более чем достаточен и не гонит текст запроса за рубеж.
-const TITLE_MODEL = "gigachat-lite"
+// qwen3-8b через SiliconFlow (не claude-*/OpenRouter — те мертвы с РФ-бокса,
+// инцидент 2026-07-07; не gigachat — выпилен из продукта 2026-07-12): для
+// тривиальной задачи «заголовок в 3-6 слов» хватает самой дешёвой модели пула
+// ($0.06/1M). Текст запроса уходит за рубеж уже замаскированным (app-слой
+// маскирует ПДн для всех не-РФ моделей, включая эту).
+const TITLE_MODEL = "qwen/qwen3-8b"
 const DEFAULT_TITLE = "Новая сессия"
 
 async function generateTitle(key: string, userText: string, assistantText: string): Promise<string | undefined> {
@@ -498,7 +498,7 @@ async function consumeAnswerStream(
       }
       if (json?.type === "text" && json.delta) await handlers.onText(json.delta)
       else if (json?.type === "reasoning" && json.delta) await handlers.onReasoning(json.delta)
-      else if (json?.type === "model" && json.model) await handlers.onModel?.(json.model, json.provider ?? "ourapp-ru")
+      else if (json?.type === "model" && json.model) await handlers.onModel?.(json.model, json.provider ?? "openrouter")
       else if (json?.type === "doc" && json.text) await handlers.onDoc?.(json.text)
       else if (json?.type === "error") throw new Error(json.message || "gateway error")
       else if (json?.type === "done") return

@@ -13,9 +13,12 @@ export interface TierModelKey {
   modelID: string
 }
 
+// Лесенка 2026-07-12 (A/B против gigachat-pro/deepseek-chat): все три — SiliconFlow
+// через шлюз, ПДн маскируются в app-слое для всех (иностранные). GigaChat выпилен:
+// дорог за токен (~50× против v4-flash), контекст 32k, output 4096 резал таблицы.
 export const TIER_MODEL: Record<ModelTier, TierModelKey> = {
-  medium: { providerID: "ourapp-ru", modelID: "gigachat-pro" },
-  hi: { providerID: "openrouter", modelID: "deepseek/deepseek-chat" },
+  medium: { providerID: "openrouter", modelID: "deepseek/deepseek-v4-flash" },
+  hi: { providerID: "openrouter", modelID: "minimax/minimax-m3" },
   ultra: { providerID: "openrouter", modelID: "z-ai/glm-5.2" },
 }
 
