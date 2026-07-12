@@ -104,17 +104,15 @@ function model(input: {
 // release: "" → невалидная дата → модель ВСЕГДА видна в пикере (context/models.tsx visible():
 // модели с валидной датой старше 6 мес. скрываются по умолчанию; наши продуктовые модели
 // должны показываться независимо от «свежести»).
-const ruModels: Model[] = [
-  model({ id: "gigachat-max", providerID: "ourapp-ru", name: "GigaChat Max", reasoning: false, attachment: false, context: 32_000, output: 4_096, release: "" }),
-  model({ id: "gigachat-pro", providerID: "ourapp-ru", name: "GigaChat Pro", reasoning: false, attachment: false, context: 32_000, output: 4_096, release: "" }),
-  model({ id: "gigachat-lite", providerID: "ourapp-ru", name: "GigaChat Lite", reasoning: false, attachment: false, context: 32_000, output: 4_096, release: "" }),
-]
-
-// Дешёвые модели через OpenRouter (алиасы шлюза). NB: иностранные → PII-маскирование
-// в рендерере сейчас не применяется к ним — учесть для 152-ФЗ до прода.
+// Пул продукта (2026-07-12): GigaChat выпилен (дорог за токен, контекст 32k, output 4096),
+// все модели — SiliconFlow через шлюз; providerID "openrouter" — исторический id каталога
+// (по нему матчится TIER_MODEL веба), фактический маршрут задаёт litellm-config шлюза.
+// ПДн маскируются app-слоем шлюза для ВСЕХ моделей пула (иностранные).
 const openrouterModels: Model[] = [
   model({ id: "z-ai/glm-5.2", providerID: "openrouter", name: "GLM 5.2 (Zhipu)", reasoning: true, attachment: false, context: 200_000, output: 8_192, costIn: 0.6, costOut: 2.2, release: "" }),
+  model({ id: "minimax/minimax-m3", providerID: "openrouter", name: "MiniMax M3", reasoning: false, attachment: false, context: 256_000, output: 16_384, costIn: 0.6, costOut: 2.4, release: "" }),
   model({ id: "deepseek/deepseek-chat", providerID: "openrouter", name: "DeepSeek Chat", reasoning: false, attachment: false, context: 64_000, output: 8_192, costIn: 0.3, costOut: 1.2, release: "" }),
+  model({ id: "deepseek/deepseek-v4-flash", providerID: "openrouter", name: "DeepSeek V4 Flash", reasoning: false, attachment: false, context: 128_000, output: 16_384, costIn: 0.13, costOut: 0.28, release: "" }),
 ]
 
 function byId(models: Model[]): Record<string, Model> {
@@ -122,25 +120,17 @@ function byId(models: Model[]): Record<string, Model> {
 }
 
 export function providerList(): ProviderListResponse {
-  const ru: Provider = {
-    id: "ourapp-ru",
-    name: "Российские модели",
-    source: "config",
-    env: [],
-    options: {},
-    models: byId(ruModels),
-  }
   const openrouter: Provider = {
     id: "openrouter",
-    name: "OpenRouter",
+    name: "Модели",
     source: "config",
     env: [],
     options: {},
     models: byId(openrouterModels),
   }
   return {
-    all: [ru, openrouter],
-    default: { "ourapp-ru": "gigachat-lite", openrouter: "deepseek/deepseek-chat" },
-    connected: ["ourapp-ru", "openrouter"],
+    all: [openrouter],
+    default: { openrouter: "deepseek/deepseek-v4-flash" },
+    connected: ["openrouter"],
   }
 }

@@ -24,7 +24,7 @@ const seedPlans: (typeof schema.plans.$inferInsert)[] = [
     monthlyBudgetUsdCenti: 200, // $2 — verifies LiteLLM hardcap
     monthlyCredits: 30, // ≈ 2-3 задачи на Sonnet 1.5×
     monthlyTasksTarget: 3, // deprecated, оставлено для совместимости
-    allowedModels: ["gigachat-pro", "gigachat-lite", "yandexgpt-pro", "yandexgpt-lite", "z-ai/glm-5.2", "deepseek/deepseek-chat", "qwen/qwen3-embedding-8b"],
+    allowedModels: ["deepseek/deepseek-v4-flash", "minimax/minimax-m3", "qwen/qwen3-8b", "yandexgpt-pro", "yandexgpt-lite", "z-ai/glm-5.2", "deepseek/deepseek-chat", "qwen/qwen3-embedding-8b"],
     features: { trial: true, trialDays: 14 },
   },
   {
@@ -36,8 +36,9 @@ const seedPlans: (typeof schema.plans.$inferInsert)[] = [
     monthlyCredits: 500,
     monthlyTasksTarget: 60, // deprecated
     allowedModels: [
-      "gigachat-pro",
-      "gigachat-max",
+      "deepseek/deepseek-v4-flash",
+      "minimax/minimax-m3",
+      "qwen/qwen3-8b",
       "yandexgpt-pro",
       "yandexgpt-lite",
       "z-ai/glm-5.2",
@@ -56,8 +57,9 @@ const seedPlans: (typeof schema.plans.$inferInsert)[] = [
     allowedModels: [
       "gpt-4o",
       "gpt-4o-mini",
-      "gigachat-pro",
-      "gigachat-max",
+      "deepseek/deepseek-v4-flash",
+      "minimax/minimax-m3",
+      "qwen/qwen3-8b",
       "yandexgpt-pro",
       "yandexgpt-lite",
       "z-ai/glm-5.2",
@@ -76,9 +78,9 @@ const seedPlans: (typeof schema.plans.$inferInsert)[] = [
     allowedModels: [
       "gpt-4o",
       "gpt-4o-mini",
-      "gigachat-pro",
-      "gigachat-max",
-      "gigachat-lite",
+      "deepseek/deepseek-v4-flash",
+      "minimax/minimax-m3",
+      "qwen/qwen3-8b",
       "yandexgpt-pro",
       "yandexgpt-lite",
       "z-ai/glm-5.2",
@@ -222,6 +224,36 @@ const seedRates: (typeof schema.modelRates.$inferInsert)[] = [
     displayNameRu: "DeepSeek Chat",
     providerPricePer1kInputUsdMicroCenti: 300,
     providerPricePer1kOutputUsdMicroCenti: 1200,
+  },
+  // ===== Пул тиров 2026-07-12 (GigaChat выпилен) — все через SiliconFlow, цены siliconflow.com =====
+  {
+    modelCode: "deepseek/deepseek-v4-flash",
+    provider: "siliconflow",
+    tier: "lite",
+    multiplier: "1.00",
+    displayNameRu: "DeepSeek V4 Flash",
+    providerPricePer1kInputUsdMicroCenti: 130,
+    providerPricePer1kOutputUsdMicroCenti: 280,
+  },
+  {
+    modelCode: "minimax/minimax-m3",
+    provider: "siliconflow",
+    tier: "mid",
+    multiplier: "1.00",
+    displayNameRu: "MiniMax M3",
+    providerPricePer1kInputUsdMicroCenti: 600,
+    providerPricePer1kOutputUsdMicroCenti: 2400,
+  },
+  // Заголовки сессий (engine TITLE_MODEL) — копеечная, но должна быть в рейтах,
+  // иначе ETL спишет фолбэк 1 кредит за каждый заголовок.
+  {
+    modelCode: "qwen/qwen3-8b",
+    provider: "siliconflow",
+    tier: "lite",
+    multiplier: "1.00",
+    displayNameRu: "Qwen3 8B (заголовки)",
+    providerPricePer1kInputUsdMicroCenti: 60,
+    providerPricePer1kOutputUsdMicroCenti: 60,
   },
 ]
 
