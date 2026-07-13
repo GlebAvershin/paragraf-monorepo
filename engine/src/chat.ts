@@ -440,9 +440,15 @@ async function runPromptInner(
         // «Практика с плашкой»: модель упоминает стандарты не из ретрива (напр. ГОСТ 14771-76 из
         // общих знаний) — дорезолвиваем их по карте источников, чтобы плашки были кликабельны.
         // Fail-open: без /sources (старый gost-rag) просто ничего не добавится.
+        // Дедуп ПОСЛЕ резолва тоже: «ГОСТ 1.16-2011» в тексте резолвится в «ГОСТ Р 1.16-2011» —
+        // фильтр по сырой строке его пропустит, и чип задублирует источник из ретрива.
         const known = new Set(shownSources.map((s) => s.doc_id))
         const mentioned = extractDesignations(asstPart.text as string).filter((d) => !known.has(d))
-        const practice = (await resolveSources(mentioned)).filter((s) => s.available)
+        const practice = (await resolveSources(mentioned)).filter((s) => {
+          if (!s.available || known.has(s.doc_id)) return false
+          known.add(s.doc_id)
+          return true
+        })
         asstPart.metadata = {
           sources: [...shownSources, ...practice],
           grounding: { top_score: gost!.top_score, grounded: true },
