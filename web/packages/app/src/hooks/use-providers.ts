@@ -5,8 +5,6 @@ import { Iterable, pipe } from "effect"
 import { createMemo } from "solid-js"
 
 export const popularProviders = [
-  "opencode",
-  "opencode-go",
   "github-copilot",
   "openai",
   "google",
@@ -47,14 +45,7 @@ export function useProviders() {
     },
     paid: () => {
       const connected = new Set(providers().connected)
-      return [
-        ...Iterable.filter(
-          providers().all,
-          ([id]) =>
-            connected.has(id) &&
-            (id !== "opencode" || Object.values(providers().all.get(id)?.models ?? {}).some((m) => m.cost?.input)),
-        ),
-      ]
+      return [...Iterable.filter(providers().all, ([id]) => connected.has(id))]
     },
   }
 }

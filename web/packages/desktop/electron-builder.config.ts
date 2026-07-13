@@ -27,7 +27,7 @@ const channel = (() => {
 })()
 
 const getBase = (): Configuration => ({
-  artifactName: "opencode-desktop-${os}-${arch}.${ext}",
+  artifactName: "isaac-desktop-${os}-${arch}.${ext}",
   directories: {
     output: "dist",
     buildResources: "resources",
@@ -53,8 +53,12 @@ const getBase = (): Configuration => ({
   dmg: {
     sign: true,
   },
+  // Схема ("opencode://") намеренно НЕ переименована — на неё завязан парсинг
+  // deep-link'ов (pages/layout/deep-links.ts, main/index.ts) и OS-регистрация
+  // протокола у уже установленных копий. name — только текст в диалоге ОС
+  // "Открыть это ссылкой в ...?", он безопасно переименован.
   protocols: {
-    name: "OpenCode",
+    name: "Isaac",
     schemes: ["opencode"],
   },
   win: {
@@ -78,6 +82,12 @@ const getBase = (): Configuration => ({
   },
 })
 
+// appId ("ai.opencode.desktop*") намеренно НЕ переименован в isaac.* — это
+// bundle/AppUserModelID, на который завязаны OS-идентичность приложения
+// (реестр Windows, macOS bundle id) и путь к userData (настройки/токен уже
+// установленных копий). Смена appId для уже выкатанных инсталляций — это
+// НОВОЕ приложение с точки зрения ОС (нет апдейта поверх старого, теряется
+// userData) — решать отдельно, а не как часть переименования брендинга.
 function getConfig() {
   const base = getBase()
 
@@ -85,29 +95,30 @@ function getConfig() {
     case "dev": {
       return {
         ...base,
+        // appId НЕ переименован — см. комментарий у getConfig().
         appId: "ai.opencode.desktop.dev",
-        productName: "OpenCode Dev",
-        rpm: { packageName: "opencode-dev" },
+        productName: "Isaac Dev",
+        rpm: { packageName: "isaac-dev" },
       }
     }
     case "beta": {
       return {
         ...base,
         appId: "ai.opencode.desktop.beta",
-        productName: "OpenCode Beta",
-        protocols: { name: "OpenCode Beta", schemes: ["opencode"] },
-        publish: { provider: "github", owner: "anomalyco", repo: "opencode-beta", channel: "latest" },
-        rpm: { packageName: "opencode-beta" },
+        productName: "Isaac Beta",
+        protocols: { name: "Isaac Beta", schemes: ["opencode"] },
+        publish: { provider: "github", owner: "GlebAvershin", repo: "paragraf-monorepo", channel: "latest" },
+        rpm: { packageName: "isaac-beta" },
       }
     }
     case "prod": {
       return {
         ...base,
         appId: "ai.opencode.desktop",
-        productName: "OpenCode",
-        protocols: { name: "OpenCode", schemes: ["opencode"] },
-        publish: { provider: "github", owner: "anomalyco", repo: "opencode", channel: "latest" },
-        rpm: { packageName: "opencode" },
+        productName: "Isaac",
+        protocols: { name: "Isaac", schemes: ["opencode"] },
+        publish: { provider: "github", owner: "GlebAvershin", repo: "paragraf-monorepo", channel: "latest" },
+        rpm: { packageName: "isaac" },
       }
     }
   }

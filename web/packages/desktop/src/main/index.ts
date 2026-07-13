@@ -40,10 +40,12 @@ import { checkUpdate, checkForUpdates, installUpdate, setupAutoUpdater } from ".
 import { Deferred, Effect, Fiber } from "effect"
 
 const APP_NAMES: Record<string, string> = {
-  dev: "OpenCode Dev",
-  beta: "OpenCode Beta",
-  prod: "OpenCode",
+  dev: "Isaac Dev",
+  beta: "Isaac Beta",
+  prod: "Isaac",
 }
+// APP_IDS НЕ переименованы — должны совпадать с appId в electron-builder.config.ts
+// (см. комментарий там же: смена ломает апдейт/userData уже установленных копий).
 const APP_IDS: Record<string, string> = {
   dev: "ai.opencode.desktop.dev",
   beta: "ai.opencode.desktop.beta",
@@ -135,7 +137,7 @@ const main = Effect.gen(function* () {
     process.env.XDG_STATE_HOME = join(root, "state")
     return root
   })()
-  app.setName(app.isPackaged ? APP_NAMES[CHANNEL] : "OpenCode Dev")
+  app.setName(app.isPackaged ? APP_NAMES[CHANNEL] : "Isaac Dev")
   app.setAppUserModelId(appId)
   app.setPath(
     "userData",

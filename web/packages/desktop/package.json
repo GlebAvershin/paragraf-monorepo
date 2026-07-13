@@ -4,10 +4,10 @@
   "version": "1.15.10",
   "type": "module",
   "license": "MIT",
-  "homepage": "https://opencode.ai",
+  "homepage": "https://isaac-ai.ru",
   "author": {
-    "name": "OpenCode",
-    "email": "hello@opencode.ai"
+    "name": "Isaac",
+    "email": "isaac.tech.russia@yandex.com"
   },
   "scripts": {
     "typecheck": "tsgo -b",
