@@ -4,7 +4,7 @@
 process.env.JWT_SECRET ??= "test-secret"
 
 import { describe, expect, test } from "bun:test"
-import { groundingSystemPrompt, queryFromParts } from "../src/chat.ts"
+import { BASE_SYSTEM_PROMPT, groundingSystemPrompt, queryFromParts } from "../src/chat.ts"
 import { extractDesignations } from "../src/gostrag.ts"
 
 describe("groundingSystemPrompt", () => {
@@ -14,6 +14,10 @@ describe("groundingSystemPrompt", () => {
     expect(prompt).toContain("[ГОСТ NNNN-ГГГГ, п. X.Y]")
     expect(prompt).toContain("не из базы — проверьте по оригиналу стандарта")
     expect(prompt).toContain("НИКОГДА не приписывай номер пункта")
+    // баг 2026-07-13: модель процитировала «ГОСТ 1.16-2011, п.4» из памяти (дока нет в выдержках)
+    expect(prompt).toContain("только по обозначению, без пунктов")
+    // и потеряла «Р» в обозначении — источник не разрезолвился
+    expect(prompt).toContain("не теряй «Р» в «ГОСТ Р»")
   })
 
   test("требует полноту и «Итоговое решение», но не краткость", () => {
@@ -22,11 +26,24 @@ describe("groundingSystemPrompt", () => {
     expect(prompt).not.toContain("кратко")
   })
 
+  test("правило противоречия выдержек и плотности текста", () => {
+    expect(prompt).toContain("Противоречие выдержек")
+    expect(prompt).toContain("Пиши плотно")
+  })
+
   test("вставляет под-вопросы deep-ретрива, когда они есть", () => {
     const deep = groundingSystemPrompt("ctx", ["про сварку", "про кабели"])
     expect(deep).toContain("1. про сварку")
     expect(deep).toContain("2. про кабели")
     expect(prompt).not.toContain("раскладывается на под-вопросы")
+  })
+})
+
+describe("BASE_SYSTEM_PROMPT", () => {
+  // Чат без ретрива шёл ВООБЩЕ без system → на «hi» голый deepseek отвечал по-китайски.
+  test("русский дефолт + запрет выдумывать реквизиты", () => {
+    expect(BASE_SYSTEM_PROMPT).toContain("Отвечай на русском")
+    expect(BASE_SYSTEM_PROMPT).toContain("Не выдумывай номера законов")
   })
 })
 
