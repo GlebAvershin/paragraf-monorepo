@@ -238,6 +238,12 @@ export type ChangePlanResponse =
   | { status: "upgraded"; newPlanCode: string; surchargeKopeck: number; extraCredits: number }
   | { status: "downgrade_scheduled"; newPlanCode: string; effectiveAt: string }
 
+// ===== Waitlist (публичный лендинг) =====
+
+export interface WaitlistResponse {
+  ok: boolean
+}
+
 export const billingApi = {
   me: () => request<MeResponse>("/me"),
   limits: () => request<LimitsResponse>("/limits"),
@@ -321,6 +327,19 @@ export const billingApi = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ newPlanCode }),
       timeoutMs: 20_000,
+      skipCache: true,
+    }),
+
+  /**
+   * Заявка с публичного лендинга (waitlist). Публичный идемпотентный по email
+   * роут billing `POST /waitlist` — без авторизации (посетитель не залогинен).
+   */
+  waitlist: (email: string) =>
+    request<WaitlistResponse>("/waitlist", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, interest: "trial", source: "landing-app" }),
+      timeoutMs: 10_000,
       skipCache: true,
     }),
 }

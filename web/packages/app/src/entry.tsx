@@ -1,8 +1,10 @@
 // @refresh reload
 
 import * as Sentry from "@sentry/solid"
+import { lazy, Suspense } from "solid-js"
 import { render } from "solid-js/web"
 import { AppBaseProviders, AppInterface } from "@/app"
+import { isLandingPath } from "@/ourapp/landing/public-path"
 import { type Platform, PlatformProvider } from "@/context/platform"
 import { dict as en } from "@/i18n/en"
 import { dict as zh } from "@/i18n/zh"
@@ -180,7 +182,26 @@ if (import.meta.env.VITE_SENTRY_DSN) {
   })
 }
 
-if (root instanceof HTMLElement) {
+// Публичный маркетинговый лендинг `/landing` — короткое замыкание ДО монтирования
+// приложения. Рендерим отдельную страницу без server/session-провайдеров (AppInterface
+// не монтируется вовсе), чтобы анонимный посетитель не тянул движок/health-check/логин.
+// `/` (страница входа) не задета — предикат матчит только `/landing`. См. web/PATCHES.md.
+const LandingPage = lazy(() => import("@/ourapp/landing/landing-page"))
+
+if (root instanceof HTMLElement && isLandingPath(location.pathname)) {
+  render(
+    () => (
+      <PlatformProvider value={platform}>
+        <AppBaseProviders>
+          <Suspense>
+            <LandingPage />
+          </Suspense>
+        </AppBaseProviders>
+      </PlatformProvider>
+    ),
+    root,
+  )
+} else if (root instanceof HTMLElement) {
   // Веб-auth к движку: пароль соединения = billing-JWT. Приоритет — одноразовый
   // ?auth_token (bootstrap при редиректе), иначе сохранённая сессия из localStorage,
   // чтобы перезагрузка страницы не теряла авторизацию (URL-токен вычищается сразу).

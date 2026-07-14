@@ -223,6 +223,30 @@ with anything in upstream's empty `.opencode/opencode.jsonc`.
 **Конфликты при upstream-merge.** Обе правки точечные (одна строка дефолта, одна
 строка фона) — конфликт маловероятен; при ребейзе сохранять НАШИ значения.
 
+### 8. `packages/app/src/entry.tsx` — публичный лендинг `/landing`
+
+**Why.** Нужен публичный (без авторизации) маркетинговый маршрут `/landing`, который
+НЕ монтирует `AppInterface` (движок/health-check/логин), но переиспользует базовые
+провайдеры темы/шрифтов/мета. Роутер приложения (`app.tsx`/`OnboardingGate`) живёт уже
+внутри `AppInterface` за server/session-провайдерами, поэтому единственная точка, где
+можно разветвиться ДО них — это `entry.tsx` (сам bootstrap-рендер). Правка аддитивная:
+существующая ветка `if (root instanceof HTMLElement)` не изменена по смыслу, лишь
+предварена короткой веткой лендинга (`isLandingPath(location.pathname)`); `/` (вход) и
+весь остальной роутинг не задеты.
+
+**Изменения:**
+
+- `packages/app/src/entry.tsx` — импорт `lazy/Suspense` + `isLandingPath`; перед
+  основным bootstrap-блоком добавлена ветка: при совпадении пути рендерится
+  `lazy(() => import("@/ourapp/landing/landing-page"))` внутри
+  `PlatformProvider → AppBaseProviders → Suspense`, `AppInterface` при этом не монтируется.
+- Вся страница лендинга и её ассеты — в `packages/app/src/ourapp/landing/` (наш код,
+  не форк): предикат маршрута, копирайт, WebGL-hero (three.js), waitlist-форма, CSS.
+  Здесь патчится только сам bootstrap-шов.
+
+**Конфликты при upstream-merge.** Один добавленный блок в `entry.tsx` перед `render(...)`;
+при ребейзе сохранять нашу ветку лендинга. Остальное — вне форка (`ourapp/`).
+
 ## Not patched (deliberately, things to add outside the fork)
 
 - **Document tools** (PDF/DOCX/XLSX parsers, DOCX generator) — now live in

@@ -1,0 +1,724 @@
+/**
+ * Стили публичного лендинга Isaac. Namespace `.isaac-lp-*` (не `.ourapp-landing`,
+ * тот занят залогиненной главной). Импортируется компонентом → едет в lazy-чанке
+ * лендинга, НЕ в index.css основного приложения.
+ *
+ * Токены — по DESIGN.md §4 (emerald #0B5345/#1A8A6B, тёплая бумага, IBM Plex
+ * Serif display / sans body / mono accents), через `light-dark()` (color-scheme
+ * ставит ThemeProvider на documentElement).
+ *
+ * Motion: входы секций — scroll-driven (`animation-timeline: view()`), обёрнуты
+ * в `@supports`, дефолт = финальное видимое состояние. Значит Firefox/без
+ * поддержки и `prefers-reduced-motion` показывают полностью статичную читаемую
+ * страницу. Это лендинг-специфичное исключение к DESIGN.md §8 (см. §8/§13).
+ */
+
+.isaac-lp {
+  --lp-bg: light-dark(#fbf9f4, #15120f);
+  --lp-surface: light-dark(#ffffff, #1f1b17);
+  --lp-surface-sunk: light-dark(#f1ede3, #1a1714);
+  --lp-text: light-dark(#1a1614, #ede8df);
+  --lp-text-2: light-dark(#4a453f, #b5afa4);
+  --lp-text-3: light-dark(#6b6660, #847e72);
+  --lp-accent: light-dark(#0b5345, #1a8a6b);
+  --lp-accent-soft: light-dark(rgba(11, 83, 69, 0.08), rgba(26, 138, 107, 0.14));
+  --lp-hairline: light-dark(#e8e3db, #2e2924);
+  --lp-radius: 12px;
+  --lp-radius-sm: 8px;
+  --lp-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --lp-maxw: 1120px;
+
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background: var(--lp-bg);
+  color: var(--lp-text-2);
+  font-family: var(--font-family-sans);
+  font-size: 16px;
+  line-height: 1.6;
+  scroll-behavior: smooth;
+}
+
+.isaac-lp-mono {
+  font-family: var(--font-family-mono);
+  font-feature-settings: "tnum" 1;
+}
+
+/* ===== Topbar ===== */
+.isaac-lp-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px clamp(20px, 5vw, 56px);
+  background: color-mix(in srgb, var(--lp-bg) 82%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid transparent;
+  transition: border-color 300ms var(--lp-ease);
+}
+
+.isaac-lp-topbar__brand {
+  font-family: var(--font-family-serif);
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--lp-text);
+}
+
+.isaac-lp-topbar__brand::first-letter {
+  color: var(--lp-accent);
+}
+
+.isaac-lp-topbar__login {
+  font-size: 14px;
+  color: var(--lp-text-2);
+  text-decoration: none;
+  padding: 8px 16px;
+  border: 1px solid var(--lp-hairline);
+  border-radius: var(--lp-radius-sm);
+  transition: all 120ms var(--lp-ease);
+}
+
+.isaac-lp-topbar__login:hover {
+  color: var(--lp-accent);
+  border-color: var(--lp-accent);
+}
+
+/* ===== Chapter rail ===== */
+.isaac-lp-rail {
+  position: fixed;
+  left: clamp(16px, 3vw, 40px);
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 15;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.isaac-lp-rail__item {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--lp-text-3);
+  opacity: 0.55;
+  transition: opacity 200ms var(--lp-ease), color 200ms var(--lp-ease);
+}
+
+.isaac-lp-rail__item:hover {
+  opacity: 1;
+}
+
+.isaac-lp-rail__item.is-active {
+  opacity: 1;
+  color: var(--lp-accent);
+}
+
+.isaac-lp-rail__num {
+  font-size: 11px;
+}
+
+.isaac-lp-rail__label {
+  font-size: 13px;
+  max-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  opacity: 0;
+  transition: max-width 260ms var(--lp-ease), opacity 200ms var(--lp-ease);
+}
+
+.isaac-lp-rail__item:hover .isaac-lp-rail__label,
+.isaac-lp-rail__item.is-active .isaac-lp-rail__label {
+  max-width: 160px;
+  opacity: 1;
+}
+
+/* ===== Hero ===== */
+.isaac-lp-hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  padding: 0 clamp(24px, 8vw, 140px);
+  overflow: hidden;
+}
+
+.isaac-lp-hero__bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.isaac-lp-hero__gl {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* 2D-фолбэк (DotWaveBackground) центрируем как полноэкранный фон hero. */
+.isaac-lp-hero__bg .ourapp-dotwave {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+}
+
+/* Статичный кадр (reduced-motion): мягкий изумрудный радиальный градиент. */
+.isaac-lp-hero__static {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+      120% 80% at 70% 20%,
+      var(--lp-accent-soft),
+      transparent 60%
+    ),
+    radial-gradient(90% 70% at 10% 90%, var(--lp-accent-soft), transparent 55%);
+}
+
+.isaac-lp-hero__content {
+  position: relative;
+  z-index: 1;
+  max-width: 760px;
+}
+
+.isaac-lp-hero__eyebrow {
+  display: inline-block;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--lp-accent);
+  margin-bottom: 20px;
+}
+
+.isaac-lp-hero__h1 {
+  font-family: var(--font-family-serif);
+  font-weight: 500;
+  font-size: clamp(40px, 7vw, 82px);
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+  color: var(--lp-text);
+  margin: 0 0 24px;
+}
+
+.isaac-lp-hero__accent {
+  color: var(--lp-accent);
+  font-family: var(--font-family-mono);
+  font-size: 0.82em;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+}
+
+.isaac-lp-hero__sub {
+  font-size: clamp(17px, 2vw, 21px);
+  line-height: 1.55;
+  color: var(--lp-text-2);
+  max-width: 620px;
+  margin: 0 0 36px;
+}
+
+.isaac-lp-hero__cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
+.isaac-lp-hero__audience {
+  display: block;
+  font-size: 13px;
+  color: var(--lp-text-3);
+}
+
+/* ===== Buttons ===== */
+.isaac-lp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 500;
+  padding: 13px 26px;
+  border-radius: var(--lp-radius-sm);
+  text-decoration: none;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 140ms var(--lp-ease);
+}
+
+.isaac-lp-btn--primary {
+  background: var(--lp-accent);
+  color: light-dark(#fbf9f4, #f2fbf7);
+  border-color: var(--lp-accent);
+}
+
+.isaac-lp-btn--primary:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.isaac-lp-btn--ghost {
+  background: transparent;
+  color: var(--lp-text);
+  border-color: var(--lp-hairline);
+}
+
+.isaac-lp-btn--ghost:hover {
+  border-color: var(--lp-accent);
+  color: var(--lp-accent);
+}
+
+/* ===== Section shell ===== */
+.isaac-lp-section {
+  position: relative;
+  z-index: 1;
+  max-width: var(--lp-maxw);
+  margin: 0 auto;
+  padding: clamp(72px, 12vh, 140px) clamp(24px, 6vw, 56px);
+  background: var(--lp-bg);
+}
+
+.isaac-lp-head {
+  max-width: 720px;
+  margin-bottom: 48px;
+}
+
+.isaac-lp-head__num {
+  display: block;
+  font-size: 13px;
+  color: var(--lp-accent);
+  margin-bottom: 16px;
+}
+
+.isaac-lp-head__title {
+  font-family: var(--font-family-serif);
+  font-weight: 500;
+  font-size: clamp(28px, 4.5vw, 46px);
+  line-height: 1.12;
+  letter-spacing: -0.015em;
+  color: var(--lp-text);
+  margin: 0 0 18px;
+}
+
+.isaac-lp-head__lede {
+  font-size: clamp(16px, 1.7vw, 19px);
+  color: var(--lp-text-2);
+  margin: 0;
+}
+
+/* ===== 01 Проблема ===== */
+.isaac-lp-problem__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.isaac-lp-problem__item {
+  padding: 28px 24px;
+  border-top: 2px solid var(--lp-accent);
+  background: var(--lp-surface-sunk);
+  border-radius: 0 0 var(--lp-radius) var(--lp-radius);
+}
+
+.isaac-lp-problem__k {
+  display: block;
+  font-size: 13px;
+  color: var(--lp-accent);
+  margin-bottom: 12px;
+}
+
+.isaac-lp-problem__v {
+  font-size: 15px;
+  color: var(--lp-text-2);
+  margin: 0;
+}
+
+/* ===== 02 Сценарии (bento) ===== */
+.isaac-lp-scen__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.isaac-lp-scen__card {
+  padding: 32px;
+  background: var(--lp-surface);
+  border: 1px solid var(--lp-hairline);
+  border-radius: var(--lp-radius);
+  transition: border-color 200ms var(--lp-ease), transform 200ms var(--lp-ease);
+}
+
+.isaac-lp-scen__card:hover {
+  border-color: var(--lp-accent);
+  transform: translateY(-3px);
+}
+
+.isaac-lp-scen__tags {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.isaac-lp-scen__tag {
+  display: inline-block;
+  font-size: 12px;
+  color: var(--lp-accent);
+  padding: 3px 10px;
+  background: var(--lp-accent-soft);
+  border-radius: 999px;
+}
+
+/* Пометка «скоро» — нейтральный, приглушённый бейдж (не изумруд, чтобы
+   отличаться от активного тега сценария). */
+.isaac-lp-scen__soon {
+  display: inline-block;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--lp-text-3);
+  padding: 3px 10px;
+  background: light-dark(rgba(26, 22, 20, 0.05), rgba(255, 255, 255, 0.06));
+  border: 1px solid var(--lp-hairline);
+  border-radius: 999px;
+}
+
+/* Нереализованные сценарии — чуть приглушены, но читаемы. */
+.isaac-lp-scen__card.is-soon {
+  opacity: 0.82;
+}
+
+.isaac-lp-scen__card.is-soon:hover {
+  opacity: 1;
+}
+
+.isaac-lp-scen__title {
+  font-family: var(--font-family-serif);
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--lp-text);
+  margin: 0 0 10px;
+}
+
+.isaac-lp-scen__desc {
+  font-size: 15px;
+  color: var(--lp-text-2);
+  margin: 0;
+}
+
+/* ===== 03 Как отвечает (asymmetric bento) ===== */
+.isaac-lp-how__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.isaac-lp-how__cell {
+  padding: 32px;
+  background: var(--lp-surface);
+  border: 1px solid var(--lp-hairline);
+  border-radius: var(--lp-radius);
+}
+
+.isaac-lp-how__cell--wide {
+  grid-column: 1 / -1;
+}
+
+.isaac-lp-how__cell--levels {
+  grid-column: 1 / -1;
+}
+
+.isaac-lp-how__title {
+  font-family: var(--font-family-serif);
+  font-size: 21px;
+  font-weight: 500;
+  color: var(--lp-text);
+  margin: 0 0 10px;
+}
+
+.isaac-lp-how__desc {
+  font-size: 15px;
+  color: var(--lp-text-2);
+  margin: 0;
+}
+
+.isaac-lp-how__tiers {
+  list-style: none;
+  margin: 22px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.isaac-lp-how__tier {
+  padding: 16px 18px;
+  background: var(--lp-surface-sunk);
+  border-radius: var(--lp-radius-sm);
+  border: 1px solid var(--lp-hairline);
+}
+
+.isaac-lp-how__tier-name {
+  display: block;
+  font-size: 15px;
+  color: var(--lp-accent);
+  margin-bottom: 4px;
+}
+
+.isaac-lp-how__tier-note {
+  font-size: 13px;
+  color: var(--lp-text-3);
+}
+
+/* ===== 04 Данные (152-ФЗ) — data-path ===== */
+.isaac-lp-data__flow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 16px;
+}
+
+.isaac-lp-data__node {
+  flex: 1 1 200px;
+  padding: 26px 22px;
+  background: var(--lp-surface);
+  border: 1px solid var(--lp-hairline);
+  border-left: 3px solid var(--lp-accent);
+  border-radius: var(--lp-radius-sm);
+}
+
+.isaac-lp-data__k {
+  display: block;
+  font-size: 13px;
+  color: var(--lp-accent);
+  margin-bottom: 10px;
+}
+
+.isaac-lp-data__v {
+  font-size: 14px;
+  color: var(--lp-text-2);
+  margin: 0;
+}
+
+.isaac-lp-data__arrow {
+  align-self: center;
+  font-size: 20px;
+  color: var(--lp-text-3);
+}
+
+/* ===== 05 Доступ (waitlist) ===== */
+.isaac-lp-section--access {
+  text-align: center;
+}
+
+.isaac-lp-access__inner {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.isaac-lp-section--access .isaac-lp-head {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.isaac-lp-access__soon {
+  margin-top: 24px;
+  font-size: 14px;
+  color: var(--lp-text-3);
+}
+
+/* ===== Waitlist form ===== */
+.isaac-lp-waitlist {
+  text-align: left;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.isaac-lp-waitlist__label {
+  display: block;
+  font-size: 13px;
+  color: var(--lp-text-2);
+  margin-bottom: 8px;
+}
+
+.isaac-lp-waitlist__row {
+  display: flex;
+  gap: 10px;
+}
+
+.isaac-lp-waitlist__input {
+  flex: 1;
+  font-family: var(--font-family-sans);
+  font-size: 15px;
+  padding: 13px 16px;
+  color: var(--lp-text);
+  background: var(--lp-surface);
+  border: 1px solid var(--lp-hairline);
+  border-radius: var(--lp-radius-sm);
+  transition: border-color 140ms var(--lp-ease);
+}
+
+.isaac-lp-waitlist__input:focus {
+  outline: none;
+  border-color: var(--lp-accent);
+}
+
+.isaac-lp-waitlist__input[aria-invalid="true"] {
+  border-color: light-dark(#991b1b, #e08177);
+}
+
+.isaac-lp-waitlist__submit {
+  font-family: var(--font-family-sans);
+  font-size: 15px;
+  font-weight: 500;
+  padding: 13px 24px;
+  color: light-dark(#fbf9f4, #f2fbf7);
+  background: var(--lp-accent);
+  border: 1px solid var(--lp-accent);
+  border-radius: var(--lp-radius-sm);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: filter 140ms var(--lp-ease);
+}
+
+.isaac-lp-waitlist__submit:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.isaac-lp-waitlist__submit:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.isaac-lp-waitlist__error {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: light-dark(#991b1b, #e08177);
+}
+
+.isaac-lp-waitlist__done {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 32px;
+  text-align: center;
+  background: var(--lp-accent-soft);
+  border: 1px solid light-dark(#b6ddcc, #1a8a6b);
+  border-radius: var(--lp-radius);
+}
+
+.isaac-lp-waitlist__done-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  font-size: 20px;
+  color: light-dark(#fbf9f4, #f2fbf7);
+  background: var(--lp-accent);
+  border-radius: 999px;
+  margin-bottom: 14px;
+}
+
+.isaac-lp-waitlist__done-title {
+  font-family: var(--font-family-serif);
+  font-size: 22px;
+  color: var(--lp-text);
+  margin: 0 0 6px;
+}
+
+.isaac-lp-waitlist__done-sub {
+  font-size: 14px;
+  color: var(--lp-text-2);
+  margin: 0;
+}
+
+/* ===== Footer ===== */
+.isaac-lp-footer {
+  position: relative;
+  z-index: 1;
+  max-width: var(--lp-maxw);
+  margin: 0 auto;
+  padding: 40px clamp(24px, 6vw, 56px) 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  border-top: 1px solid var(--lp-hairline);
+}
+
+.isaac-lp-footer__brand {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.isaac-lp-footer__name {
+  font-family: var(--font-family-serif);
+  font-size: 20px;
+  color: var(--lp-text);
+}
+
+.isaac-lp-footer__name::first-letter {
+  color: var(--lp-accent);
+}
+
+.isaac-lp-footer__tag {
+  font-size: 12px;
+  color: var(--lp-text-3);
+}
+
+.isaac-lp-footer__rights {
+  font-size: 13px;
+  color: var(--lp-text-3);
+}
+
+/* ===== Scroll-driven reveal (progressive enhancement) =====
+   Дефолт — финальное видимое состояние (Firefox/без поддержки/reduced-motion
+   получают статичную читаемую страницу). Только при поддержке scroll-timeline
+   И при отсутствии reduced-motion добавляем въезд по мере попадания в кадр. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .isaac-lp-reveal {
+      animation: isaac-lp-rise linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 30%;
+    }
+  }
+}
+
+@keyframes isaac-lp-rise {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 900px) {
+  .isaac-lp-rail {
+    display: none;
+  }
+  .isaac-lp-problem__grid,
+  .isaac-lp-scen__grid,
+  .isaac-lp-how__grid,
+  .isaac-lp-how__tiers {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .isaac-lp-waitlist__row {
+    flex-direction: column;
+  }
+  .isaac-lp-data__arrow {
+    display: none;
+  }
+}
