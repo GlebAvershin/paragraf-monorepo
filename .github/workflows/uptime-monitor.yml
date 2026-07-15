@@ -72,10 +72,9 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           REASON: ${{ steps.check.outputs.reason }}
         run: |
-          text="🔴 <b>isaac-ai.ru недоступен</b>
-${REASON}
-Время: $(date -u '+%Y-%m-%d %H:%M:%S UTC')
-Проверить: https://console.yandex.cloud/folders/b1g8jsna6lraorred1bp/compute/instances/epdo1u2vi365nl6miaa7"
+          now=$(date -u '+%Y-%m-%d %H:%M:%S UTC')
+          console_url="https://console.yandex.cloud/folders/b1g8jsna6lraorred1bp/compute/instances/epdo1u2vi365nl6miaa7"
+          text=$(printf '%s\n%s\n%s: %s\n%s: %s' "🔴 <b>isaac-ai.ru недоступен</b>" "$REASON" "Время" "$now" "Проверить" "$console_url")
           curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
             -d chat_id="${TELEGRAM_CHAT_ID}" \
             -d parse_mode="HTML" \
