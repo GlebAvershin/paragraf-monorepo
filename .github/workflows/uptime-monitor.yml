@@ -1,0 +1,82 @@
+# Uptime monitor — пингует прод каждые 5 минут и шлёт алерт в Telegram при сбое.
+#
+# Зачем: 15.07.2026 инстанс isaac1 был остановлен самой Yandex Cloud (см. вкладка
+# «Операции» в консоли YC) и пролежал ~4 часа никем не замеченным, пока коллега
+# случайно не увидел, что сайт не открывается. Этот воркфлоу существует, чтобы
+# в следующий раз узнать за 5 минут, а не за 4 часа.
+#
+# Работает НЕ на нашем сервере (специально) — если сама VM ляжет, GitHub Actions
+# всё равно продолжит пинговать её снаружи и сможет прислать алерт.
+#
+# Секреты (Settings → Secrets and variables → Actions):
+#   TELEGRAM_BOT_TOKEN — токен бота от @BotFather
+#   TELEGRAM_CHAT_ID   — id чата/пользователя, куда слать алерты
+#
+# Без дедупликации: пока сайт лежит, алерт будет приходить каждые 5 минут — это
+# осознанно (подтверждает, что проблема ещё не решена), при желании чат можно
+# заглушить на время инцидента.
+#
+# NB (2026-07-16): первая регистрация файла у GitHub закэшировалась некорректно
+# (workflow_dispatch не распознавался, API отдавал 422 "does not have
+# workflow_dispatch trigger", name в /actions/workflows показывал путь к файлу
+# вместо name: ниже) — правка, форсирующая новый коммит/переиндексацию, это чинит.
+
+name: Uptime Monitor
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check isaac-ai.ru
+        id: check
+        run: |
+          set +e
+          ok=1
+          reason=""
+
+          root_code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 https://isaac-ai.ru)
+          if [ "$root_code" != "200" ]; then
+            ok=0
+            reason="${reason}Главная страница: HTTP ${root_code}. "
+          fi
+
+          billing_body=$(curl -s --max-time 10 https://isaac-ai.ru/me -o /dev/null -w "%{http_code}")
+          # /me без токена ожидаемо 401 — это значит billing ЖИВ и отвечает.
+          # Любой другой код (0, 502, 503, timeout) — billing недоступен.
+          if [ "$billing_body" != "401" ]; then
+            ok=0
+            reason="${reason}billing (/me): HTTP ${billing_body} (ожидали 401). "
+          fi
+
+          engine_body=$(curl -s --max-time 10 https://isaac-ai.ru/health/readiness)
+          case "$engine_body" in
+            *'"status":"ok"'*) ;;
+            *)
+              ok=0
+              reason="${reason}engine (/health/readiness): '${engine_body}'. "
+              ;;
+          esac
+
+          echo "ok=$ok" >> "$GITHUB_OUTPUT"
+          echo "reason=$reason" >> "$GITHUB_OUTPUT"
+
+      - name: Send Telegram alert on failure
+        if: steps.check.outputs.ok == '0'
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          REASON: ${{ steps.check.outputs.reason }}
+        run: |
+          text="🔴 <b>isaac-ai.ru недоступен</b>
+${REASON}
+Время: $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+Проверить: https://console.yandex.cloud/folders/b1g8jsna6lraorred1bp/compute/instances/epdo1u2vi365nl6miaa7"
+          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            -d chat_id="${TELEGRAM_CHAT_ID}" \
+            -d parse_mode="HTML" \
+            --data-urlencode text="$text"
