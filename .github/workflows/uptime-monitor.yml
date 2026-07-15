@@ -40,7 +40,7 @@ jobs:
           reason=""
 
           root_code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 https://isaac-ai.ru)
-          if [ "$root_code" != "200" ]; then
+          if [ "$root_code" != "999" ]; then # TEMP TEST: force failure to verify Telegram alert
             ok=0
             reason="${reason}Главная страница: HTTP ${root_code}. "
           fi
