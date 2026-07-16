@@ -762,17 +762,21 @@ export function MessageTimeline(props: {
     titleMutation.mutate({ id, title: next })
   }
 
+  // OurApp: replace:true — иначе URL удалённой/архивированной сессии остаётся
+  // в истории браузера. Штатный «Назад» после удаления возвращает на этот
+  // мёртвый URL → движок отвечает 404 → падает единственный ErrorBoundary на
+  // всё приложение (нашли вживую 2026-07-16).
   const navigateAfterSessionRemoval = (sessionID: string, parentID?: string, nextSessionID?: string) => {
     if (params.id !== sessionID) return
     if (parentID) {
-      navigate(`/${params.dir}/session/${parentID}`)
+      navigate(`/${params.dir}/session/${parentID}`, { replace: true })
       return
     }
     if (nextSessionID) {
-      navigate(`/${params.dir}/session/${nextSessionID}`)
+      navigate(`/${params.dir}/session/${nextSessionID}`, { replace: true })
       return
     }
-    navigate(`/${params.dir}/session`)
+    navigate(`/${params.dir}/session`, { replace: true })
   }
 
   const archiveSession = async (sessionID: string) => {
