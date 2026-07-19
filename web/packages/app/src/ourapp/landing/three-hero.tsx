@@ -177,7 +177,10 @@ export default function ThreeHero() {
     const scroller = host.closest(".isaac-lp") as HTMLElement | null
 
     const scene = new THREE.Scene()
-    const camera = new THREE.PerspectiveCamera(52, host.clientWidth / host.clientHeight, 0.1, 100)
+    // Гвард на нулевую высоту хоста в момент onMount (как в resize()) — иначе первый
+    // кадр мог бы получить NaN-aspect до первого колбэка ResizeObserver.
+    const aspect0 = host.clientHeight > 0 ? host.clientWidth / host.clientHeight : 1
+    const camera = new THREE.PerspectiveCamera(52, aspect0, 0.1, 100)
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "low-power" })
     renderer.setClearColor(0x000000, 0)
@@ -192,7 +195,7 @@ export default function ThreeHero() {
     const surfUniforms: Record<string, THREE.IUniform> = {
       uTime: { value: 0 },
       uSize: { value: new THREE.Vector2(WORLD_W, WORLD_D) },
-      uOffset: { value: new THREE.Vector2(0, 0) },
+      uOffset: { value: new THREE.Vector2(0, 0) }, // резерв под пан мира (сейчас 0, без сдвига)
       uZNear: { value: ZNEAR },
       uFlow: { value: 0 },
       uMouse: { value: new THREE.Vector2(0, -6) },
