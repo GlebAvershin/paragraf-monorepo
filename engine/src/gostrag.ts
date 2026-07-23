@@ -27,6 +27,11 @@ export interface GostRetrieval {
   sub_queries?: string[]
 }
 
+// Общий секрет с gost-rag: шлём его заголовком X-Internal-Key, gost-rag принимает /retrieve и
+// /sources только с ним. Пусто (dev) → заголовок не шлём. Тот же паттерн, что ANSWER_SECRET у шлюза.
+const internalKeyHeaders = (): Record<string, string> =>
+  config.GOST_RAG_INTERNAL_KEY ? { "x-internal-key": config.GOST_RAG_INTERNAL_KEY } : {}
+
 const TIMEOUT_MS = 15_000 // retrieve = эмбеддинг запроса + поиск в Qdrant, должно быть быстро
 // deep = ещё и планнер-вызов LLM (декомпозиция) + ретрив на под-вопрос; gost-rag сам падает в
 // одиночный путь по своему таймауту планнера, так что этот лимит — верхняя страховка.
@@ -52,7 +57,7 @@ export async function resolveSources(designations: string[]): Promise<GostSource
   if (designations.length === 0) return []
   const res = await fetch(`${config.GOST_RAG_URL}/sources`, {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: { "content-type": "application/json", ...internalKeyHeaders() },
     body: JSON.stringify({ designations }),
     signal: AbortSignal.timeout(SOURCES_TIMEOUT_MS),
   }).catch(() => null)
@@ -74,7 +79,7 @@ export async function retrieveGost(
   const deep = !!opts?.deep && !!opts?.userKey
   const res = await fetch(`${config.GOST_RAG_URL}/retrieve`, {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: { "content-type": "application/json", ...internalKeyHeaders() },
     body: JSON.stringify({
       query,
       ...(topK ? { top_k: topK } : {}),

@@ -41,6 +41,10 @@ export const config = {
   // 24 = прод-валидированный k (Phase-0 гейт: k24 PASS, k16 near-tie fail; MIGRATION-1024.md),
   // совпадает с серверным дефолтом /retrieve. На k=8 deep-fusion (Ultra) резался до 8 чанков.
   GOST_TOP_K: Number(process.env.GOST_TOP_K ?? 24),
+  // Общий секрет с gost-rag: движок шлёт его заголовком X-Internal-Key на /retrieve и /sources,
+  // gost-rag принимает только запросы с ним (как ANSWER_SECRET для gateway-app). Должен совпадать с
+  // GOSTRAG_INTERNAL_KEY самого gost-rag. Пусто → заголовок не шлём (gost-rag тогда в dev-режиме).
+  GOST_RAG_INTERNAL_KEY: process.env.GOSTRAG_INTERNAL_KEY ?? "",
 
   // Хранилище сессий/сообщений (РФ-хостинг по 152-ФЗ). Своя БД, как у billing.
   DATABASE_URL: process.env.DATABASE_URL ?? "postgres://engine:engine@localhost:5434/engine",
