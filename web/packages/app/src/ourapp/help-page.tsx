@@ -10,7 +10,7 @@
  */
 import { For, Show, createSignal, type Component } from "solid-js"
 import { AppTopbar } from "./app-topbar"
-import { DotWaveBackground } from "./dot-wave-bg"
+import { AppWaveBackground } from "./app-wave-bg"
 import "./settings-page.css"
 
 interface FaqItem {
@@ -67,7 +67,7 @@ export const HelpPage: Component = () => {
 
   return (
     <div class="ourapp-settings">
-      <DotWaveBackground />
+      <AppWaveBackground />
       <AppTopbar active="help" />
 
       <main class="ourapp-settings__main">

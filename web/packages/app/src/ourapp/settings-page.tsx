@@ -17,7 +17,7 @@ import { clearSession } from "./auth-storage"
 import { loadVertical, saveVertical, VERTICAL_ORDER, VERTICALS, type Vertical } from "./verticals"
 import { AboutModal } from "./about-modal"
 import { AppTopbar } from "./app-topbar"
-import { DotWaveBackground } from "./dot-wave-bg"
+import { AppWaveBackground } from "./app-wave-bg"
 import { getDefaultTier, setDefaultTier, TIER_DESC, TIER_LABEL, TIER_ORDER, type ModelTier } from "./scenario-model-tier/store"
 import "./about-modal.css"
 import "./pii.css"
@@ -57,7 +57,7 @@ export const SettingsPage: Component = () => {
 
   return (
     <div class="ourapp-settings">
-      <DotWaveBackground />
+      <AppWaveBackground />
       <AppTopbar active="settings" />
 
       <main class="ourapp-settings__main">

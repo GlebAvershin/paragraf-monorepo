@@ -191,6 +191,12 @@ body {
   left: 0;
 }
 
+.ourapp-dotwave__gl {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
 
 /* Без курсива нигде — включая markdown-курсив в ответах модели. */
 em,

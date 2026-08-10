@@ -14,7 +14,7 @@ import { For, Show, type Component } from "solid-js"
 import { scenariosFor, type Scenario } from "./scenarios"
 import { AppTopbar } from "./app-topbar"
 import { VERTICALS, verticalLabel, type Vertical } from "./verticals"
-import { DotWaveBackground } from "./dot-wave-bg"
+import { AppWaveBackground } from "./app-wave-bg"
 import { HintTour, HOME_HINTS } from "./hint-tour"
 
 export interface HomeRecentSession {
@@ -41,7 +41,7 @@ export const HomeWelcome: Component<HomeWelcomeProps> = (props) => {
 
   return (
     <div class="ourapp-landing">
-      <DotWaveBackground />
+      <AppWaveBackground />
       <AppTopbar active="home" />
       {/* Онбординг-подсказки (один раз после авторизации). */}
       <HintTour tourId="home" batches={HOME_HINTS} />

@@ -11,7 +11,7 @@ import { createSignal, Show, type Component } from "solid-js"
 import { billingApi } from "./billing-api"
 import { setSessionToken } from "./auth-storage"
 import { usePlatform } from "@/context/platform"
-import { DotWaveBackground } from "./dot-wave-bg"
+import { AppWaveBackground } from "./app-wave-bg"
 import { resetHintTours } from "./hint-tour"
 
 export const OnboardingPage: Component<{ onDone: () => void }> = (props) => {
@@ -81,7 +81,7 @@ export const OnboardingPage: Component<{ onDone: () => void }> = (props) => {
 
   return (
     <div class="ourapp-onboarding">
-      <DotWaveBackground />
+      <AppWaveBackground />
       <header class="ourapp-onboarding__topbar">
         <span class="ourapp-onboarding__brand">Isaac</span>
       </header>
