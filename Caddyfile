@@ -61,3 +61,17 @@
 		-Server
 	}
 }
+
+# ---- witek-bi.ru — партнёрская платформа, отдельный изолированный сайт ----
+# (не трогает isaac-ai.ru выше). Контейнер bi-app должен быть подключён к сети
+# isaak_shared и слушать 0.0.0.0:8080 внутри себя — см. комментарий в
+# docker-compose.prod.yml про 127.0.0.1 vs isaak_shared (грабли с первого деплоя).
+# DNS witek-bi.ru должен указывать на наш IP, иначе Caddy не выпустит TLS-сертификат.
+witek-bi.ru {
+	reverse_proxy bi-app:8080
+
+	log {
+		output stdout
+		format json
+	}
+}

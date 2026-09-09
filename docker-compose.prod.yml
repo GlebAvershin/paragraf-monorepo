@@ -194,6 +194,9 @@ services:
     environment:
       APP_DOMAIN: ${APP_DOMAIN}
       ACME_EMAIL: ${ACME_EMAIL}
+    # isaak_shared — иначе Caddy не достучится до bi-app (witek-bi.ru), который
+    # живёт ТОЛЬКО на этой сети, не на default (см. Caddyfile).
+    networks: [default, isaak_shared]
 
 volumes:
   billing_pg_data:
