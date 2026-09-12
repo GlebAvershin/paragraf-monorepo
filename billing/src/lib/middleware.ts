@@ -44,11 +44,14 @@ export const requireManager: MiddlewareHandler = async (c, next) => {
     .where(eq(schema.users.id, userId))
     .limit(1)
   const user = rows[0]
+  // Отдаём JSON {error}, а не HTTPException с текстовым message: клиент
+  // (manager-api.ts) достаёт код именно из поля error, иначе показал бы
+  // пользователю «HTTP 403» вместо человеческого текста.
   if (!user || user.status !== "active") {
-    throw new HTTPException(403, { message: "forbidden" })
+    return c.json({ error: "forbidden" }, 403)
   }
   if (user.role !== "manager") {
-    throw new HTTPException(403, { message: "not_a_manager" })
+    return c.json({ error: "not_a_manager" }, 403)
   }
   await next()
 }
