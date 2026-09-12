@@ -57,7 +57,7 @@
         "docx": "^9.0.0",
         "effect": "catalog:",
         "fuzzysort": "catalog:",
-        "ghostty-web": "github:anomalyco/ghostty-web#main",
+        "ghostty-web": "github:anomalyco/ghostty-web#83c0a07",
         "luxon": "catalog:",
         "mammoth": "^1.8.0",
         "marked": "catalog:",
