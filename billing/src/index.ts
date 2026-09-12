@@ -18,6 +18,7 @@
  *   GET  /payments/history       — payment history for /credits UI
  *   POST /webhooks/cloudpayments — CloudPayments notifications (Pay/Fail/Recurrent/Receipt)
  *   POST /events                 — UI click-аналитика (см. routes/events.ts)
+ *   /manager/*                   — кабинет менеджера: команда, переводы кредитов, расход
  *   GET  /health/liveliness      — process alive
  *   GET  /health/readiness       — process + DB ready
  */
@@ -35,6 +36,7 @@ import { subscriptionRoutes } from "./routes/subscriptions.ts"
 import { paymentRoutes } from "./routes/payments.ts"
 import { webhookRoutes } from "./routes/webhooks.ts"
 import { usageRoutes } from "./routes/usage.ts"
+import { managerRoutes } from "./routes/manager.ts"
 import { eventsRoutes } from "./routes/events.ts"
 import { healthRoutes } from "./routes/health.ts"
 import { waitlistRoutes } from "./routes/waitlist.ts"
@@ -92,6 +94,7 @@ app.route("/subscriptions", subscriptionRoutes)
 app.route("/payments", paymentRoutes)
 app.route("/webhooks", webhookRoutes)
 app.route("/usage", usageRoutes)
+app.route("/manager", managerRoutes)
 app.route("/events", eventsRoutes)
 app.route("/waitlist", waitlistRoutes)
 app.route("/admin", adminRoutes)

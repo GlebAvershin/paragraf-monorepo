@@ -12,7 +12,9 @@
 import { createResource, createSignal, For, Show, type Component } from "solid-js"
 import { useTheme, type ColorScheme } from "@opencode-ai/ui/theme"
 import { Icon } from "@opencode-ai/ui/icon"
-import { billingApi } from "./billing-api"
+import { useNavigate } from "@solidjs/router"
+import { billingApi, cacheReset } from "./billing-api"
+import { managerApi, managerErrorText } from "./manager-api"
 import { clearSession } from "./auth-storage"
 import { loadVertical, saveVertical, VERTICAL_ORDER, VERTICALS, type Vertical } from "./verticals"
 import { AboutModal } from "./about-modal"
@@ -26,8 +28,30 @@ import { useLanguage } from "@/context/language"
 export const SettingsPage: Component = () => {
   const theme = useTheme()
   const language = useLanguage()
-  const [me] = createResource(() => billingApi.me().then((r) => (r.ok ? r.data : null)))
+  const navigate = useNavigate()
+  const [me, { refetch: refetchMe }] = createResource(() =>
+    billingApi.me().then((r) => (r.ok ? r.data : null)),
+  )
   const [aboutOpen, setAboutOpen] = createSignal(false)
+  const [roleBusy, setRoleBusy] = createSignal(false)
+  const [roleError, setRoleError] = createSignal<string | null>(null)
+
+  const becomeManager = async () => {
+    if (!confirm("Стать менеджером? Появится раздел «Команда»: сотрудники и раздача кредитов.")) return
+    setRoleBusy(true)
+    setRoleError(null)
+    const res = await managerApi.activate()
+    setRoleBusy(false)
+    if (!res.ok) {
+      setRoleError(managerErrorText(res.error))
+      return
+    }
+    // Кэш billing-api держит /me 60 секунд — без сброса роль в шапке и на
+    // странице обновилась бы только через минуту.
+    cacheReset()
+    await refetchMe()
+    navigate("/team")
+  }
 
   const [vertical, setVertical] = createSignal<Vertical>(loadVertical())
   const [defaultTier, setDefaultTierSignal] = createSignal<ModelTier>(getDefaultTier())
@@ -80,6 +104,46 @@ export const SettingsPage: Component = () => {
               Выйти из аккаунта
             </button>
           </div>
+        </section>
+
+        <section class="ourapp-settings__card">
+          <div class="ourapp-settings__label">Роль</div>
+          <div class="ourapp-settings__row">
+            <span class="ourapp-settings__rowLabel">Сейчас</span>
+            <span class="ourapp-settings__rowValue">
+              {me()?.user.role === "manager" ? "Менеджер" : "Сотрудник"}
+            </span>
+          </div>
+          <Show when={me()?.user.role === "manager"}>
+            <p class="ourapp-settings__lede">
+              Вам доступен раздел «Команда»: сотрудники, выдача кредитов и их расход.
+            </p>
+            <div class="ourapp-settings__rowActions">
+              <button type="button" class="ourapp-btn" onClick={() => navigate("/team")}>
+                Открыть «Команду»
+              </button>
+            </div>
+          </Show>
+          <Show when={me()?.user.canBecomeManager}>
+            <p class="ourapp-settings__lede">
+              Станьте менеджером, чтобы заводить сотрудников и раздавать им кредиты. На вашу
+              собственную работу с сервисом это не влияет — все возможности остаются.
+            </p>
+            <div class="ourapp-settings__rowActions">
+              <button type="button" class="ourapp-btn" disabled={roleBusy()} onClick={becomeManager}>
+                {roleBusy() ? "Включаем…" : "Стать менеджером"}
+              </button>
+            </div>
+          </Show>
+          <Show when={me() && !me()!.user.canBecomeManager && me()!.user.role !== "manager"}>
+            <p class="ourapp-settings__lede">
+              Ваш аккаунт создан менеджером — расход по нему виден в его кабинете. Ограничений в
+              работе с сервисом нет.
+            </p>
+          </Show>
+          <Show when={roleError()}>
+            {(msg) => <p class="ourapp-settings__lede ourapp-settings__error">{msg()}</p>}
+          </Show>
         </section>
 
         <section class="ourapp-settings__card">

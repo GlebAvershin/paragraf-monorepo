@@ -19,7 +19,7 @@ import { isVerticalEnabled, loadVertical, saveVertical, VERTICAL_ORDER, vertical
 let lastMe: MeResponse | null = null
 let lastLimits: LimitsResponse | null = null
 
-export type AppTopbarActive = "home" | "credits" | "history" | "analytics" | "settings" | "help"
+export type AppTopbarActive = "home" | "credits" | "history" | "analytics" | "team" | "settings" | "help"
 
 // «Настройки» из nav переехали в правый край шапки: там теперь почта аккаунта
 // (клик → настройки) и полоска остатка кредитов (клик → /credits).
@@ -30,6 +30,14 @@ const NAV_ITEMS: Array<{ id: AppTopbarActive; label: string; path: string }> = [
   { id: "analytics", label: "Аналитика", path: "/analytics" },
   { id: "help", label: "Помощь", path: "/help" },
 ]
+
+// «Команда» — только для роли manager: обычному сотруднику раздел не нужен
+// (он всё равно увидит там заглушку, а лишний пункт в шапке путает).
+const TEAM_ITEM: { id: AppTopbarActive; label: string; path: string } = {
+  id: "team",
+  label: "Команда",
+  path: "/team",
+}
 
 export const AppTopbar: Component<{ active: AppTopbarActive }> = (props) => {
   const navigate = useNavigate()
@@ -44,6 +52,8 @@ export const AppTopbar: Component<{ active: AppTopbarActive }> = (props) => {
     () => billingApi.limits().then((r) => (r.ok ? (lastLimits = r.data) : lastLimits)),
     { initialValue: lastLimits ?? undefined },
   )
+
+  const navItems = () => (me()?.user.role === "manager" ? [...NAV_ITEMS, TEAM_ITEM] : NAV_ITEMS)
 
   const creditsRemaining = () => limits()?.credits.remaining ?? 0
   const creditsTotal = () => limits()?.credits.monthlyTotal ?? 0
@@ -105,7 +115,7 @@ export const AppTopbar: Component<{ active: AppTopbarActive }> = (props) => {
           </DropdownMenu>
         </div>
         <nav class="ourapp-landing__nav" aria-label="Разделы">
-          <For each={NAV_ITEMS}>
+          <For each={navItems()}>
             {(item) => (
               <button
                 type="button"

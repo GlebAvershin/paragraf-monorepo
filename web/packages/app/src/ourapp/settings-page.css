@@ -262,3 +262,8 @@
 .ourapp-btn--danger:hover {
   background: light-dark(rgba(153, 27, 27, 0.06), rgba(220, 38, 38, 0.12));
 }
+
+/* Ошибка операции с ролью (например, не удалось стать менеджером). */
+.ourapp-settings__error {
+  color: light-dark(#991b1b, #f87171);
+}

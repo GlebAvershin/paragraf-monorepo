@@ -141,8 +141,20 @@ function safeJson(text: string): unknown {
 
 // ===== Endpoints =====
 
+export type UserRole = "employee" | "manager"
+
 export interface MeResponse {
-  user: { id: string; email: string; name: string | null; primaryVertical: string | null }
+  user: {
+    id: string
+    email: string
+    name: string | null
+    primaryVertical: string | null
+    role: UserRole
+    /** Кто завёл аккаунт. null = зарегистрировался сам. */
+    managerId: string | null
+    /** true только у самостоятельно заведённого сотрудника (созданный менеджером — не может). */
+    canBecomeManager: boolean
+  }
   subscription: {
     id: string
     planCode: string

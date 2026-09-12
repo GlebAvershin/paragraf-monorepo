@@ -16,6 +16,7 @@ import CreditsRoute from "@/ourapp/credits-route"
 import SettingsRoute from "@/ourapp/settings-route"
 import HistoryRoute from "@/ourapp/history-route"
 import AnalyticsRoute from "@/ourapp/analytics-route"
+import TeamRoute from "@/ourapp/team-route"
 import HelpRoute from "@/ourapp/help-route"
 import AdminConversationsRoute from "@/ourapp/admin-conversations-route"
 import AdminEventsRoute from "@/ourapp/admin-events-route"
@@ -346,6 +347,7 @@ export function AppInterface(props: {
                     <Route path="/settings" component={SettingsRoute} />
                     <Route path="/history" component={HistoryRoute} />
                     <Route path="/analytics" component={AnalyticsRoute} />
+                    <Route path="/team" component={TeamRoute} />
                     <Route path="/help" component={HelpRoute} />
                     <Route path="/admin/conversations" component={AdminConversationsRoute} />
                     <Route path="/admin/click-analytics" component={AdminEventsRoute} />
@@ -356,6 +358,7 @@ export function AppInterface(props: {
                       <Route path="/settings" component={SettingsRoute} />
                       <Route path="/history" component={HistoryRoute} />
                       <Route path="/analytics" component={AnalyticsRoute} />
+                      <Route path="/team" component={TeamRoute} />
                       <Route path="/help" component={HelpRoute} />
                     </Route>
                   </Dynamic>

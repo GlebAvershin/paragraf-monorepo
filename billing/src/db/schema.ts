@@ -20,12 +20,18 @@ import {
   index,
   bigserial,
   numeric,
+  type AnyPgColumn,
 } from "drizzle-orm/pg-core"
 
 // ===== Enums =====
 
 export const verticalEnum = pgEnum("vertical", ["lawyer", "accountant", "manager", "other"])
 export const userStatusEnum = pgEnum("user_status", ["active", "blocked"])
+// Роль в личном кабинете (2026-09-11). НЕ путать с verticalEnum "manager" —
+// то профессия (вертикаль сценариев), это права в кабинете.
+//   employee — дефолт для любого нового аккаунта: сам платит, сам тратит, без ограничений;
+//   manager  — плюс вкладка «Команда»: заводит сотрудников, раздаёт им кредиты, видит их расход.
+export const userRoleEnum = pgEnum("user_role", ["employee", "manager"])
 export const subStatusEnum = pgEnum("sub_status", [
   "trial",
   "active",
@@ -50,6 +56,10 @@ export const creditReasonEnum = pgEnum("credit_reason", [
   "support_compensation",
   "subscription_monthly", // выдаётся при каждом успешном продлении подписки
   "topup", // докупка вне подписки — переносится на 1 след. месяц
+  // Перевод кредитов менеджером сотруднику (списывается с грантов менеджера).
+  // Добавление значения в enum = ручная миграция (ALTER TYPE ... ADD VALUE),
+  // см. drizzle/manual/2026-09-11-manager-role.sql.
+  "manager_transfer",
 ])
 
 // "embedding" — служебный тир gost-rag-ретрива (метрится по факту, БЕЗ пола 1 кредит; см.
@@ -127,6 +137,11 @@ export const users = pgTable(
     passwordHash: text("password_hash"),
     primaryVertical: verticalEnum("primary_vertical"),
     status: userStatusEnum("status").notNull().default("active"),
+    role: userRoleEnum("role").notNull().default("employee"),
+    // Кто завёл этого пользователя. NULL = зарегистрирован сам (может стать
+    // менеджером). Заполнен = создан менеджером: работает без ограничений, но
+    // менеджером стать не может и его расход виден создателю.
+    managerId: uuid("manager_id").references((): AnyPgColumn => users.id, { onDelete: "set null" }),
     metadata: jsonb("metadata").$type<Record<string, unknown>>().default({}),
     lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -134,6 +149,7 @@ export const users = pgTable(
   },
   (t) => ({
     emailIdx: uniqueIndex("users_email_unique").on(t.email),
+    managerIdx: index("users_manager_idx").on(t.managerId),
   }),
 )
 

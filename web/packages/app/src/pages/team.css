@@ -1,0 +1,257 @@
+/* OurApp «Команда» — кабинет менеджера. Разметка/палитра как у analytics.css. */
+
+.ourapp-team {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  font-family: var(--font-family-sans);
+  color: light-dark(#1a1614, #ede8df);
+  background: light-dark(#fbf9f4, #15120f);
+}
+
+.ourapp-team__main {
+  position: relative;
+  z-index: 1;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 32px 24px 64px;
+}
+
+.ourapp-team__title {
+  font-family: var(--font-family-serif, "IBM Plex Serif", serif);
+  font-size: 32px;
+  font-weight: 500;
+  margin: 0 0 24px;
+}
+
+.ourapp-team__title em {
+  font-style: italic;
+  color: light-dark(#0b5345, #1fa37a);
+}
+
+.ourapp-team__filters {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.ourapp-team__loading,
+.ourapp-team__empty {
+  padding: 24px;
+  border: 1px solid light-dark(#e8e3db, #2e2924);
+  border-radius: 12px;
+  background: light-dark(#fff, #1f1b17);
+  color: light-dark(#4a453f, #b5afa4);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.ourapp-team__empty p {
+  margin: 0 0 12px;
+}
+
+.ourapp-team__error {
+  color: light-dark(#991b1b, #f87171);
+  font-size: 13px;
+  margin: 8px 0 0;
+}
+
+.ourapp-team__ok {
+  color: light-dark(#0b5345, #1fa37a);
+  font-size: 13px;
+  margin: 0 0 16px;
+}
+
+/* ---- форма создания сотрудника ---- */
+
+.ourapp-team__form {
+  border: 1px solid light-dark(#e8e3db, #2e2924);
+  border-radius: 12px;
+  background: light-dark(#fff, #1f1b17);
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.ourapp-team__formlede {
+  margin: 0 0 16px;
+  font-size: 13px;
+  color: light-dark(#6b6660, #a39d92);
+  line-height: 1.5;
+}
+
+.ourapp-team__formrow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.ourapp-team__formrow label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  color: light-dark(#4a453f, #b5afa4);
+}
+
+.ourapp-team__formrow input {
+  padding: 9px 11px;
+  border-radius: 8px;
+  border: 1px solid light-dark(#d8d2c5, #3a342d);
+  background: light-dark(#fff, #25201b);
+  color: inherit;
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.ourapp-team__formrow input:focus-visible {
+  outline: 2px solid light-dark(#0b5345, #1fa37a);
+  outline-offset: 1px;
+}
+
+.ourapp-team__formactions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+/* ---- сводные карточки ---- */
+
+.ourapp-team__cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.ourapp-team__card {
+  border: 1px solid light-dark(#e8e3db, #2e2924);
+  border-radius: 12px;
+  background: light-dark(#fff, #1f1b17);
+  padding: 16px 18px;
+}
+
+.ourapp-team__cardLabel {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: light-dark(#6b6660, #a39d92);
+  margin-bottom: 6px;
+}
+
+.ourapp-team__cardValue {
+  font-size: 26px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- таблица команды ---- */
+
+.ourapp-team__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.ourapp-team__table th {
+  text-align: left;
+  font-weight: 500;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: light-dark(#6b6660, #a39d92);
+  padding: 8px 10px;
+  border-bottom: 1px solid light-dark(#e8e3db, #2e2924);
+}
+
+.ourapp-team__table td {
+  padding: 12px 10px;
+  border-bottom: 1px solid light-dark(#f0ebe0, #2a2521);
+  vertical-align: top;
+}
+
+.ourapp-team__num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.ourapp-team__member {
+  font-weight: 500;
+}
+
+.ourapp-team__submeta {
+  font-size: 12px;
+  color: light-dark(#6b6660, #a39d92);
+  margin-top: 2px;
+}
+
+.ourapp-team__actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  white-space: nowrap;
+}
+
+.ourapp-team__link {
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  color: light-dark(#0b5345, #1fa37a);
+}
+
+.ourapp-team__link:hover {
+  text-decoration: underline;
+}
+
+/* ---- раскрывающиеся строки (перевод / история) ---- */
+
+.ourapp-team__inlinerow > td {
+  background: light-dark(#f6f2eb, #1a1713);
+}
+
+.ourapp-team__grant {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: light-dark(#4a453f, #b5afa4);
+}
+
+.ourapp-team__grant input {
+  width: 140px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid light-dark(#d8d2c5, #3a342d);
+  background: light-dark(#fff, #25201b);
+  color: inherit;
+  font-family: inherit;
+}
+
+.ourapp-team__subtable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.ourapp-team__subtable th {
+  text-align: left;
+  font-weight: 500;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: light-dark(#6b6660, #a39d92);
+  padding: 6px 8px;
+}
+
+.ourapp-team__subtable td {
+  padding: 6px 8px;
+  border-top: 1px solid light-dark(#e8e3db, #2e2924);
+}

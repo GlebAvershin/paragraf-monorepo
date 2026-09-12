@@ -48,6 +48,11 @@ meRoutes.get("/", requireSession, async (c) => {
       email: user.email,
       name: user.name,
       primaryVertical: user.primaryVertical,
+      role: user.role,
+      managerId: user.managerId,
+      // Менеджером может стать только тот, кто завёлся сам. Созданный менеджером
+      // сотрудник — нет (иначе иерархия команд разъезжается).
+      canBecomeManager: user.role === "employee" && user.managerId === null,
     },
     subscription: sub
       ? {
