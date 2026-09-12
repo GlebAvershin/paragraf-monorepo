@@ -677,3 +677,18 @@ Master-key — в `gateway/.env`. Кэш ключа в памяти LiteLLM — 
 - **DEV-mode artifacts auto-hidden in production.** `import.meta.env.DEV &&`
   gate at `packages/app/src/pages/layout.tsx:2381,2535` hides `DebugBar` (FPS/JANK
   overlay) and the DEV badge in production builds. No fork patch needed.
+
+## Прод-грабли деплоя (2026-09-12)
+
+- **Новый роут billing надо добавить в Caddyfile.** У billing в `Caddyfile` не
+  wildcard, а **явный список путей** (`@billing path /auth/* /me /limits /manager/* …`).
+  Роут, которого там нет, уходит в SPA-fallback и отвечает 200 html / 405 вместо
+  JSON — выглядит как «фича не задеплоилась». Так вышло с `/manager/*` у кабинета
+  менеджера. Wildcard `/admin/*` ставить нельзя — он ломает SPA-страницы админки
+  (см. историю с `/admin/click-analytics`). Проверка после деплоя:
+  `curl -X POST https://isaac-ai.ru/<новый-роут>` → должен быть **401**, не 405/200.
+- **git-зависимости пиньте на коммит, а не на ветку.** `ghostty-web` стоял как
+  `github:anomalyco/ghostty-web#main` → любой коммит в upstream менял resolved-хэш,
+  и CI падал на `bun install --frozen-lockfile` («lockfile had changes»). Дважды
+  блокировало деплой. Теперь `#83c0a07`. Обновлять — осознанно: сменить ref +
+  `bun install`, закоммитить `web/bun.lock` вместе с `package.json`.
