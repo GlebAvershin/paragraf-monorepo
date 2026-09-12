@@ -6,7 +6,7 @@
  * страницами шапка визуально «прыгала» (цвет/ширина/текст). Теперь одна шапка,
  * меняется только подсвеченный пункт nav.
  */
-import { createResource, createSignal, For, Show, type Component } from "solid-js"
+import { createResource, createSignal, For, onCleanup, onMount, Show, type Component } from "solid-js"
 import { useNavigate } from "@solidjs/router"
 import { DropdownMenu } from "@opencode-ai/ui/dropdown-menu"
 import { Icon } from "@opencode-ai/ui/icon"
@@ -48,10 +48,19 @@ export const AppTopbar: Component<{ active: AppTopbarActive }> = (props) => {
     () => billingApi.me().then((r) => (r.ok ? (lastMe = r.data) : lastMe)),
     { initialValue: lastMe ?? undefined },
   )
-  const [limits] = createResource(
+  const [limits, { refetch: refetchLimits }] = createResource(
     () => billingApi.limits().then((r) => (r.ok ? (lastLimits = r.data) : lastLimits)),
     { initialValue: lastLimits ?? undefined },
   )
+
+  // Кабинет менеджера меняет баланс, не уходя со страницы: сбросить кэш
+  // billing-api мало — этот resource уже отработал и сам не перезапросит,
+  // поэтому остаток в шапке висел старым до перезагрузки. Слушаем событие.
+  onMount(() => {
+    const onCreditsChanged = () => void refetchLimits()
+    window.addEventListener("ourapp:credits-changed", onCreditsChanged)
+    onCleanup(() => window.removeEventListener("ourapp:credits-changed", onCreditsChanged))
+  })
 
   const navItems = () => (me()?.user.role === "manager" ? [...NAV_ITEMS, TEAM_ITEM] : NAV_ITEMS)
 

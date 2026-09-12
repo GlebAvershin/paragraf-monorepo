@@ -27,6 +27,11 @@ import { DotWaveBackground } from "@/ourapp/dot-wave-bg"
 import { SCENARIOS as WIZARD_SCENARIOS } from "@/ourapp/scenarios/index"
 import "./team.css"
 
+// Сброса кэша billing-api недостаточно: шапка (AppTopbar) уже смонтирована и
+// свой /limits сама не перезапросит — остаток кредитов в ней оставался старым
+// до перезагрузки страницы. Тот же паттерн, что "ourapp:vertical-changed".
+const notifyCreditsChanged = () => window.dispatchEvent(new Event("ourapp:credits-changed"))
+
 const PERIOD_LABELS: Record<UsagePeriod, string> = { week: "Неделя", month: "Месяц", year: "Год" }
 
 const formatDateTime = (iso: string) =>
@@ -103,6 +108,7 @@ export const TeamPage: Component = () => {
     // Баланс в шапке берётся из /limits с 60-секундным кэшем billing-api —
     // без сброса менеджер увидит там старую цифру ещё минуту после перевода.
     cacheReset()
+    notifyCreditsChanged()
     void refetchTeam()
   }
 
@@ -128,6 +134,7 @@ export const TeamPage: Component = () => {
     setGrantFor(null)
     setGrantAmount("")
     cacheReset()
+    notifyCreditsChanged()
     void refetchTeam()
   }
 
