@@ -2,8 +2,8 @@
  * Публичный маркетинговый лендинг Isaac (`/landing`). Позиционирование —
  * инфраструктура и единый доступ бизнеса ко всем сильнейшим нейросетям (см. copy.ts).
  *
- * Композиция: закреплённый на весь экран WebGL-мир (`three-hero`, lazy-чанк
- * three.js) за контентом, верхняя навигация, секции-истории (проблема → платформа →
+ * Композиция: статичный фон за контентом, верхняя навигация,
+ * секции-истории (проблема → платформа →
  * модели → возможности → результаты → механизм сценариев → примеры → доступ) и
  * waitlist-CTA. Секции полупрозрачны — «мир» виден за ними и всегда в кадре.
  *
@@ -11,19 +11,16 @@
  * `lazy(() => import("@/ourapp/landing/landing-page"))` при пути `/landing`.
  * Server/session-провайдеры сюда НЕ приходят — только базовые (тема/шрифты/мета).
  *
- * Хореография движения — CSS + JS в `onMount`: `.isaac-lp-reveal` всплывают снизу
- * (IntersectionObserver), `.isaac-lp-flow` утекают вверх с размытием при уходе за
- * верх экрана (scroll → rAF), счётчики результатов считаются вверх. Прокрутка
+ * `.isaac-lp-reveal` появляются при прокрутке (IntersectionObserver),
+ * счётчики результатов считаются вверх. Прокрутка
  * берётся у контейнера `.isaac-lp` (лендинг скроллится внутри него), фолбэк — окно.
  * Всё под `prefers-reduced-motion` — статичная читаемая страница.
  */
 import { Meta, Title } from "@solidjs/meta"
-import { For, lazy, onCleanup, onMount, Show, Suspense } from "solid-js"
+import { For, onCleanup, onMount, Show } from "solid-js"
 import { ACCESS, ENGINE, EXAMPLES, FEATURES, FOOTER, HERO, MODELS, NAV, PILLARS, PROBLEM, RESULTS } from "./copy"
 import { WaitlistForm } from "./waitlist-form"
 import "./landing.css"
-
-const ThreeHero = lazy(() => import("./three-hero"))
 
 function FeatureIcon(props: { name: string }) {
   return (
@@ -148,51 +145,19 @@ export default function LandingPage() {
       for (const el of stats) countUp(el)
     }
 
-    // Прокрутка: nav-состояние, скрытие подсказки, «утекание» блоков вверх.
-    const flows = Array.from(root.querySelectorAll<HTMLElement>(".isaac-lp-flow"))
+    // Прокрутка: nav-состояние и скрытие подсказки.
     const nav = root.querySelector(".isaac-lp-nav")
-    const choreo = () => {
-      const vh = window.innerHeight
-      for (const f of flows) {
-        const r = f.getBoundingClientRect()
-        const rel = (r.top + r.height / 2 - vh / 2) / vh // >0 ниже центра, <0 выше
-        if (rel < -0.02) {
-          const k = Math.min(-rel, 1)
-          const e = k * k // ускоряется на выходе
-          f.style.transform = `translateY(${-e * 110}px)`
-          f.style.opacity = `${(1 - e * 0.95).toFixed(3)}`
-          f.style.filter = k > 0.12 ? `blur(${(e * 5).toFixed(2)}px)` : ""
-        } else if (f.style.transform) {
-          f.style.transform = ""
-          f.style.opacity = ""
-          f.style.filter = ""
-        }
-      }
-    }
-    let ticking = false
     const onScroll = () => {
       const y = root.scrollTop || window.scrollY
       nav?.classList.toggle("is-scrolled", y > 40)
       root.classList.toggle("is-hidehint", y > 120)
-      if (!reduce && !ticking) {
-        ticking = true
-        requestAnimationFrame(() => {
-          choreo()
-          ticking = false
-        })
-      }
-    }
-    const onResize = () => {
-      if (!reduce) choreo()
     }
     root.addEventListener("scroll", onScroll, { passive: true })
     window.addEventListener("scroll", onScroll, { passive: true })
-    window.addEventListener("resize", onResize)
     onScroll()
     onCleanup(() => {
       root.removeEventListener("scroll", onScroll)
       window.removeEventListener("scroll", onScroll)
-      window.removeEventListener("resize", onResize)
     })
   })
 
@@ -204,9 +169,7 @@ export default function LandingPage() {
         content="Isaac подключает бизнес к самым сильным нейросетям мира: единый доступ ко всем моделям, готовая инфраструктура (аналитика, файлы, команды) и механизм сценариев. Помогаем бизнесу работать с ИИ эффективно."
       />
 
-      <Suspense>
-        <ThreeHero />
-      </Suspense>
+      <div class="isaac-lp-world" aria-hidden="true" />
 
       <header class="isaac-lp-nav">
         <a class="isaac-lp-nav__brand" href="#top">

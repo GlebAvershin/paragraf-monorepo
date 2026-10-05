@@ -76,7 +76,7 @@ function HomeDesign() {
 
   // OurApp: текущая вертикаль (профессия). Источник правды — ourapp/verticals.ts
   // (там же список включённых и дефолт). loadVertical() автоматически вернёт
-  // дефолт, если в localStorage лежит ВЫКЛЮЧЕННАЯ вертикаль (lawyer/accountant).
+  // дефолт, если в localStorage лежит ВЫКЛЮЧЕННАЯ вертикаль (technologist).
   // Сменить вертикаль можно из шапки (AppTopbar, любая страница) — она пишет в
   // localStorage и шлёт "ourapp:vertical-changed", на который здесь подписка,
   // чтобы hero на Home оставался реактивным без прокидывания коллбэка через пропсы.

@@ -205,7 +205,7 @@ export function buildRequestParts(input: BuildRequestPartsInput) {
     return {
       id: Identifier.ascending("part"),
       type: "file",
-      mime: attachment.mime,
+      mime: attachment.originalMime ?? attachment.mime,
       url: attachment.dataUrl,
       filename: attachment.filename,
     } satisfies PromptRequestPart

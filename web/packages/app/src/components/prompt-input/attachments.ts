@@ -47,6 +47,11 @@ export function createPromptAttachments(input: PromptAttachmentsInput) {
   }
 
   const add = async (file: File, toast = true) => {
+    const existingSize = prompt.current().reduce((total, part) => total + (part.type === "image" ? Math.ceil((part.dataUrl.split(",")[1]?.length ?? 0) * 3 / 4) : 0), 0)
+    if (file.size + existingSize > 20 * 1024 * 1024) {
+      showToast({ title: "Файлы слишком большие", description: "Суммарный размер вложений одного сообщения — до 20 МБ." })
+      return false
+    }
     const mime = await attachmentMime(file)
     if (!mime) {
       if (toast) warn()
@@ -61,9 +66,9 @@ export function createPromptAttachments(input: PromptAttachmentsInput) {
     // (с иконкой документа), текст останется скрытым.
     // При build-request эта part заменяется на text-part с содержимым документа —
     // LLM видит plain text (даже GigaChat без document-API).
-    if (mime === "ourapp/office" || mime === "application/pdf") {
-      const parsed = await parseOfficeDocumentLocally(file)
-      if (!parsed) {
+    if (mime === "ourapp/office" || mime === "application/pdf" || mime === "text/plain") {
+      const parsed = mime === "text/plain" ? { filename: file.name, text: await file.text(), warning: undefined } : await parseOfficeDocumentLocally(file)
+      if (!parsed || parsed.warning === "parse_error") {
         if (toast) warn()
         return false
       }
@@ -72,8 +77,9 @@ export function createPromptAttachments(input: PromptAttachmentsInput) {
         id: uuid(),
         filename: parsed.filename,
         mime: "ourapp/office",
-        dataUrl: "",
+        dataUrl: await dataUrl(file, file.type || (mime === "text/plain" ? "text/plain" : "application/octet-stream")),
         extractedText: parsed.text,
+        originalMime: file.type || (mime === "text/plain" ? "text/plain" : "application/octet-stream"),
       }
       const cursor = prompt.cursor() ?? getCursorPosition(editor)
       prompt.set([...prompt.current(), docAttachment], cursor)

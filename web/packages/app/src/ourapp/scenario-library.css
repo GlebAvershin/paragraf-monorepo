@@ -135,7 +135,7 @@
   box-shadow:
     0 1px 2px light-dark(rgba(26, 22, 20, 0.04), rgba(0, 0, 0, 0.4)),
     0 0 0 1px light-dark(rgba(26, 22, 20, 0.02), rgba(0, 0, 0, 0.1));
-  transition: all 180ms var(--ourapp-ease, ease);
+  transition: border-color 120ms ease, background-color 120ms ease;
   text-align: left;
   font-family: inherit;
   outline: none;
@@ -143,10 +143,6 @@
 
 .ourapp-scenario:hover {
   border-color: light-dark(#D8D2C5, #3A342D);
-  transform: translateY(-2px);
-  box-shadow:
-    0 8px 20px light-dark(rgba(26, 22, 20, 0.08), rgba(0, 0, 0, 0.5)),
-    0 2px 4px light-dark(rgba(26, 22, 20, 0.04), rgba(0, 0, 0, 0.3));
 }
 
 .ourapp-scenario:focus-visible {

@@ -35,7 +35,6 @@ import {
 import { openCardBindingWidget, isPaymentsConfigured } from "./cloudpayments-widget"
 import { PlanChangeModal } from "./plan-change-modal"
 import { AppTopbar } from "./app-topbar"
-import { AppWaveBackground } from "./app-wave-bg"
 
 const TOPUP_PACKAGE = "p500"
 
@@ -177,7 +176,6 @@ export const CreditsPage: Component = () => {
 
   return (
     <div class="ourapp-credits">
-      <AppWaveBackground />
       <AppTopbar active="credits" />
 
       <main class="ourapp-credits__main">
@@ -256,7 +254,7 @@ export const CreditsPage: Component = () => {
                       <div class="ourapp-credits__rate">
                         <span class="ourapp-credits__rateDot" style={{ background: dotColor() }} />
                         <span class="ourapp-credits__rateName">
-                          {t().models.map((m) => m.nameRu).join(", ") || t().label}
+                          {tier === "lite" ? "Базовые модели" : tier === "mid" ? "Стандартные модели" : "Топовые модели"}
                         </span>
                         <span class="ourapp-credits__rateMult">
                           {t().models[0]?.multiplier ?? "—"}× кредит

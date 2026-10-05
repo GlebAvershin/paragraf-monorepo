@@ -1,15 +1,19 @@
 /**
- * GET /me — full profile bundle for the desktop app.
- * Returns: user, current subscription metadata, and the LiteLLM virtual key
- * (which the desktop client uses as `apiKey` when configuring providers).
+ * GET /me — full profile bundle for the web app.
+ * Returns: user and current subscription metadata.
  */
 import { Hono } from "hono"
+import { zValidator } from "@hono/zod-validator"
 import { desc, eq, and } from "drizzle-orm"
+import { z } from "zod"
 import { db, schema } from "../db/client.ts"
 import { requireSession } from "../lib/middleware.ts"
 import { config } from "../config.ts"
 
 export const meRoutes = new Hono()
+const PrimaryVerticalSchema = z.object({
+  primaryVertical: z.enum(["lawyer", "accountant"]),
+})
 
 meRoutes.get("/", requireSession, async (c) => {
   const { sub: userId } = c.get("session")
@@ -83,4 +87,17 @@ meRoutes.get("/", requireSession, async (c) => {
       baseUrl: config.LITELLM_BASE_URL,
     },
   })
+})
+
+meRoutes.patch("/", requireSession, zValidator("json", PrimaryVerticalSchema), async (c) => {
+  const { sub: userId } = c.get("session")
+  const { primaryVertical } = c.req.valid("json")
+  const rows = await db
+    .update(schema.users)
+    .set({ primaryVertical })
+    .where(eq(schema.users.id, userId))
+    .returning({ id: schema.users.id, primaryVertical: schema.users.primaryVertical })
+  const user = rows[0]
+  if (!user) return c.json({ error: "user_not_found" }, 404)
+  return c.json({ user })
 })

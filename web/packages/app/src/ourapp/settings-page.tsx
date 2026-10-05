@@ -9,17 +9,16 @@
  *
  * Layout — как credits-page (mockup-style + cream paper-grain).
  */
-import { createResource, createSignal, For, Show, type Component } from "solid-js"
+import { createEffect, createResource, createSignal, For, Show, type Component } from "solid-js"
 import { useTheme, type ColorScheme } from "@opencode-ai/ui/theme"
 import { Icon } from "@opencode-ai/ui/icon"
 import { useNavigate } from "@solidjs/router"
 import { billingApi, cacheReset } from "./billing-api"
 import { managerApi, managerErrorText } from "./manager-api"
 import { clearSession } from "./auth-storage"
-import { loadVertical, saveVertical, VERTICAL_ORDER, VERTICALS, type Vertical } from "./verticals"
+import { clearVertical, loadVertical, persistVertical, saveVertical, VERTICAL_ORDER, VERTICALS, type Vertical } from "./verticals"
 import { AboutModal } from "./about-modal"
 import { AppTopbar } from "./app-topbar"
-import { AppWaveBackground } from "./app-wave-bg"
 import { getDefaultTier, setDefaultTier, TIER_DESC, TIER_LABEL, TIER_ORDER, type ModelTier } from "./scenario-model-tier/store"
 import "./about-modal.css"
 import "./pii.css"
@@ -56,6 +55,14 @@ export const SettingsPage: Component = () => {
   const [vertical, setVertical] = createSignal<Vertical>(loadVertical())
   const [defaultTier, setDefaultTierSignal] = createSignal<ModelTier>(getDefaultTier())
 
+  createEffect(() => {
+    const stored = me()?.user.primaryVertical
+    if (stored !== "lawyer" && stored !== "accountant") return
+    if (stored === vertical()) return
+    setVertical(stored)
+    saveVertical(stored)
+  })
+
   const updateDefaultTier = (tier: ModelTier) => {
     setDefaultTierSignal(tier)
     setDefaultTier(tier)
@@ -64,7 +71,7 @@ export const SettingsPage: Component = () => {
   const updateVertical = (v: Vertical) => {
     if (!VERTICALS[v].enabled) return
     setVertical(v)
-    saveVertical(v)
+    persistVertical(v)
     window.dispatchEvent(new Event("ourapp:vertical-changed"))
   }
 
@@ -74,6 +81,7 @@ export const SettingsPage: Component = () => {
 
   const handleLogout = () => {
     if (!confirm("Выйти из аккаунта? Все локальные данные сохранятся в браузере.")) return
+    clearVertical()
     clearSession()
     // После clearSession диспатчится "ourapp:session-changed",
     // OnboardingGate перерисуется и покажет онбординг.
@@ -81,7 +89,6 @@ export const SettingsPage: Component = () => {
 
   return (
     <div class="ourapp-settings">
-      <AppWaveBackground />
       <AppTopbar active="settings" />
 
       <main class="ourapp-settings__main">
@@ -165,7 +172,7 @@ export const SettingsPage: Component = () => {
                     }}
                     disabled={!meta.enabled}
                     aria-disabled={!meta.enabled}
-                    title={meta.enabled ? undefined : "Скоро. Сейчас доступен только Технолог."}
+                    title={meta.enabled ? undefined : "Скоро"}
                     onClick={() => updateVertical(id)}
                   >
                     {meta.label}

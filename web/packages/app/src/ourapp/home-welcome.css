@@ -28,7 +28,6 @@
   padding: 11px 24px;
   background: light-dark(#F6F2EB, #25201B);
   border-bottom: 1px solid light-dark(#E8E3DB, #2E2924);
-  backdrop-filter: blur(10px);
   flex-shrink: 0;
 }
 
@@ -218,29 +217,31 @@
 .ourapp-landing__main {
   flex: 1;
   display: grid;
-  grid-template-columns: 280px minmax(0, 1fr) 340px;
-  gap: 48px;
-  padding: 80px 64px 64px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-areas: "hero hero" "scenarios recent";
+  gap: 40px 48px;
+  padding: 56px 48px 48px;
   align-items: start;
-  max-width: 1400px;
+  max-width: 1120px;
   margin: 0 auto;
   width: 100%;
 }
 
-@media (max-width: 1080px) {
+@media (max-width: 720px) {
   .ourapp-landing__main {
     grid-template-columns: 1fr;
-    padding: 56px 32px 48px;
-    gap: 40px;
+    grid-template-areas: "hero" "scenarios" "recent";
+    padding: 32px 20px;
+    gap: 28px;
   }
 }
 
 /* ---- Scenarios (левая колонка) — прозрачный список-«пути», зеркально recent ---- */
 
 .ourapp-landing__scen {
-  border-right: 1px solid light-dark(#E8E3DB, #2E2924);
-  padding-right: 32px;
-  padding-top: 8px;
+  grid-area: scenarios;
+  border-top: 1px solid light-dark(#E8E3DB, #2E2924);
+  padding-top: 24px;
 }
 
 @media (max-width: 1080px) {
@@ -249,7 +250,7 @@
     border-right: 0;
     padding-right: 0;
     border-top: 1px solid light-dark(#E8E3DB, #2E2924);
-    padding-top: 32px;
+    padding-top: 24px;
   }
 }
 
@@ -257,7 +258,9 @@
 /* ---- Hero (центр) ---- */
 
 .ourapp-landing__hero {
-  max-width: 640px;
+  grid-area: hero;
+  position: relative;
+  min-width: 0;
 }
 
 @media (max-width: 1080px) {
@@ -273,13 +276,10 @@
   font-family: var(--font-family-sans);
   font-size: 11px;
   text-transform: uppercase;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.12em;
   font-weight: 600;
   color: light-dark(#0B5345, #1A8A6B);
-  margin-bottom: 24px;
-  padding: 6px 14px;
-  background: light-dark(rgba(11, 83, 69, 0.07), rgba(26, 138, 107, 0.15));
-  border-radius: 999px;
+  margin-bottom: 20px;
 }
 
 .ourapp-landing__eyebrowdot {
@@ -292,13 +292,14 @@
 }
 
 .ourapp-landing__title {
+  max-width: 740px;
   font-family: var(--font-family-serif);
-  font-size: 64px;
-  line-height: 1.02;
+  font-size: clamp(36px, 5vw, 56px);
+  line-height: 1.12;
   letter-spacing: -0.025em;
   font-weight: 400;
   color: light-dark(#1A1614, #EDE8DF);
-  margin: 0 0 28px;
+  margin: 0 0 20px;
 }
 
 .ourapp-landing__title span {
@@ -307,16 +308,16 @@
 
 @media (max-width: 720px) {
   .ourapp-landing__title {
-    font-size: 44px;
+    font-size: clamp(32px, 7vw, 44px);
   }
 }
 
 .ourapp-landing__lede {
-  font-size: 17px;
-  line-height: 1.55;
+  font-size: 16px;
+  line-height: 1.6;
   color: light-dark(#4A453F, #B5AFA4);
-  max-width: 540px;
-  margin: 0 0 40px;
+  max-width: 600px;
+  margin: 0 0 28px;
 }
 
 .ourapp-landing__actions {
@@ -336,32 +337,133 @@
   border-radius: var(--ourapp-radius-md, 10px);
   border: 1px solid transparent;
   cursor: pointer;
-  transition: all 180ms var(--ourapp-ease, ease);
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
   letter-spacing: -0.005em;
 }
 
 .ourapp-landing__cta--primary {
   background: light-dark(#0B5345, #1A8A6B);
   color: light-dark(#FBF9F4, #EDE8DF);
-  box-shadow:
-    0 2px 8px light-dark(rgba(11, 83, 69, 0.25), rgba(0, 0, 0, 0.4)),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .ourapp-landing__cta--primary:hover {
   background: light-dark(#0D6B58, #1FA17F);
-  transform: translateY(-1px);
-  box-shadow:
-    0 4px 14px light-dark(rgba(11, 83, 69, 0.3), rgba(0, 0, 0, 0.5)),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.ourapp-landing__cta-arrow {
+  display: inline-block;
+  transition: transform 180ms ease;
+}
+
+.ourapp-landing__cta:is(:hover, :focus-visible) .ourapp-landing__cta-arrow {
+  transform: translateX(3px);
+}
+
+.ourapp-landing__illustration {
+  position: absolute;
+  top: 24px;
+  right: 0;
+  width: 220px;
+  height: 257px;
+  pointer-events: none;
+  color: light-dark(#0B5345, #57B99A);
+}
+
+.ourapp-landing__illustration-guide {
+  stroke: light-dark(#E8E3DB, #2E2924);
+  stroke-width: 1;
+}
+
+.ourapp-landing__illustration-sheet {
+  fill: light-dark(#F6F2EB, #25201B);
+  stroke: light-dark(#D8D2C5, #3A342D);
+}
+
+.ourapp-landing__illustration-paper {
+  fill: light-dark(#FFFFFF, #1F1B17);
+  stroke: light-dark(#D8D2C5, #3A342D);
+}
+
+.ourapp-landing__illustration-line {
+  stroke: light-dark(#D8D2C5, #5C554B);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.ourapp-landing__illustration-accent,
+.ourapp-landing__illustration-check {
+  stroke: currentColor;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.ourapp-landing__illustration-back {
+  animation: ourapp-document-settle 8s ease-in-out 2;
+}
+
+.ourapp-landing__illustration-front {
+  animation: ourapp-document-settle 8s ease-in-out 2 reverse;
+}
+
+.ourapp-landing__illustration-check {
+  stroke-dasharray: 1;
+  animation: ourapp-document-check 650ms ease-out 280ms both;
+}
+
+.ourapp-landing__hero > :not(svg),
+.ourapp-landing__scen,
+.ourapp-landing__recent {
+  animation: ourapp-home-enter 420ms cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+
+.ourapp-landing__title { animation-delay: 40ms; }
+.ourapp-landing__lede { animation-delay: 80ms; }
+.ourapp-landing__actions { animation-delay: 120ms; }
+.ourapp-landing__scen { animation-delay: 160ms; }
+.ourapp-landing__recent { animation-delay: 200ms; }
+
+@keyframes ourapp-home-enter {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes ourapp-document-settle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+@keyframes ourapp-document-check {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
+}
+
+@media (max-width: 1100px) {
+  .ourapp-landing__illustration { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ourapp-landing__hero > :not(svg),
+  .ourapp-landing__scen,
+  .ourapp-landing__recent,
+  .ourapp-landing__illustration-back,
+  .ourapp-landing__illustration-front,
+  .ourapp-landing__illustration-check {
+    animation: none;
+  }
+
+  .ourapp-landing__cta-arrow {
+    transition: none;
+    transform: none !important;
+  }
 }
 
 /* ---- Recent (правая колонка) ---- */
 
 .ourapp-landing__recent {
-  border-left: 1px solid light-dark(#E8E3DB, #2E2924);
-  padding-left: 32px;
-  padding-top: 8px;
+  grid-area: recent;
+  border-top: 1px solid light-dark(#E8E3DB, #2E2924);
+  padding-top: 24px;
 }
 
 @media (max-width: 1080px) {
@@ -370,7 +472,7 @@
     border-left: 0;
     padding-left: 0;
     border-top: 1px solid light-dark(#E8E3DB, #2E2924);
-    padding-top: 32px;
+    padding-top: 24px;
   }
 }
 
@@ -453,6 +555,11 @@
   opacity: 0.5;
   margin-top: 7px;
   flex-shrink: 0;
+  transition: opacity 180ms ease, background-color 180ms ease;
+}
+
+.ourapp-landing__recentitem:is(:hover, :focus-visible) .ourapp-landing__recentdot {
+  opacity: 1;
 }
 
 .ourapp-landing__recentbody {
@@ -464,7 +571,7 @@
 }
 
 .ourapp-landing__recenttext {
-  font-size: 13px;
+  font-size: 14px;
   color: light-dark(#1A1614, #EDE8DF);
   font-weight: 500;
   white-space: nowrap;
@@ -473,7 +580,47 @@
 }
 
 .ourapp-landing__recentmeta {
-  font-size: 11px;
+  font-size: 12px;
   color: light-dark(#6B6660, #847E72);
+}
+
+:where(.ourapp-landing, .ourapp-settings, .ourapp-credits, .ourapp-history, .ourapp-analytics, .ourapp-library, .ourapp-sidebar, .ourapp-help, .ourapp-onboarding, .ourapp-about-modal, .ourapp-planmodal) :is(button, a, input, select, textarea):focus-visible {
+  outline: 2px solid light-dark(#0B5345, #57B99A);
+  outline-offset: 3px;
+}
+
+@media (max-width: 600px) {
+  .ourapp-landing__topbar {
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 12px 16px;
+  }
+
+  .ourapp-landing__brandgroup {
+    width: 100%;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .ourapp-topbar__right {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .ourapp-topbar__creditstext {
+    display: inline;
+  }
+
+  .ourapp-topbar__account {
+    max-width: 200px;
+  }
+
+  .ourapp-navpill {
+    padding: 6px 8px;
+  }
+
+  .ourapp-landing__recenttext {
+    white-space: normal;
+  }
 }
 

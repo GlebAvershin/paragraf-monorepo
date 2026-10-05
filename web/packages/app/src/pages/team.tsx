@@ -23,7 +23,6 @@ import {
 } from "@/ourapp/manager-api"
 import { periodRange, type UsagePeriod } from "@/ourapp/usage-api"
 import { AppTopbar } from "@/ourapp/app-topbar"
-import { DotWaveBackground } from "@/ourapp/dot-wave-bg"
 import { SCENARIOS as WIZARD_SCENARIOS } from "@/ourapp/scenarios/index"
 import "./team.css"
 
@@ -165,7 +164,6 @@ export const TeamPage: Component = () => {
 
   return (
     <div class="ourapp-team">
-      <DotWaveBackground />
       <AppTopbar active="team" />
 
       <main class="ourapp-team__main">

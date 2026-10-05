@@ -8,6 +8,36 @@ import { config } from "../config.ts"
 
 type Json = Record<string, unknown>
 
+const REDACTED = "[REDACTED]"
+const sensitiveQueryParameter = /([?&](?:api_?key|key|token|authorization|master_?key)=)[^&]*/giu
+const secretLikeValue = /sk-[A-Za-z0-9_-]{4,}/gu
+
+function isSensitiveFieldName(field: string): boolean {
+  return ["key", "apikey", "token", "authorization", "masterkey", "password", "secret"].includes(
+    field.replaceAll(/[_-]/g, "").toLowerCase(),
+  )
+}
+
+/** Removes credentials before an upstream error reaches application logs. */
+export function redactLiteLLMErrorValue(value: unknown, seen = new WeakSet<object>()): unknown {
+  if (typeof value === "string") {
+    return value
+      .replace(sensitiveQueryParameter, `$1${REDACTED}`)
+      .replace(secretLikeValue, REDACTED)
+  }
+  if (Array.isArray(value)) return value.map((item) => redactLiteLLMErrorValue(item, seen))
+  if (!value || typeof value !== "object") return value
+  if (seen.has(value)) return "[Circular]"
+
+  seen.add(value)
+  return Object.fromEntries(
+    Object.entries(value).map(([field, item]) => [
+      field,
+      isSensitiveFieldName(field) ? REDACTED : redactLiteLLMErrorValue(item, seen),
+    ]),
+  )
+}
+
 export interface CreateKeyParams {
   /** Our user.id — kept on LiteLLM side as the linkage. */
   userId: string
@@ -59,13 +89,14 @@ export interface KeyInfo {
 }
 
 export class LiteLLMError extends Error {
-  constructor(
-    message: string,
-    public status: number,
-    public body: unknown,
-  ) {
-    super(message)
+  public readonly status: number
+  public readonly body: unknown
+
+  constructor(message: string, status: number, body: unknown) {
+    super(redactLiteLLMErrorValue(message) as string)
     this.name = "LiteLLMError"
+    this.status = status
+    this.body = redactLiteLLMErrorValue(body)
   }
 }
 

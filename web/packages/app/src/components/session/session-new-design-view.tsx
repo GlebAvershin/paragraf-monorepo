@@ -1,8 +1,8 @@
-import { createSignal, type JSX } from "solid-js"
+import { createSignal, onCleanup, onMount, type JSX } from "solid-js"
 import { useNavigate } from "@solidjs/router"
 import { ScenarioLibrary, type Scenario, type Vertical } from "@/ourapp/scenario-library"
 import { openScenarioWizard } from "@/ourapp/scenarios/wizard-controller"
-import { loadVertical, saveVertical } from "@/ourapp/verticals"
+import { loadVertical, persistVertical } from "@/ourapp/verticals"
 
 /**
  * OurApp empty-state новой сессии.
@@ -21,11 +21,17 @@ import { loadVertical, saveVertical } from "@/ourapp/verticals"
  */
 export function NewSessionDesignView(props: { worktree: string; children: JSX.Element }) {
   const [vertical, setVertical] = createSignal<Vertical>(loadVertical())
+  onMount(() => {
+    const syncVertical = () => setVertical(loadVertical())
+    window.addEventListener("ourapp:vertical-changed", syncVertical)
+    onCleanup(() => window.removeEventListener("ourapp:vertical-changed", syncVertical))
+  })
   const navigate = useNavigate()
 
   const onVerticalChange = (v: Vertical) => {
     setVertical(v)
-    saveVertical(v)
+    persistVertical(v)
+    window.dispatchEvent(new Event("ourapp:vertical-changed"))
   }
 
   const handlePick = (scenario: Scenario) => {

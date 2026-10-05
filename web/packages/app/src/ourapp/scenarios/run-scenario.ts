@@ -90,6 +90,7 @@ export async function buildScenarioPrompt(
   }
 
   const attachments: ImageAttachmentPart[] = []
+  if (files.reduce((total, file) => total + file.size, 0) > 20 * 1024 * 1024) throw new Error("Суммарный размер вложений сценария — до 20 МБ.")
   for (const file of files) {
     if (isImageFile(file)) {
       // Скан-картинка: прикрепляем КАК ЕСТЬ (image/*). OCR делает gateway (РФ), как и в
@@ -112,8 +113,9 @@ export async function buildScenarioPrompt(
       id: uuid(),
       filename: parsed.filename,
       mime: "ourapp/office",
-      dataUrl: "",
+      dataUrl: await fileToDataUrl(file),
       extractedText: parsed.text,
+      originalMime: file.type || "application/octet-stream",
     })
   }
 

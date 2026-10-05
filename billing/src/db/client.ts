@@ -9,7 +9,7 @@ const queryClient = postgres(config.DATABASE_URL, {
   connect_timeout: 10,
 })
 
-export const db = drizzle(queryClient, { schema, logger: config.NODE_ENV === "development" })
+export const db = drizzle(queryClient, { schema })
 
 export type DB = typeof db
 export { schema }

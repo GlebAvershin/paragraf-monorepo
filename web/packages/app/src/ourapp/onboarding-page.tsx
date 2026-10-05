@@ -1,17 +1,10 @@
 /**
- * OurApp вход — email + пароль (демо/тест-период, 2026-07-01).
- *
- * Раньше здесь был двухдверный онбординг (выбор вертикали → OTP-код на email).
- * На тест-период вертикаль всегда одна (Технолог, см. verticals.ts), а вместо
- * рассылки OTP на каждый вход — общий тестовый аккаунт с паролем
- * (billing /auth/login, параллельный OTP способ входа). Backend-код OTP не
- * тронут — просто эта страница его больше не вызывает.
+ * Isaac sign-in screen for the legal and accounting workflows.
  */
 import { createSignal, Show, type Component } from "solid-js"
 import { billingApi } from "./billing-api"
 import { setSessionToken } from "./auth-storage"
 import { usePlatform } from "@/context/platform"
-import { AppWaveBackground } from "./app-wave-bg"
 import { resetHintTours } from "./hint-tour"
 
 export const OnboardingPage: Component<{ onDone: () => void }> = (props) => {
@@ -20,24 +13,6 @@ export const OnboardingPage: Component<{ onDone: () => void }> = (props) => {
   const [password, setPassword] = createSignal("")
   const [busy, setBusy] = createSignal(false)
   const [error, setError] = createSignal<string | null>(null)
-
-  // «Авторизация» — кнопка-шутка: некликабельна, убегает от курсора в случайное
-  // место экрана. transform от базового слота, диапазон ограничен вьюпортом,
-  // чтобы не улетала за край.
-  let runaway: HTMLButtonElement | undefined
-  const [flee, setFlee] = createSignal({ x: 0, y: 0 })
-  const dodge = () => {
-    const b = runaway?.getBoundingClientRect()
-    if (!b) return
-    const margin = 16
-    const baseX = b.left - flee().x
-    const baseY = b.top - flee().y
-    const maxX = Math.max(margin, window.innerWidth - b.width - margin)
-    const maxY = Math.max(margin, window.innerHeight - b.height - margin)
-    const targetX = margin + Math.random() * (maxX - margin)
-    const targetY = margin + Math.random() * (maxY - margin)
-    setFlee({ x: targetX - baseX, y: targetY - baseY })
-  }
 
   const login = async (e: Event) => {
     e.preventDefault()
@@ -81,7 +56,6 @@ export const OnboardingPage: Component<{ onDone: () => void }> = (props) => {
 
   return (
     <div class="ourapp-onboarding">
-      <AppWaveBackground />
       <header class="ourapp-onboarding__topbar">
         <span class="ourapp-onboarding__brand">Isaac</span>
       </header>
@@ -89,12 +63,11 @@ export const OnboardingPage: Component<{ onDone: () => void }> = (props) => {
       <main class="ourapp-onboarding__main">
         <form class="ourapp-onboarding__step" onSubmit={login}>
           <h1 class="ourapp-onboarding__title">
-            ИИ-инфраструктура <span>для решения любых ваших задач</span>
+            ИИ-помощник <span>для юристов и бухгалтеров</span>
           </h1>
           <p class="ourapp-onboarding__lede">
-            Isaac объединяет современные ИИ-модели, ваши документы и готовые рабочие
-            сценарии в одном пространстве. Любой сотрудник — любая задача: спросите,
-            загрузите, поручите — и получите готовый результат.
+            Работайте с договорами, претензиями, первичными документами и требованиями
+            ФНС в готовых сценариях или в обычном чате.
           </p>
 
           <div class="ourapp-onboarding__field">
@@ -105,7 +78,7 @@ export const OnboardingPage: Component<{ onDone: () => void }> = (props) => {
               id="onb-email"
               type="email"
               class="ourapp-onboarding__input"
-              placeholder="isaac@test.test"
+              placeholder="name@company.ru"
               value={email()}
               onInput={(e) => setEmail(e.currentTarget.value)}
               ref={(el) => setTimeout(() => el?.focus(), 50)}
@@ -141,24 +114,11 @@ export const OnboardingPage: Component<{ onDone: () => void }> = (props) => {
             >
               {busy() ? "Входим…" : "Войти →"}
             </button>
-            <button
-              ref={runaway}
-              type="button"
-              class="ourapp-btn ourapp-btn--primary ourapp-onboarding__runaway"
-              style={{ transform: `translate(${flee().x}px, ${flee().y}px)` }}
-              onMouseEnter={dodge}
-              onPointerDown={(e) => {
-                e.preventDefault()
-                dodge()
-              }}
-              onClick={(e) => e.preventDefault()}
-              tabindex={-1}
-              aria-hidden="true"
-            >
-              Регистрация
-            </button>
           </div>
-
+          <p class="ourapp-onboarding__access-note">
+            Нет аккаунта? Для получения доступа напишите на{" "}
+            <a href="mailto:isaac.tech.russia@yandex.com">isaac.tech.russia@yandex.com</a>.
+          </p>
         </form>
       </main>
     </div>

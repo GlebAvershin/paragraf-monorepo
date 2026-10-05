@@ -3,6 +3,18 @@ import type { Prompt } from "@/context/prompt"
 import { buildRequestParts } from "./build-request-parts"
 
 describe("buildRequestParts", () => {
+  test("preserves office file bytes and original MIME alongside parsed text", () => {
+    const url = "data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,AAA"
+    const result = buildRequestParts({
+      prompt: [], context: [],
+      images: [{ type: "image", id: "office_1", filename: "contract.docx", mime: "ourapp/office", originalMime: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", dataUrl: url, extractedText: "Договор" }],
+      text: "Проверь договор", messageID: "msg_office", sessionID: "ses_office", sessionDirectory: "/",
+    })
+    const file = result.requestParts.find((part) => part.type === "file")
+    expect(file?.type === "file" && file.mime).toBe("application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+    expect(file?.type === "file" && file.url).toBe(url)
+    expect(result.optimisticParts.some((part) => part.type === "file" && part.url === url)).toBe(true)
+  })
   test("builds typed request and optimistic parts without cast path", () => {
     const prompt: Prompt = [
       { type: "text", content: "hello", start: 0, end: 5 },

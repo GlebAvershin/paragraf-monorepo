@@ -14,6 +14,7 @@ import {
   onMount,
   untrack,
   createResource,
+  createSignal,
 } from "solid-js"
 import { makeEventListener } from "@solid-primitives/event-listener"
 import { createMediaQuery } from "@solid-primitives/media"
@@ -24,7 +25,6 @@ import { selectionFromLines, useFile, type FileSelection, type SelectedLineRange
 import { createStore } from "solid-js/store"
 import { ResizeHandle } from "@opencode-ai/ui/resize-handle"
 import { Select } from "@opencode-ai/ui/select"
-import { Tabs } from "@opencode-ai/ui/tabs"
 import { createAutoScroll } from "@opencode-ai/ui/hooks"
 import { previewSelectedLines } from "@opencode-ai/ui/pierre/selection-bridge"
 import { Button } from "@opencode-ai/ui/button"
@@ -88,6 +88,8 @@ const emptyFollowups: FollowupItem[] = []
 type ChangeMode = "git" | "branch" | "turn"
 type VcsMode = "git" | "branch"
 const USE_NEW_SESSION_DESIGN = import.meta.env.VITE_OPENCODE_CHANNEL !== "prod"
+// Isaac is a document service, not an IDE: source-control review never ships to users.
+const DEVELOPER_REVIEW_ENABLED = false
 
 type SessionHistoryWindowInput = {
   sessionID: () => string | undefined
@@ -194,6 +196,12 @@ function createSessionHistoryLoader(input: SessionHistoryWindowInput) {
 }
 
 export default function Page() {
+  const [vertical, setVertical] = createSignal(loadVertical())
+  onMount(() => {
+    const syncVertical = () => setVertical(loadVertical())
+    window.addEventListener("ourapp:vertical-changed", syncVertical)
+    onCleanup(() => window.removeEventListener("ourapp:vertical-changed", syncVertical))
+  })
   const globalSync = useGlobalSync()
   const layout = useLayout()
   const local = useLocal()
@@ -316,8 +324,12 @@ export default function Page() {
   const size = createSizing()
   const isV2NewSessionPage = () =>
     shouldUseV2NewSessionPage({ channel: import.meta.env.VITE_OPENCODE_CHANNEL, sessionID: params.id })
-  const desktopReviewOpen = createMemo(() => isDesktop() && view().reviewPanel.opened() && !isV2NewSessionPage())
-  const desktopFileTreeOpen = createMemo(() => isDesktop() && layout.fileTree.opened() && !isV2NewSessionPage())
+  const desktopReviewOpen = createMemo(
+    () => DEVELOPER_REVIEW_ENABLED && isDesktop() && view().reviewPanel.opened() && !isV2NewSessionPage(),
+  )
+  const desktopFileTreeOpen = createMemo(
+    () => DEVELOPER_REVIEW_ENABLED && isDesktop() && layout.fileTree.opened() && !isV2NewSessionPage(),
+  )
   const desktopSidePanelOpen = createMemo(() => desktopReviewOpen() || desktopFileTreeOpen())
   const sessionPanelWidth = createMemo(() => {
     if (!desktopSidePanelOpen()) return "100%"
@@ -350,10 +362,8 @@ export default function Page() {
   const info = createMemo(() => (params.id ? sync.session.get(params.id) : undefined))
   const isChildSession = createMemo(() => !!info()?.parentID)
   const diffs = createMemo(() => (params.id ? list(sync.data.session_diff[params.id]) : []))
-  // OurApp: review-tab (Git overview) — IDE-фича, юристам/бухгалтерам не нужна.
-  // Включается флагом VITE_OURAPP_SHOW_DEV=true. canReview ставим false навсегда.
-  const canReview = createMemo(() => !!sync.project && import.meta.env.VITE_OURAPP_SHOW_DEV === "true")
-  const reviewTab = createMemo(() => isDesktop() && import.meta.env.VITE_OURAPP_SHOW_DEV === "true")
+  const canReview = createMemo(() => DEVELOPER_REVIEW_ENABLED && !!sync.project)
+  const reviewTab = createMemo(() => DEVELOPER_REVIEW_ENABLED && isDesktop())
   const tabState = createSessionTabs({
     tabs,
     pathFromTab: file.pathFromTab,
@@ -431,7 +441,6 @@ export default function Page() {
 
   const [store, setStore] = createStore({
     messageId: undefined as string | undefined,
-    mobileTab: "session" as "session" | "changes",
     changes: "git" as ChangeMode,
     newSessionWorktree: "main",
     deferRender: false,
@@ -500,11 +509,11 @@ export default function Page() {
     list.push("turn")
     return list
   })
-  const mobileChanges = createMemo(() => !isDesktop() && store.mobileTab === "changes")
   const wantsReview = createMemo(() =>
-    isDesktop()
+    DEVELOPER_REVIEW_ENABLED &&
+    (isDesktop()
       ? desktopFileTreeOpen() || (desktopReviewOpen() && activeTab() === "review")
-      : store.mobileTab === "changes",
+      : false),
   )
   const vcsMode = createMemo<VcsMode | undefined>(() => {
     if (store.changes === "git" || store.changes === "branch") return store.changes
@@ -514,7 +523,7 @@ export default function Page() {
   )
   const vcsQuery = createQuery(() => {
     const mode = vcsMode()
-    const enabled = wantsReview() && sync.project?.vcs === "git"
+    const enabled = DEVELOPER_REVIEW_ENABLED && wantsReview() && sync.project?.vcs === "git"
 
     return {
       queryKey: [...vcsKey(), mode] as const,
@@ -1773,7 +1782,7 @@ export default function Page() {
           {/* Онбординг-подсказки воркспейса (один раз). */}
           <HintTour tourId="workspace" batches={WORKSPACE_HINTS} />
           <WelcomeSidebar
-            vertical={loadVertical()}
+            vertical={vertical()}
             onPickScenario={(s: Scenario) => {
               void trackEvent("scenario_pick", { scenarioId: s.id, source: "sidebar" })
               // OurApp: сценарий из сайдбара всегда должен стартовать в НОВОЙ
@@ -1819,31 +1828,6 @@ export default function Page() {
             onOpenHelp={() => navigate("/help")}
           />
         </Show>
-        <Show when={!isDesktop() && !!params.id}>
-          <Tabs value={store.mobileTab} class="h-auto">
-            <Tabs.List>
-              <Tabs.Trigger
-                value="session"
-                class="!w-1/2 !max-w-none"
-                classes={{ button: "w-full" }}
-                onClick={() => setStore("mobileTab", "session")}
-              >
-                {language.t("session.tab.session")}
-              </Tabs.Trigger>
-              <Tabs.Trigger
-                value="changes"
-                class="!w-1/2 !max-w-none !border-r-0"
-                classes={{ button: "w-full" }}
-                onClick={() => setStore("mobileTab", "changes")}
-              >
-                {hasReview()
-                  ? language.t("session.review.filesChanged", { count: reviewCount() })
-                  : language.t("session.review.change.other")}
-              </Tabs.Trigger>
-            </Tabs.List>
-          </Tabs>
-        </Show>
-
         <div
           classList={{
             "@container relative shrink-0 flex flex-col min-h-0 h-full bg-background-stronger": true,
@@ -1866,20 +1850,6 @@ export default function Page() {
           </Show>
           <div class="flex-1 min-h-0 overflow-hidden">
             <Switch>
-              <Match when={params.id && mobileChanges()}>
-                <div class="relative h-full overflow-hidden">
-                  {reviewContent({
-                    diffStyle: "unified",
-                    classes: {
-                      root: "pb-8",
-                      header: "px-4",
-                      container: "px-4",
-                    },
-                    loadingClass: "px-4 py-4 text-text-weak",
-                    emptyClass: "h-full pb-64 -mt-4 flex flex-col items-center justify-center text-center gap-6",
-                  })}
-                </div>
-              </Match>
               <Match when={params.id}>
                 <Show when={messagesReady()}>
                   <MessageTimeline

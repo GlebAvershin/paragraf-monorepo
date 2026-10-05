@@ -22,9 +22,9 @@ const seedPlans: (typeof schema.plans.$inferInsert)[] = [
     description: "Бесплатный пробный период — попробовать без оплаты",
     priceRubKopeck: 0,
     monthlyBudgetUsdCenti: 200, // $2 — verifies LiteLLM hardcap
-    monthlyCredits: 30, // ≈ 2-3 задачи на Sonnet 1.5×
+    monthlyCredits: 30, // ≈ 2-3 задачи среднего уровня
     monthlyTasksTarget: 3, // deprecated, оставлено для совместимости
-    allowedModels: ["deepseek/deepseek-v4-flash", "minimax/minimax-m3", "qwen/qwen3-8b", "yandexgpt-pro", "yandexgpt-lite", "z-ai/glm-5.2", "deepseek/deepseek-chat", "qwen/qwen3-embedding-8b"],
+    allowedModels: ["gigachat-lite", "gigachat-pro", "gigachat-max", "yandexgpt-pro", "yandexgpt-lite", "deepseek/deepseek-v4-flash", "minimax/minimax-m3", "qwen/qwen3-8b", "z-ai/glm-5.2", "deepseek/deepseek-chat", "qwen/qwen3-embedding-8b"],
     features: { trial: true, trialDays: 14 },
   },
   {
@@ -36,6 +36,9 @@ const seedPlans: (typeof schema.plans.$inferInsert)[] = [
     monthlyCredits: 500,
     monthlyTasksTarget: 60, // deprecated
     allowedModels: [
+      "gigachat-lite",
+      "gigachat-pro",
+      "gigachat-max",
       "deepseek/deepseek-v4-flash",
       "minimax/minimax-m3",
       "qwen/qwen3-8b",
@@ -57,6 +60,9 @@ const seedPlans: (typeof schema.plans.$inferInsert)[] = [
     allowedModels: [
       "gpt-4o",
       "gpt-4o-mini",
+      "gigachat-lite",
+      "gigachat-pro",
+      "gigachat-max",
       "deepseek/deepseek-v4-flash",
       "minimax/minimax-m3",
       "qwen/qwen3-8b",
@@ -78,6 +84,9 @@ const seedPlans: (typeof schema.plans.$inferInsert)[] = [
     allowedModels: [
       "gpt-4o",
       "gpt-4o-mini",
+      "gigachat-lite",
+      "gigachat-pro",
+      "gigachat-max",
       "deepseek/deepseek-v4-flash",
       "minimax/minimax-m3",
       "qwen/qwen3-8b",
@@ -91,11 +100,8 @@ const seedPlans: (typeof schema.plans.$inferInsert)[] = [
   },
 ]
 
-// Множители и провайдерские цены — стартовые гипотезы.
-// Real-prices в micro-cents/1K tokens (Anthropic public: 2026-05).
-// Цены: Sonnet 4.5 in=$3/1M out=$15/1M, Opus 4.7 in=$15/1M out=$75/1M,
-//        GPT-4o in=$2.5/1M out=$10/1M, GPT-4o-mini in=$0.15/1M out=$0.6/1M,
-//        GigaChat: внутренние цены Сбера, средние оценки.
+// Множители и провайдерские цены — стартовые гипотезы, подлежащие калибровке
+// по фактическим spend-логам после пилота.
 const seedRates: (typeof schema.modelRates.$inferInsert)[] = [
   // ===== Lite =====
   {
@@ -116,15 +122,6 @@ const seedRates: (typeof schema.modelRates.$inferInsert)[] = [
     providerPricePer1kInputUsdMicroCenti: 150, // $0.0015/1K → 150 micro-cents
     providerPricePer1kOutputUsdMicroCenti: 600,
   },
-  {
-    modelCode: "claude-haiku",
-    provider: "anthropic",
-    tier: "lite",
-    multiplier: "1.00",
-    displayNameRu: "Claude Haiku 4.5",
-    providerPricePer1kInputUsdMicroCenti: 1000,
-    providerPricePer1kOutputUsdMicroCenti: 5000,
-  },
   // ===== Mid =====
   {
     modelCode: "gigachat-pro",
@@ -134,15 +131,6 @@ const seedRates: (typeof schema.modelRates.$inferInsert)[] = [
     displayNameRu: "GigaChat Pro",
     providerPricePer1kInputUsdMicroCenti: 200,
     providerPricePer1kOutputUsdMicroCenti: 600,
-  },
-  {
-    modelCode: "claude-sonnet",
-    provider: "anthropic",
-    tier: "mid",
-    multiplier: "1.50",
-    displayNameRu: "Claude Sonnet 4.6",
-    providerPricePer1kInputUsdMicroCenti: 3000, // $3/1M → 3000 micro-cents/1K
-    providerPricePer1kOutputUsdMicroCenti: 15000,
   },
   {
     modelCode: "gpt-4o",
@@ -162,15 +150,6 @@ const seedRates: (typeof schema.modelRates.$inferInsert)[] = [
     displayNameRu: "GigaChat Max",
     providerPricePer1kInputUsdMicroCenti: 1000,
     providerPricePer1kOutputUsdMicroCenti: 3000,
-  },
-  {
-    modelCode: "claude-opus",
-    provider: "anthropic",
-    tier: "top",
-    multiplier: "2.20",
-    displayNameRu: "Claude Opus 4.8",
-    providerPricePer1kInputUsdMicroCenti: 15000, // $15/1M
-    providerPricePer1kOutputUsdMicroCenti: 75000,
   },
   // ===== Yandex (РФ) =====
   // ВАЖНО: modelCode = имя model_name из gateway/litellm-config.yaml (yandexgpt-pro /
@@ -225,7 +204,7 @@ const seedRates: (typeof schema.modelRates.$inferInsert)[] = [
     providerPricePer1kInputUsdMicroCenti: 300,
     providerPricePer1kOutputUsdMicroCenti: 1200,
   },
-  // ===== Пул тиров 2026-07-12 (GigaChat выпилен) — все через SiliconFlow, цены siliconflow.com =====
+  // ===== Международные модели — доступны как отдельный контур =====
   {
     modelCode: "deepseek/deepseek-v4-flash",
     provider: "siliconflow",

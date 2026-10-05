@@ -142,6 +142,7 @@ function safeJson(text: string): unknown {
 // ===== Endpoints =====
 
 export type UserRole = "employee" | "manager"
+export type PrimaryVertical = "lawyer" | "accountant"
 
 export interface MeResponse {
   user: {
@@ -258,6 +259,17 @@ export interface WaitlistResponse {
 
 export const billingApi = {
   me: () => request<MeResponse>("/me"),
+  updatePrimaryVertical: async (primaryVertical: PrimaryVertical) => {
+    const result = await request<{ user: { id: string; primaryVertical: PrimaryVertical } }>("/me", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ primaryVertical }),
+      timeoutMs: 3_000,
+      skipCache: true,
+    })
+    if (result.ok) cache.delete("/me")
+    return result
+  },
   limits: () => request<LimitsResponse>("/limits"),
   rates: () => request<RatesResponse>("/credits/rates"),
   preview: (modelCode: string, inputTokens?: number, outputTokens?: number) =>

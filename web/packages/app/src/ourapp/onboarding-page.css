@@ -236,21 +236,18 @@
   margin-top: 16px;
 }
 
-/* Кнопка-шутка «Авторизация» — затемнённо-зелёная, как НЕкликабельный вход
-   (чтобы сразу не выглядела активной). Плавно убегает от курсора. */
-.ourapp-onboarding__runaway {
-  position: relative;
-  z-index: 20;
-  cursor: default;
-  will-change: transform;
-  transition: transform 620ms cubic-bezier(0.22, 1, 0.36, 1);
+.ourapp-onboarding__access-note {
+  margin: 24px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: light-dark(#6B6660, #B5AFA4);
+  overflow-wrap: anywhere;
 }
 
-.ourapp-onboarding__runaway,
-.ourapp-onboarding__runaway:hover {
-  background: light-dark(#0A4A3D, #124A3A);
-  color: light-dark(#B7D1C8, #7FA398);
-  opacity: 0.72;
+.ourapp-onboarding__access-note a {
+  color: light-dark(#0B5345, #57B99A);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .ourapp-onboarding__link {

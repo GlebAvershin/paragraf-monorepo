@@ -19,7 +19,7 @@ export const lawyerContractReview: Scenario = {
       id: "document",
       type: "file_upload",
       label: "Загрузите договор",
-      hint: "PDF, DOCX или фото/скан (распознаём текст локально). Сканы точнее на Claude Sonnet/Opus.",
+      hint: "PDF, DOCX или фото/скан. Текст со скана распознаём локально.",
       accept: [".pdf", ".docx", ".jpg", ".jpeg", ".png", ".webp"],
       required: true,
     },

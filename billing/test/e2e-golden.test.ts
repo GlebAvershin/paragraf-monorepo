@@ -3,12 +3,13 @@
  *
  * Прогоняет критичный бизнес-путь, как реальный пользователь:
  *   1. Вход по OTP-коду → JWT (существующий юзер с Free-подпиской)
- *   2. Старт: баланс = 30 кредитов (триал)
- *   3. Запрос к модели → ETL-style списание кредитов (chargeCredits)
- *   4. Баланс уменьшился (30 → 18)
- *   5. Аналитика /usage/summary показывает расход по сценарию/модели
- *   6. Идемпотентность: повтор того же requestId не списывает дважды
- *   7. CSV-экспорт содержит событие
+ *   2. Профессия сохраняется в профиле
+ *   3. Старт: баланс = 30 кредитов (триал)
+ *   4. Запрос к модели → ETL-style списание кредитов (chargeCredits)
+ *   5. Баланс уменьшился (30 → 18)
+ *   6. Аналитика /usage/summary показывает расход по сценарию/модели
+ *   7. Идемпотентность: повтор того же requestId не списывает дважды
+ *   8. CSV-экспорт содержит событие
  *
  * НЕ покрывает: реальный gateway-вызов модели (нужен LiteLLM-ключ) и
  * DOCX-экспорт (desktop-функция). Здесь — биллинговая логика, где баги дороже.
@@ -144,21 +145,38 @@ test("шаг 1: вход по OTP-коду → JWT", async () => {
   token = body.token
 })
 
-// ── 2. Старт: баланс 30 ──────────────────────────────────────────────────────
-test("шаг 2: стартовый баланс = 30 кредитов", async () => {
+// ── 2. Персональная профессия ─────────────────────────────────────────────────
+test("шаг 2: выбранная профессия сохраняется в профиле", async () => {
+  const patch = await appFetch(
+    new Request("http://x/me", {
+      method: "PATCH",
+      headers: authHeaders(),
+      body: JSON.stringify({ primaryVertical: "accountant" }),
+    }),
+  )
+  expect(patch.status).toBe(200)
+  expect(((await patch.json()) as { user: { primaryVertical: string } }).user.primaryVertical).toBe("accountant")
+
+  const me = await appFetch(new Request("http://x/me", { headers: authHeaders() }))
+  expect(me.status).toBe(200)
+  expect(((await me.json()) as { user: { primaryVertical: string } }).user.primaryVertical).toBe("accountant")
+})
+
+// ── 3. Старт: баланс 30 ──────────────────────────────────────────────────────
+test("шаг 3: стартовый баланс = 30 кредитов", async () => {
   const res = await appFetch(new Request("http://x/limits", { headers: authHeaders() }))
   expect(res.status).toBe(200)
   const body = (await res.json()) as { credits: { remaining: number; monthlyTotal: number } }
   expect(body.credits.remaining).toBe(30)
 })
 
-// ── 3-4. Списание за сценарий → баланс 18 ────────────────────────────────────
-test("шаг 3-4: списание 12 кредитов за сценарий → баланс 18", async () => {
+// ── 4-5. Списание за сценарий → баланс 18 ────────────────────────────────────
+test("шаг 4-5: списание 12 кредитов за сценарий → баланс 18", async () => {
   const result = await etlCharge({
     subscriptionId: subId,
     credits: 12,
-    model: "claude-sonnet",
-    provider: "anthropic",
+    model: "minimax/minimax-m3",
+    provider: "openrouter",
     inputTokens: 8000,
     outputTokens: 2000,
     costUsdMicroCenti: 120000,
@@ -173,8 +191,8 @@ test("шаг 3-4: списание 12 кредитов за сценарий →
   expect(body.credits.remaining).toBe(18)
 })
 
-// ── 5. Аналитика показывает расход ───────────────────────────────────────────
-test("шаг 5: /usage/summary показывает расход по сценарию и модели", async () => {
+// ── 6. Аналитика показывает расход ───────────────────────────────────────────
+test("шаг 6: /usage/summary показывает расход по сценарию и модели", async () => {
   const res = await appFetch(new Request("http://x/usage/summary", { headers: authHeaders() }))
   expect(res.status).toBe(200)
   const body = (await res.json()) as {
@@ -185,17 +203,17 @@ test("шаг 5: /usage/summary показывает расход по сцена
   }
   expect(body.totalCredits).toBe(12)
   expect(body.totalRequests).toBe(1)
-  expect(body.byModel.find((m) => m.model === "claude-sonnet")?.credits).toBe(12)
+  expect(body.byModel.find((m) => m.model === "minimax/minimax-m3")?.credits).toBe(12)
   expect(body.byScenario.find((s) => s.scenarioId === "law.contract.review")?.credits).toBe(12)
 })
 
-// ── 6. Идемпотентность списания ──────────────────────────────────────────────
-test("шаг 6: повтор того же requestId не списывает дважды", async () => {
+// ── 7. Идемпотентность списания ──────────────────────────────────────────────
+test("шаг 7: повтор того же requestId не списывает дважды", async () => {
   await etlCharge({
     subscriptionId: subId,
     credits: 12,
-    model: "claude-sonnet",
-    provider: "anthropic",
+    model: "minimax/minimax-m3",
+    provider: "openrouter",
     inputTokens: 8000,
     outputTokens: 2000,
     costUsdMicroCenti: 120000,
@@ -208,11 +226,11 @@ test("шаг 6: повтор того же requestId не списывает д�
   expect(body.credits.remaining).toBe(18) // НЕ 6 — повтор не списал
 })
 
-// ── 7. CSV-экспорт ───────────────────────────────────────────────────────────
-test("шаг 7: /usage/export.csv содержит событие", async () => {
+// ── 8. CSV-экспорт ───────────────────────────────────────────────────────────
+test("шаг 8: /usage/export.csv содержит событие", async () => {
   const res = await appFetch(new Request("http://x/usage/export.csv", { headers: authHeaders() }))
   expect(res.status).toBe(200)
   const csv = await res.text()
-  expect(csv).toContain("claude-sonnet")
+  expect(csv).toContain("minimax/minimax-m3")
   expect(csv).toContain("law.contract.review")
 })

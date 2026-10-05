@@ -40,6 +40,7 @@ export interface ImageAttachmentPart {
    * MIME для таких attachment'ов: "ourapp/office".
    */
   extractedText?: string
+  originalMime?: string
 }
 
 export type ContentPart = TextPart | FileAttachmentPart | AgentPart | ImageAttachmentPart

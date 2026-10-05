@@ -4,7 +4,8 @@
  * Показывает название продукта, версию, назначение, юридические ссылки
  * (152-ФЗ обязателен), контакты поддержки. Открывается из Settings.
  */
-import { Show, type Component } from "solid-js"
+import { type Component } from "solid-js"
+import { Dialog } from "@kobalte/core/dialog"
 import { Icon } from "@opencode-ai/ui/icon"
 
 // Версия берётся из Vite define или package.json через import.meta.env.
@@ -36,63 +37,59 @@ export const AboutModal: Component<AboutModalProps> = (props) => {
   }
 
   return (
-    <Show when={props.open}>
-      <div
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 animate-in fade-in duration-150"
-        onClick={props.onClose}
-      >
-        <div
-          class="ourapp-about-modal"
-          role="dialog"
-          aria-modal="true"
-          aria-label="О Isaac"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <button
-            type="button"
-            class="ourapp-about-modal__close"
-            aria-label="Закрыть"
-            onClick={props.onClose}
-          >
-            <Icon name="close" class="size-4" />
-          </button>
-
-          <div class="ourapp-about-modal__brand">
-            <h2 class="ourapp-about-modal__title">Isaac</h2>
-            <p class="ourapp-about-modal__version">Версия {APP_VERSION}</p>
-          </div>
-
-          <p class="ourapp-about-modal__lede">
-            ИИ-агент для профессионалов. Разбирает ГОСТы и стандарты, проверяет документы
-            на соответствие — по готовым сценариям под вашу профессию.
-          </p>
-
-          <div class="ourapp-about-modal__links">
-            <button type="button" class="ourapp-about-modal__link" onClick={() => openLink(SITE_URL)}>
-              Сайт
-            </button>
-            <button type="button" class="ourapp-about-modal__link" onClick={() => openLink(OFFER_URL)}>
-              Оферта
-            </button>
-            <button type="button" class="ourapp-about-modal__link" onClick={() => openLink(PRIVACY_URL)}>
-              Политика конфиденциальности
-            </button>
-          </div>
-
-          <div class="ourapp-about-modal__support">
-            Поддержка:{" "}
+    <Dialog open={props.open} onOpenChange={(open) => !open && props.onClose()}>
+      <Dialog.Portal>
+        <div class="fixed inset-0 z-50 flex items-center justify-center">
+          <Dialog.Overlay class="absolute inset-0 bg-black/40" />
+          <Dialog.Content class="ourapp-about-modal" aria-label="О Isaac">
             <button
               type="button"
-              class="ourapp-about-modal__link"
-              onClick={() => openLink(`mailto:${SUPPORT_EMAIL}`)}
+              class="ourapp-about-modal__close"
+              aria-label="Закрыть"
+              onClick={props.onClose}
             >
-              {SUPPORT_EMAIL}
+              <Icon name="close" class="size-4" />
             </button>
-          </div>
 
-          <p class="ourapp-about-modal__copyright">© {new Date().getFullYear()} Isaac. Все права защищены.</p>
+            <div class="ourapp-about-modal__brand">
+              <Dialog.Title as="h2" class="ourapp-about-modal__title">
+                Isaac
+              </Dialog.Title>
+              <p class="ourapp-about-modal__version">Версия {APP_VERSION}</p>
+            </div>
+
+            <Dialog.Description as="p" class="ourapp-about-modal__lede">
+              Рабочее пространство с ИИ для юристов и бухгалтеров. Анализ документов,
+              подготовка договоров и работа с налоговыми вопросами — в чате и готовых сценариях.
+            </Dialog.Description>
+
+            <div class="ourapp-about-modal__links">
+              <button type="button" class="ourapp-about-modal__link" onClick={() => openLink(SITE_URL)}>
+                Сайт
+              </button>
+              <button type="button" class="ourapp-about-modal__link" onClick={() => openLink(OFFER_URL)}>
+                Оферта
+              </button>
+              <button type="button" class="ourapp-about-modal__link" onClick={() => openLink(PRIVACY_URL)}>
+                Политика конфиденциальности
+              </button>
+            </div>
+
+            <div class="ourapp-about-modal__support">
+              Поддержка:{" "}
+              <button
+                type="button"
+                class="ourapp-about-modal__link"
+                onClick={() => openLink(`mailto:${SUPPORT_EMAIL}`)}
+              >
+                {SUPPORT_EMAIL}
+              </button>
+            </div>
+
+            <p class="ourapp-about-modal__copyright">© {new Date().getFullYear()} Isaac. Все права защищены.</p>
+          </Dialog.Content>
         </div>
-      </div>
-    </Show>
+      </Dialog.Portal>
+    </Dialog>
   )
 }

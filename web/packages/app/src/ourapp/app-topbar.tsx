@@ -6,12 +6,12 @@
  * страницами шапка визуально «прыгала» (цвет/ширина/текст). Теперь одна шапка,
  * меняется только подсвеченный пункт nav.
  */
-import { createResource, createSignal, For, onCleanup, onMount, Show, type Component } from "solid-js"
+import { createEffect, createResource, createSignal, For, onCleanup, onMount, Show, type Component } from "solid-js"
 import { useNavigate } from "@solidjs/router"
 import { DropdownMenu } from "@opencode-ai/ui/dropdown-menu"
 import { Icon } from "@opencode-ai/ui/icon"
 import { billingApi, type LimitsResponse, type MeResponse } from "./billing-api"
-import { isVerticalEnabled, loadVertical, saveVertical, VERTICAL_ORDER, verticalLabel, type Vertical } from "./verticals"
+import { isVerticalEnabled, loadVertical, persistVertical, saveVertical, VERTICAL_ORDER, verticalLabel, type Vertical } from "./verticals"
 
 // Последние загруженные значения переживают перемонтирование шапки: навигация
 // между страницами монтирует AppTopbar заново, и без этого кэша блок
@@ -53,6 +53,15 @@ export const AppTopbar: Component<{ active: AppTopbarActive }> = (props) => {
     { initialValue: lastLimits ?? undefined },
   )
 
+  createEffect(() => {
+    const stored = me()?.user.primaryVertical
+    if (stored !== "lawyer" && stored !== "accountant") return
+    if (stored === vertical()) return
+    setVertical(stored)
+    saveVertical(stored)
+    window.dispatchEvent(new Event("ourapp:vertical-changed"))
+  })
+
   // Кабинет менеджера меняет баланс, не уходя со страницы: сбросить кэш
   // billing-api мало — этот resource уже отработал и сам не перезапросит,
   // поэтому остаток в шапке висел старым до перезагрузки. Слушаем событие.
@@ -74,7 +83,7 @@ export const AppTopbar: Component<{ active: AppTopbarActive }> = (props) => {
 
   const onVerticalChange = (v: Vertical) => {
     setVertical(v)
-    saveVertical(v)
+    persistVertical(v)
     // Другие компоненты (напр. hero на Home) держат свою копию текущей
     // вертикали — уведомляем через window-event, тот же паттерн, что и
     // "ourapp:session-changed" в onboarding-gate.tsx.

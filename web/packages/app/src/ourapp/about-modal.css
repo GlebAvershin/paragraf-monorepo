@@ -1,8 +1,9 @@
 .ourapp-about-modal {
   position: relative;
   width: min(440px, calc(100vw - 32px));
-  background: var(--ourapp-bg-surface, #fff);
-  border: 1px solid var(--hairline, #e8e3db);
+  background: light-dark(#FFFFFF, #1F1B17);
+  border: 1px solid light-dark(#E8E3DB, #2E2924);
+  color: light-dark(#1A1614, #EDE8DF);
   border-radius: var(--ourapp-radius-lg, 14px);
   padding: 40px 32px 28px;
   box-shadow: 0 24px 64px rgba(26, 22, 20, 0.18);
@@ -69,7 +70,7 @@
 .ourapp-about-modal__lede {
   font-size: 14px;
   line-height: 1.55;
-  color: var(--text-secondary, #5c5852);
+  color: light-dark(#4A453F, #B5AFA4);
   text-align: center;
   margin: 0 0 24px;
 }
@@ -89,7 +90,7 @@
   border: none;
   padding: 0;
   font-size: 13px;
-  color: var(--ourapp-accent, #0b5345);
+  color: light-dark(#0B5345, #57B99A);
   cursor: pointer;
   text-decoration: none;
 }
@@ -101,7 +102,7 @@
 .ourapp-about-modal__support {
   text-align: center;
   font-size: 13px;
-  color: var(--text-secondary, #5c5852);
+  color: light-dark(#4A453F, #B5AFA4);
   margin-bottom: 16px;
 }
 

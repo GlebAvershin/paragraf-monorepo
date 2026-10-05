@@ -93,7 +93,7 @@ const draftImages = (prompt: Prompt, inlineScans: boolean) =>
   prompt.filter(
     (part): part is ImageAttachmentPart =>
       part.type === "image" &&
-      !isOfficeDoc(part) &&
+      (!isOfficeDoc(part) || !!part.dataUrl) &&
       !(inlineScans && isScannedDoc(part)),
   )
 

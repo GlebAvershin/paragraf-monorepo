@@ -17,9 +17,10 @@
     "db:seed": "bun run src/db/seed.ts",
     "create-user": "bun run src/scripts/create-user.ts",
     "grant-credits": "bun run src/scripts/grant-credits.ts",
-    "test": "bun test",
-    "test:payments": "bun test test/payments-flow.test.ts",
-    "test:e2e": "bun test test/e2e-golden.test.ts"
+    "sync-model-access": "bun run src/scripts/sync-model-access.ts",
+    "test": "bun run test/run-tests.ts",
+    "test:payments": "bun run test/run-tests.ts test/payments-flow.test.ts",
+    "test:e2e": "bun run test/run-tests.ts test/e2e-golden.test.ts"
   },
   "dependencies": {
     "@hono/zod-validator": "^0.4.0",

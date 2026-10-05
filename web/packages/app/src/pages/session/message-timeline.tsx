@@ -57,6 +57,7 @@ import { useSync } from "@/context/sync"
 import { messageAgentColor } from "@/utils/agent"
 import { sessionTitle } from "@/utils/session-title"
 import { makeTimer } from "@solid-primitives/timer"
+import { openArtifactPreview } from "@/ourapp/artifact-preview"
 import { MessageComment, SummaryDiff, Timeline, TimelineRow, TimelineRowMap } from "./message-timeline.data"
 
 const emptyMessages: MessageType[] = []
@@ -1248,7 +1249,23 @@ export function MessageTimeline(props: {
               {(message) => (
                 <div data-slot="session-turn-message-container" class="w-full px-4 md:px-5">
                   <div data-slot="session-turn-message-content" aria-live="off">
-                    <Message message={message()} parts={getMsgParts(row.userMessageID)} actions={props.actions} />
+                    <Message
+                      message={message()}
+                      parts={getMsgParts(row.userMessageID)}
+                      actions={props.actions}
+                      onOpenAttachment={(attachment) =>
+                        openArtifactPreview({
+                          filename: attachment.filename,
+                          path: "",
+                          mime: attachment.mime,
+                          sourceUrl: attachment.url,
+                          text: attachment.text,
+                          downloadable: !!attachment.url,
+                          sessionID: message().sessionID,
+                          documentKey: attachment.key ?? `${message().id}:${attachment.filename}`,
+                        })
+                      }
+                    />
                   </div>
                 </div>
               )}

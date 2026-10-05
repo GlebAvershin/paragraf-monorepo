@@ -15,7 +15,7 @@ import { useNavigate } from "@solidjs/router"
 import { Icon } from "@opencode-ai/ui/icon"
 import { DropdownMenu } from "@opencode-ai/ui/dropdown-menu"
 import { scenariosFor, type Scenario } from "./scenarios"
-import { isVerticalEnabled, saveVertical, VERTICAL_ORDER, verticalLabel, type Vertical } from "./verticals"
+import { isVerticalEnabled, persistVertical, VERTICAL_ORDER, verticalLabel, type Vertical } from "./verticals"
 import { billingApi, daysUntil } from "./billing-api"
 
 export interface WelcomeSidebarRecentSession {
@@ -61,14 +61,11 @@ export const WelcomeSidebar: Component<WelcomeSidebarProps> = (props) => {
   // Показываем все сценарии вертикали (их 7) — лимит .slice(0,5) скрывал новые.
   const list = createMemo(() => scenariosFor(props.vertical))
 
-  // Выпадашка ролей (как в шапке на главной). На тест-период включён только
-  // «Технолог», остальные — «· скоро». Смена шлёт "ourapp:vertical-changed",
-  // тот же событийный контракт, что и AppTopbar.
-  const [vertical, setVertical] = createSignal<Vertical>(props.vertical)
+  // Выпадашка профессий (как в шапке на главной). Смена шлёт
+  // "ourapp:vertical-changed", тот же событийный контракт, что и AppTopbar.
   const [menuOpen, setMenuOpen] = createSignal(false)
   const onVerticalChange = (v: Vertical) => {
-    setVertical(v)
-    saveVertical(v)
+    persistVertical(v)
     window.dispatchEvent(new Event("ourapp:vertical-changed"))
   }
 
@@ -118,7 +115,7 @@ export const WelcomeSidebar: Component<WelcomeSidebarProps> = (props) => {
             class="ourapp-sidebar__role ourapp-sidebar__role--menu"
             aria-expanded={menuOpen()}
           >
-            {verticalLabel(vertical())}
+            {verticalLabel(props.vertical)}
             <Icon name="chevron-down" class="size-3" />
           </DropdownMenu.Trigger>
           <DropdownMenu.Portal>
@@ -144,11 +141,10 @@ export const WelcomeSidebar: Component<WelcomeSidebarProps> = (props) => {
       <div class="ourapp-sidebar__section" data-hint="ws-scenarios">
         <div class="ourapp-sidebar__label">Сценарии</div>
         <For each={list()}>
-          {(s, i) => (
+          {(s) => (
             <button
               type="button"
               class="ourapp-sidebar__item"
-              classList={{ "ourapp-sidebar__item--active": i() === 0 }}
               onClick={() => props.onPickScenario?.(s)}
               title={s.lede}
             >

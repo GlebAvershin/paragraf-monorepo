@@ -5,10 +5,8 @@
  * Раньше эта логика дублировалась инлайном в 5 местах (onboarding, home, settings,
  * session, new-session-view) — теперь правится здесь одной строкой.
  *
- * MVP (2026-07): первые клиенты — заводы (инженеры-технологи). Активна только
- * вертикаль «Технолог» (сценарии по ГОСТам). «Юрист»/«Бухгалтер» временно
- * выключены (enabled:false) — двери видны, но недоступны. Чтобы вернуть —
- * поставить enabled:true у нужной вертикали.
+ * Current product focus: lawyers and accountants. The technologist flow remains
+ * in code for a future relaunch, but is not available in the user interface.
  */
 import type { Vertical } from "./scenarios"
 
@@ -30,33 +28,33 @@ export const VERTICALS: Record<Vertical, VerticalMeta> = {
   technologist: {
     id: "technologist",
     label: "Технолог",
-    enabled: true,
+    enabled: false,
     doorLede: "Документы, стандарты, расчёты, рутина",
     heroLede: "Выберите сценарий, опишите задачу — получите готовый результат.",
   },
   lawyer: {
     id: "lawyer",
     label: "Юрист",
-    enabled: false,
+    enabled: true,
     doorLede: "Договоры, претензии, иски, ДДУ, корп. право",
     heroLede:
-      "Прочитает договор, найдёт риски, подготовит претензию. Не пустой чат — пошаговые сценарии под юриста.",
+      "Проверка договоров, поиск рисков и подготовка документов — в одном рабочем пространстве. Начните с чата или выберите готовый сценарий.",
   },
   accountant: {
     id: "accountant",
     label: "Бухгалтер",
-    enabled: false,
+    enabled: true,
     doorLede: "Первичка, отчётность, ФНС, НК, контрагенты",
     heroLede:
-      "Проверит первичку, ответит на требование ФНС, объяснит норму НК. Не пустой чат — пошаговые сценарии под бухгалтера.",
+      "Проверка первичных документов, ответы на требования ФНС и разбор налоговых вопросов. Начните с чата или выберите готовый сценарий.",
   },
 }
 
-/** Дефолтная вертикаль — первая активная (сейчас «Технолог»). */
-export const DEFAULT_VERTICAL: Vertical = "technologist"
+/** Дефолтная вертикаль для новых и ранее технологических сессий. */
+export const DEFAULT_VERTICAL: Vertical = "lawyer"
 
-/** Все вертикали в порядке показа (активные первыми). */
-export const VERTICAL_ORDER: Vertical[] = ["technologist", "lawyer", "accountant"]
+/** Вертикали, доступные в пользовательском интерфейсе. */
+export const VERTICAL_ORDER: Vertical[] = ["lawyer", "accountant"]
 
 export function verticalLabel(v: Vertical): string {
   return VERTICALS[v]?.label ?? "—"
@@ -70,7 +68,7 @@ const STORAGE_KEY = "ourapp.primaryVertical"
 
 /**
  * Прочитать выбранную вертикаль из localStorage. Если сохранённая вертикаль
- * выключена (напр. «Юрист» у старого пользователя) или мусор — отдаём дефолт.
+ * выключена (например, «Технолог» у старого пользователя) или мусор — отдаём дефолт.
  */
 export function loadVertical(): Vertical {
   try {
@@ -85,3 +83,18 @@ export function saveVertical(v: Vertical): void {
     localStorage.setItem(STORAGE_KEY, v)
   } catch {}
 }
+
+/** Persists a local UI preference and its account-level source of truth. */
+export function persistVertical(v: Vertical): void {
+  saveVertical(v)
+  if (v === "lawyer" || v === "accountant") {
+    void billingApi.updatePrimaryVertical(v)
+  }
+}
+
+export function clearVertical(): void {
+  try {
+    localStorage.removeItem(STORAGE_KEY)
+  } catch {}
+}
+import { billingApi } from "./billing-api"

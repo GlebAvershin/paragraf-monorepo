@@ -9,8 +9,8 @@
     localStorage.removeItem("opencode-theme-css-dark")
   }
 
-  // OurApp: если пользователь ещё не выбрал светлую/тёмную/системную — тёмная по умолчанию.
-  var scheme = localStorage.getItem("opencode-color-scheme") || "dark"
+  // Isaac: до явного выбора пользователя всегда используем светлую тему.
+  var scheme = localStorage.getItem("opencode-color-scheme") || "light"
   var isDark = scheme === "dark" || (scheme === "system" && matchMedia("(prefers-color-scheme: dark)").matches)
   var mode = isDark ? "dark" : "light"
 

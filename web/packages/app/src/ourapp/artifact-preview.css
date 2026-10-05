@@ -1,0 +1,391 @@
+.ourapp-artifact-preview {
+  width: min(640px, 50vw);
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  border-left: 1px solid var(--ourapp-hairline, #e8e3db);
+  background: var(--ourapp-bg-surface-alt, #f6f2eb);
+  color: var(--ourapp-text-primary, #1a1614);
+  font-family: var(--ourapp-font-body, Onest, sans-serif);
+}
+.ourapp-artifact-preview--expanded {
+  position: fixed;
+  inset: 56px 0 0 264px;
+  z-index: 44;
+  width: auto;
+}
+.isaac-document-workspace {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+.isaac-document-workspace[hidden] {
+  display: none;
+}
+.ourapp-artifact-preview[hidden] {
+  display: none;
+}
+.isaac-document-tabs {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  padding: 8px 12px 0;
+  border-bottom: 1px solid var(--ourapp-hairline, #e8e3db);
+  flex-shrink: 0;
+}
+.isaac-document-tabs button {
+  max-width: 240px;
+  padding: 10px 12px;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border-bottom: 2px solid transparent;
+}
+.isaac-document-tabs button[aria-selected="true"] {
+  color: var(--ourapp-accent, #0b5345);
+  border-color: var(--ourapp-accent, #0b5345);
+  background: var(--ourapp-accent-muted, #0b53450f);
+}
+.isaac-document-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+}
+.isaac-document-heading > div {
+  min-width: 0;
+  flex: 1;
+}
+.isaac-document-heading strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+}
+.isaac-document-heading span {
+  display: block;
+  font-size: 11px;
+  color: var(--ourapp-text-tertiary, #6b6660);
+  margin-top: 4px;
+}
+.isaac-document-heading button {
+  width: 30px;
+  height: 30px;
+  font-size: 22px;
+}
+.isaac-document-actions,
+.isaac-document-format {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px 12px;
+  flex-shrink: 0;
+}
+.isaac-document-actions button,
+.isaac-document-actions select,
+.isaac-document-format button,
+.isaac-document-format select {
+  min-height: 32px;
+  padding: 5px 9px;
+  border: 1px solid var(--ourapp-hairline, #e8e3db);
+  border-radius: 6px;
+  background: var(--ourapp-bg-surface, #fff);
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+}
+.isaac-document-actions button[aria-pressed="true"] {
+  color: var(--ourapp-accent, #0b5345);
+  border-color: var(--ourapp-accent, #0b5345);
+}
+.isaac-document-actions .isaac-document-save:not(:disabled) {
+  background: var(--ourapp-accent, #0b5345);
+  color: #fff;
+  border-color: var(--ourapp-accent, #0b5345);
+}
+.ourapp-artifact-preview button {
+  cursor: pointer;
+}
+.ourapp-artifact-preview button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.ourapp-artifact-preview button:hover:not(:disabled),
+.ourapp-artifact-preview select:hover {
+  filter: brightness(0.97);
+}
+.ourapp-artifact-preview button:focus-visible,
+.ourapp-artifact-preview input:focus-visible,
+.ourapp-artifact-preview select:focus-visible {
+  outline: 2px solid var(--ourapp-accent, #0b5345);
+  outline-offset: 2px;
+}
+.isaac-document-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 24px;
+  background: var(--ourapp-bg-inset, #f1ede3);
+}
+.isaac-document-paper {
+  width: 794px;
+  min-height: 1123px;
+  padding: 76px;
+  margin: 0 auto 24px;
+  background: #fff;
+  color: #1a1614;
+  box-shadow: 0 1px 5px #1a16141a;
+}
+.isaac-document-content {
+  font-family: "Times New Roman", serif;
+  font-size: 16px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.isaac-document-content p {
+  margin: 0 0 12px;
+}
+.isaac-document-content h1,
+.isaac-document-content h2,
+.isaac-document-content h3 {
+  font-weight: 700;
+  line-height: 1.3;
+  margin: 20px 0 12px;
+}
+.isaac-document-content h1 {
+  font-size: 24px;
+}
+.isaac-document-content h2 {
+  font-size: 20px;
+}
+.isaac-document-content h3 {
+  font-size: 18px;
+}
+.isaac-document-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 12px 0;
+  table-layout: fixed;
+}
+.isaac-document-content th,
+.isaac-document-content td {
+  border: 1px solid #bdb8b0;
+  padding: 6px 8px;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+.isaac-document-content th {
+  font-weight: 700;
+  background: #f6f2eb;
+}
+.isaac-document-content ul {
+  list-style: disc;
+}
+.isaac-document-content ol {
+  list-style: decimal;
+}
+.isaac-document-content ul,
+.isaac-document-content ol {
+  padding-left: 24px;
+  margin: 8px 0 12px;
+}
+.isaac-document-content li {
+  margin: 4px 0;
+}
+.isaac-document-content img {
+  max-width: 100%;
+  height: auto;
+}
+.isaac-document-content a {
+  color: #0b5345;
+  text-decoration: underline;
+}
+.isaac-document-editor {
+  outline: none;
+  min-height: 920px;
+  caret-color: #0b5345;
+}
+.isaac-document-notice {
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 0;
+  padding: 10px 16px;
+  color: var(--ourapp-text-secondary, #4a453f);
+  background: var(--ourapp-bg-surface, #fff);
+}
+.isaac-document-notice--error {
+  color: #991b1b;
+  background: #991b1b0f;
+}
+.isaac-document-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 8px;
+  font-size: 12px;
+}
+.isaac-document-pagination button {
+  width: 28px;
+  height: 28px;
+  font-size: 22px;
+}
+.isaac-document-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 16px;
+  border-top: 1px solid var(--ourapp-hairline, #e8e3db);
+  font-size: 11px;
+  color: var(--ourapp-text-tertiary, #6b6660);
+  flex-shrink: 0;
+}
+.isaac-original-docx .isaac-docx-wrapper {
+  padding: 0;
+  background: transparent;
+}
+.isaac-original-docx section.isaac-docx {
+  margin: 0 auto 24px;
+  color: #1a1614;
+  box-shadow: 0 1px 5px #1a16141a;
+}
+.isaac-original-docx a {
+  color: #0b5345;
+}
+.isaac-pdf-page {
+  display: block;
+  margin: 0 auto;
+  background: #fff;
+  box-shadow: 0 1px 5px #1a16141a;
+  max-width: none;
+}
+.ourapp-artifact-preview__image {
+  display: block;
+  height: auto;
+  margin: 0 auto;
+  object-fit: contain;
+}
+.isaac-workbook {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--ourapp-bg-surface, #fff);
+}
+.isaac-workbook-formula {
+  display: flex;
+  gap: 12px;
+  padding: 8px 12px;
+  border-block: 1px solid var(--ourapp-hairline, #e8e3db);
+  align-items: center;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+.isaac-workbook-formula > span:first-child {
+  width: 48px;
+}
+.isaac-workbook-formula input {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 8px;
+  border: 1px solid var(--ourapp-hairline, #e8e3db);
+  border-radius: 4px;
+}
+.isaac-workbook-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+.isaac-workbook-grid {
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+  width: max-content;
+  min-width: 100%;
+  font-size: 12px;
+  color: #1a1614;
+  background: #fff;
+}
+.isaac-workbook-grid th {
+  position: sticky;
+  background: #f1ede3;
+  font-weight: 500;
+  color: #6b6660;
+}
+.isaac-workbook-grid thead th {
+  top: 0;
+  z-index: 2;
+}
+.isaac-workbook-grid tbody th {
+  left: 0;
+  z-index: 1;
+}
+.isaac-workbook-grid td,
+.isaac-workbook-grid th {
+  border-right: 1px solid #d8d2c5;
+  border-bottom: 1px solid #d8d2c5;
+  min-width: 42px;
+  height: 34px;
+  vertical-align: top;
+}
+.isaac-workbook-grid td button,
+.isaac-workbook-grid td input {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 34px;
+  min-width: 0;
+  padding: 8px;
+  text-align: inherit;
+  font: inherit;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: transparent;
+  border: 0;
+  color: inherit;
+}
+.isaac-workbook-grid td.isaac-cell-selected {
+  outline: 2px solid #0b5345;
+  outline-offset: -2px;
+}
+.isaac-workbook-grid td input {
+  outline: none;
+}
+.isaac-workbook-sheets {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  padding: 8px 12px;
+  border-top: 1px solid var(--ourapp-hairline, #e8e3db);
+  flex-shrink: 0;
+}
+.isaac-workbook-sheets button {
+  padding: 8px 12px;
+  font-size: 12px;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+}
+.isaac-workbook-sheets button[aria-selected="true"] {
+  color: var(--ourapp-accent, #0b5345);
+  border-color: var(--ourapp-accent, #0b5345);
+}
+@media (max-width: 900px) {
+  .ourapp-artifact-preview,
+  .ourapp-artifact-preview--expanded {
+    position: fixed;
+    inset: 0;
+    z-index: 45;
+    width: 100%;
+    border-left: 0;
+  }
+  .isaac-document-scroll {
+    padding: 16px;
+  }
+}

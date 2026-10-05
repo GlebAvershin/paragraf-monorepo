@@ -54,6 +54,7 @@ export interface PromptInput {
   /** OurApp: "deep" (тир Ultra в Технологе) — gost-rag декомпозирует запрос на под-вопросы. */
   retrieval?: string
   parts: Array<{
+    id?: string
     type: string
     text?: string
     mime?: string
@@ -190,12 +191,9 @@ const GOST_ABSTAIN =
 // Заголовок сессии. После первого обмена генерируем краткий заголовок дешёвой моделью.
 // Запрос идёт через gateway-app (как и основной чат) — там же маскирование.
 //
-// qwen3-8b через SiliconFlow (не claude-*/OpenRouter — те мертвы с РФ-бокса,
-// инцидент 2026-07-07; не gigachat — выпилен из продукта 2026-07-12): для
-// тривиальной задачи «заголовок в 3-6 слов» хватает самой дешёвой модели пула
-// ($0.06/1M). Текст запроса уходит за рубеж уже замаскированным (app-слой
-// маскирует ПДн для всех не-РФ моделей, включая эту).
-const TITLE_MODEL = "qwen/qwen3-8b"
+// Используем GigaChat Lite, чтобы текст первого сообщения не покидал российский
+// контур даже при генерации технического заголовка диалога.
+const TITLE_MODEL = "gigachat-lite"
 const DEFAULT_TITLE = "Новая сессия"
 
 async function generateTitle(key: string, userText: string, assistantText: string): Promise<string | undefined> {
@@ -230,7 +228,7 @@ async function generateTitle(key: string, userText: string, assistantText: strin
 }
 
 // Фолбэк: первые слова запроса юзера, если LLM-заголовок не получился
-// (модель недоступна/ключ не разрешает claude-haiku/таймаут). Иначе все сессии
+// (модель недоступна/ключ не разрешает выбранную модель/таймаут). Иначе все сессии
 // навсегда остаются «Новая сессия» — поймано на проде 2026-07-07.
 //
 // Промпты сценариев (wizard) структурированы markdown'ом (# заголовок, ##
@@ -304,13 +302,15 @@ async function runPromptInner(
 
   let idx = 0
   for (const p of input.parts) {
-    if (p.type !== "text" || !p.text) continue
+    if (p.type !== "text" && p.type !== "file") continue
+    if (p.type === "text" && !p.text) continue
+    if (p.type === "file" && (!p.url?.startsWith("data:") || !p.mime)) continue
     const part: StoredPart = {
-      id: newId("prt"),
+      id: p.id && /^prt_[A-Za-z0-9]{10,64}$/.test(p.id) ? p.id : newId("prt"),
       sessionID,
       messageID: userMsg.id,
-      type: "text",
-      text: p.text,
+      type: p.type,
+      ...(p.type === "text" ? { text: p.text } : { mime: p.mime, url: p.url, filename: p.filename }),
       ...(p.synthetic ? { synthetic: true } : {}),
     }
     await insertPart(userId, idx++, part)

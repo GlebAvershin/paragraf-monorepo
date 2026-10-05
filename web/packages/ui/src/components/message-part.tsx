@@ -159,8 +159,17 @@ export interface MessageProps {
   message: MessageType
   parts: PartType[]
   actions?: UserActions
+  onOpenAttachment?: (attachment: MessageAttachmentPreview) => void
   showAssistantCopyPartID?: string | null
   showReasoningSummaries?: boolean
+}
+
+export type MessageAttachmentPreview = {
+  filename: string
+  mime: string
+  text?: string
+  url?: string
+  key?: string
 }
 
 export type SessionAction = (input: { sessionID: string; messageID: string }) => Promise<void> | void
@@ -914,7 +923,12 @@ export function Message(props: MessageProps) {
     <Switch>
       <Match when={props.message.role === "user" && props.message}>
         {(userMessage) => (
-          <UserMessageDisplay message={userMessage() as UserMessage} parts={props.parts} actions={props.actions} />
+          <UserMessageDisplay
+            message={userMessage() as UserMessage}
+            parts={props.parts}
+            actions={props.actions}
+            onOpenAttachment={props.onOpenAttachment}
+          />
         )}
       </Match>
       <Match when={props.message.role === "assistant" && props.message}>
@@ -1116,7 +1130,12 @@ export function ContextToolGroup(props: { parts: ToolPart[]; busy?: boolean }) {
   )
 }
 
-export function UserMessageDisplay(props: { message: UserMessage; parts: PartType[]; actions?: UserActions }) {
+export function UserMessageDisplay(props: {
+  message: UserMessage
+  parts: PartType[]
+  actions?: UserActions
+  onOpenAttachment?: (attachment: MessageAttachmentPreview) => void
+}) {
   const data = useData()
   const dialog = useDialog()
   const i18n = useI18n()
@@ -1142,11 +1161,15 @@ export function UserMessageDisplay(props: { message: UserMessage; parts: PartTyp
   const docBlocks = createMemo(() => {
     const txt = rawText()
     if (!txt.includes("[Документ:")) return []
-    const re = /\[Документ:\s*([^\]]+)\]\n\n[\s\S]*?\n\n\[Конец документа\]\n?/g
-    const out: string[] = []
+    const re = /\[Документ:\s*([^\]]+)\]\n\n([\s\S]*?)\n\n\[Конец документа\]\n?/g
+    const out: MessageAttachmentPreview[] = []
     let match: RegExpExecArray | null
     while ((match = re.exec(txt)) !== null) {
-      out.push(match[1].trim())
+      out.push({
+        filename: match[1].trim(),
+        mime: "ourapp/office",
+        text: match[2].trim(),
+      })
     }
     return out
   })
@@ -1156,6 +1179,7 @@ export function UserMessageDisplay(props: { message: UserMessage; parts: PartTyp
     if (!txt.includes("[Документ:")) return txt
     return txt
       .replace(/\[Документ:[^\]]+\]\n\n[\s\S]*?\n\n\[Конец документа\]\n?/g, "")
+      .replace(/^(?:\s*---\s*\n)+/, "")
       .replace(/^\s*\n+/, "")
       .replace(/\n{3,}/g, "\n\n")
       .trim()
@@ -1219,12 +1243,18 @@ export function UserMessageDisplay(props: { message: UserMessage; parts: PartTyp
               const name = file.filename ?? i18n.t("ui.message.attachment.alt")
 
               return (
-                <div
+                <button
+                  type="button"
                   data-slot="user-message-attachment"
                   data-type={type}
-                  data-clickable={type === "image" ? "true" : undefined}
-                  title={type === "file" ? name : undefined}
+                  data-clickable={type === "image" || props.onOpenAttachment ? "true" : undefined}
+                  title={props.onOpenAttachment ? `Открыть предпросмотр: ${name}` : type === "file" ? name : undefined}
+                  aria-label={props.onOpenAttachment ? `Открыть предпросмотр: ${name}` : undefined}
                   onClick={() => {
+                    if (props.onOpenAttachment) {
+                      props.onOpenAttachment({ filename: name, mime: file.mime, url: file.url, key: file.id, text: docBlocks().find((item) => item.filename === name)?.text })
+                      return
+                    }
                     if (type === "image") openImagePreview(file.url, name)
                   }}
                 >
@@ -1239,7 +1269,7 @@ export function UserMessageDisplay(props: { message: UserMessage; parts: PartTyp
                   >
                     <img data-slot="user-message-attachment-image" src={file.url} alt={name} />
                   </Show>
-                </div>
+                </button>
               )
             }}
           </For>
@@ -1247,16 +1277,24 @@ export function UserMessageDisplay(props: { message: UserMessage; parts: PartTyp
       </Show>
       {/* OurApp: chips для прикреплённых документов (DOCX/XLSX/CSV) —
           извлечены из text через маркеры [Документ: ...] */}
-      <Show when={docBlocks().length > 0}>
+      <Show when={docBlocks().some((item) => !attachments().some((file) => file.filename === item.filename))}>
         <div data-slot="user-message-attachments">
-          <For each={docBlocks()}>
-            {(filename) => (
-              <div data-slot="user-message-attachment" data-type="file" title={filename}>
+          <For each={docBlocks().filter((item) => !attachments().some((file) => file.filename === item.filename))}>
+            {(attachment) => (
+              <button
+                type="button"
+                data-slot="user-message-attachment"
+                data-type="file"
+                data-clickable={props.onOpenAttachment ? "true" : undefined}
+                title={props.onOpenAttachment ? `Открыть предпросмотр: ${attachment.filename}` : attachment.filename}
+                aria-label={props.onOpenAttachment ? `Открыть предпросмотр: ${attachment.filename}` : undefined}
+                onClick={() => props.onOpenAttachment?.(attachment)}
+              >
                 <div data-slot="user-message-attachment-file">
-                  <FileIcon node={{ path: filename, type: "file" }} />
-                  <span data-slot="user-message-attachment-name">{filename}</span>
+                  <FileIcon node={{ path: attachment.filename, type: "file" }} />
+                  <span data-slot="user-message-attachment-name">{attachment.filename}</span>
                 </div>
-              </div>
+              </button>
             )}
           </For>
         </div>

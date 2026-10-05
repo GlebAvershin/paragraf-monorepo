@@ -666,6 +666,7 @@ function TabNavItem(props: {
   hideClose?: boolean
   onClose: () => void
 }) {
+  const language = useLanguage()
   const match = useMatch(() => props.href)
   const isActive = () => !!match()
   // OurApp: крестик — обычный flex-элемент с зарезервированным местом (без
@@ -694,12 +695,14 @@ function TabNavItem(props: {
         }`}
         onClick={props.onClose}
         icon={<IconV2 name="xmark-small" />}
+        aria-label={language.t("common.closeTab")}
       />
     </div>
   )
 }
 
 function NewSessionTabItem(props: { href: string; title: string; onClose: () => void }) {
+  const language = useLanguage()
   return (
     <div class="group relative flex h-7 max-w-60 flex-row items-center gap-1.5 overflow-hidden rounded-[6px] bg-[var(--accent-muted)] pl-2.5 pr-8 whitespace-nowrap focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-[var(--ourapp-accent)]">
       <a
@@ -726,7 +729,7 @@ function NewSessionTabItem(props: { href: string; title: string; onClose: () => 
             props.onClose()
           }}
           icon={<IconV2 name="xmark-small" />}
-          aria-label="Close tab"
+          aria-label={language.t("common.closeTab")}
         />
       </div>
     </div>

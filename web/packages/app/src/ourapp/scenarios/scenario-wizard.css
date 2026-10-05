@@ -52,6 +52,7 @@
   justify-content: center;
   width: 36px;
   height: 36px;
+  flex-shrink: 0;
   border-radius: var(--ourapp-radius-md, 10px);
   background: transparent;
   border: none;
@@ -331,4 +332,28 @@
   margin: 0 auto;
   padding: 20px 48px 32px;
   border-top: 1px solid var(--hairline, #e8e3db);
+}
+
+@media (max-width: 600px) {
+  .ourapp-wiz__head {
+    padding: 24px 20px 0;
+    gap: 12px;
+  }
+
+  .ourapp-wiz__title {
+    font-size: 24px;
+    line-height: 1.2;
+  }
+
+  .ourapp-wiz__progress {
+    padding: 0 20px;
+  }
+
+  .ourapp-wiz__body {
+    padding: 28px 20px;
+  }
+
+  .ourapp-wiz__foot {
+    padding: 16px 20px;
+  }
 }

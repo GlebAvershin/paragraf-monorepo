@@ -12,6 +12,7 @@
 import { For, type Component } from "solid-js"
 import { SCENARIOS, scenariosFor, type Scenario, type Vertical } from "./scenarios"
 import { VERTICAL_ORDER, VERTICALS } from "./verticals"
+import { scenarioById } from "./scenarios/index"
 
 export interface ScenarioLibraryProps {
   /** Текущая вертикаль (controlled). */
@@ -52,7 +53,7 @@ export const ScenarioLibrary: Component<ScenarioLibraryProps> = (props) => {
                   aria-selected={props.vertical === id && meta.enabled}
                   aria-disabled={!meta.enabled}
                   disabled={!meta.enabled}
-                  title={meta.enabled ? undefined : "Скоро. Сейчас доступен только Технолог."}
+                  title={meta.enabled ? undefined : "Скоро"}
                   onClick={() => meta.enabled && props.onVerticalChange(id)}
                 >
                   {meta.label}
@@ -65,34 +66,37 @@ export const ScenarioLibrary: Component<ScenarioLibraryProps> = (props) => {
 
       <div class="ourapp-library__grid">
         <For each={list()}>
-          {(s, i) => (
-            <article
-              class="ourapp-scenario"
-              classList={{ "ourapp-scenario--feature": s.feature }}
-              tabindex={0}
-              role="button"
-              aria-label={s.title}
-              onClick={() => props.onPick(s)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault()
-                  props.onPick(s)
-                }
-              }}
-            >
-              <span class="ourapp-scenario__num">
-                {String(i() + 1).padStart(2, "0")}
-                {s.feature ? " · популярный" : ""}
-              </span>
-              <h2 class="ourapp-scenario__title">{s.title}</h2>
-              <p class="ourapp-scenario__lede">{s.lede}</p>
-              <div class="ourapp-scenario__foot">
-                <span class="ourapp-scenario__steps">
-                  {s.steps} {s.steps === 1 ? "шаг" : s.steps < 5 ? "шага" : "шагов"}
+          {(s, i) => {
+            const stepCount = scenarioById(s.id)?.steps.length ?? s.steps
+            return (
+              <article
+                class="ourapp-scenario"
+                classList={{ "ourapp-scenario--feature": s.feature }}
+                tabindex={0}
+                role="button"
+                aria-label={s.title}
+                onClick={() => props.onPick(s)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault()
+                    props.onPick(s)
+                  }
+                }}
+              >
+                <span class="ourapp-scenario__num">
+                  {String(i() + 1).padStart(2, "0")}
+                  {s.feature ? " · популярный" : ""}
                 </span>
-              </div>
-            </article>
-          )}
+                <h2 class="ourapp-scenario__title">{s.title}</h2>
+                <p class="ourapp-scenario__lede">{s.lede}</p>
+                <div class="ourapp-scenario__foot">
+                  <span class="ourapp-scenario__steps">
+                    {stepCount} {stepCount === 1 ? "шаг" : stepCount < 5 ? "шага" : "шагов"}
+                  </span>
+                </div>
+              </article>
+            )
+          }}
         </For>
       </div>
     </div>

@@ -89,4 +89,14 @@ export async function initSchema(): Promise<void> {
       data       JSONB NOT NULL
     )`
   await sql`CREATE INDEX IF NOT EXISTS parts_message_idx ON parts (message_id, idx ASC)`
+  await sql`
+    CREATE TABLE IF NOT EXISTS document_revisions (
+      user_id TEXT NOT NULL,
+      session_id TEXT NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
+      document_key TEXT NOT NULL,
+      revision INT NOT NULL,
+      draft JSONB NOT NULL,
+      updated BIGINT NOT NULL,
+      PRIMARY KEY (user_id, session_id, document_key, revision)
+    )`
 }

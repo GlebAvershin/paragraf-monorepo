@@ -1,9 +1,6 @@
 /**
- * Waitlist-форма публичного лендинга — ПОКА НЕАКТИВНА (по решению 2026-07-18).
- * Поле почты и кнопка показываются, но приём заявок отключён: input/кнопка
- * `disabled`, submit не вешается, `billingApi.waitlist` НЕ вызывается. Когда приём
- * откроют — вернуть отправку (см. историю git: было idle/busy/success/error →
- * billing `POST /waitlist`).
+ * Доступ на публичном лендинге оформляется через поддержку.
+ * Самостоятельная регистрация и вызов `billingApi.waitlist` остаются отключены.
  *
  * Namespace классов — `.isaac-lp-*` (см. landing.css). Компонент самодостаточен,
  * не тянет server/session-контекст (лендинг рендерится без них).
@@ -12,27 +9,11 @@ import { ACCESS } from "./copy"
 
 export function WaitlistForm() {
   return (
-    // Не <form>: submit намеренно недоступен, ничего никуда не уходит.
-    <div class="isaac-lp-waitlist" aria-disabled="true">
-      <label class="isaac-lp-waitlist__label" for="isaac-lp-email">
-        {ACCESS.formLabel}
-      </label>
-      <div class="isaac-lp-waitlist__row">
-        <input
-          id="isaac-lp-email"
-          class="isaac-lp-waitlist__input"
-          type="email"
-          inputmode="email"
-          autocomplete="email"
-          placeholder={ACCESS.formPlaceholder}
-          disabled
-          tabindex={-1}
-          aria-hidden="true"
-        />
-        <button class="isaac-lp-waitlist__submit" type="button" disabled tabindex={-1} aria-hidden="true">
-          {ACCESS.ctaLabel}
-        </button>
-      </div>
+    <div class="isaac-lp-waitlist">
+      <a class="isaac-lp-btn isaac-lp-btn--primary isaac-lp-btn--lg" href="mailto:isaac.tech.russia@yandex.com">
+        {ACCESS.ctaLabel}
+      </a>
+      <p class="isaac-lp-waitlist__contact">isaac.tech.russia@yandex.com</p>
     </div>
   )
 }

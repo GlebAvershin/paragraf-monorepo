@@ -335,9 +335,9 @@ export function AppInterface(props: {
       <ConnectionGate disableHealthCheck={props.disableHealthCheck}>
         <ServerKey>
           <QueryProvider>
-            <GlobalSDKProvider>
-              <GlobalSyncProvider>
-                <OnboardingGate>
+            <OnboardingGate>
+              <GlobalSDKProvider>
+                <GlobalSyncProvider>
                   <Dynamic
                     component={props.router ?? Router}
                     root={(routerProps) => <RouterRoot appChildren={props.children}>{routerProps.children}</RouterRoot>}
@@ -362,9 +362,9 @@ export function AppInterface(props: {
                       <Route path="/help" component={HelpRoute} />
                     </Route>
                   </Dynamic>
-                </OnboardingGate>
-              </GlobalSyncProvider>
-            </GlobalSDKProvider>
+                </GlobalSyncProvider>
+              </GlobalSDKProvider>
+            </OnboardingGate>
           </QueryProvider>
         </ServerKey>
       </ConnectionGate>

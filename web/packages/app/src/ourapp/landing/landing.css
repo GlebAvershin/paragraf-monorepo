@@ -3,16 +3,14 @@
  * тот занят залогиненной главной). Импортируется компонентом → едет в lazy-чанке
  * лендинга, НЕ в index.css основного приложения.
  *
- * Дизайн — тёмный «цифровой мир»: закреплённый WebGL-террейн за полупрозрачным
- * контентом (см. three-hero.tsx), изумруд/аква + тёплый сигнальный акцент на
+ * Дизайн — тёмный статичный фон за полупрозрачным
+ * контентом, изумруд/аква + тёплый сигнальный акцент на
  * цифрах результата. Шрифты — приложенческие IBM Plex (`--font-family-*`).
  * Лендинг тёмный независимо от темы приложения (`color-scheme: dark`, свои токены,
  * без `light-dark()`).
  *
- * Motion — лендинг-специфичное исключение к DESIGN.md §8 (WebGL-hero + scroll-driven
- * появления/утекание). Всё деградирует: `prefers-reduced-motion` → статичная
- * читаемая страница (мир — один кадр или CSS-фон, reveal'ы сразу видимы, блоки не
- * утекают). Прокрутка лендинга — внутри `.isaac-lp` (свой scroll-контейнер).
+ * При `prefers-reduced-motion` элементы сразу видимы.
+ * Прокрутка лендинга — внутри `.isaac-lp` (свой scroll-контейнер).
  */
 
 .isaac-lp {
@@ -101,7 +99,7 @@
 }
 
 .isaac-lp-flow {
-  will-change: transform, opacity, filter;
+  position: relative;
 }
 
 .isaac-lp-glass {
@@ -127,23 +125,16 @@
   padding: 11px 20px;
   border-radius: 999px;
   transition:
-    transform 0.25s var(--lp-ease),
-    box-shadow 0.3s,
-    background 0.3s,
-    color 0.2s;
-}
-.isaac-lp-btn:active {
-  transform: translateY(1px);
+    background 120ms,
+    color 120ms,
+    border-color 120ms;
 }
 .isaac-lp-btn--primary {
   color: #04110c;
-  background: linear-gradient(180deg, #57e6b3, var(--lp-emerald));
-  box-shadow:
-    0 6px 24px -8px rgba(47, 209, 150, 0.6),
-    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  background: var(--lp-emerald);
 }
 .isaac-lp-btn--primary:hover {
-  box-shadow: 0 10px 34px -8px rgba(47, 209, 150, 0.75);
+  background: #57e6b3;
 }
 .isaac-lp-btn--ghost {
   color: var(--lp-text);
@@ -229,6 +220,7 @@
 /* ===== Section shell ===== */
 .isaac-lp-hero,
 .isaac-lp-section {
+  scroll-margin-top: 76px;
   position: relative;
   z-index: 1;
   max-width: var(--lp-maxw);
@@ -524,7 +516,6 @@
     border-color 0.25s;
 }
 .isaac-lp-chip:hover {
-  transform: translateY(-2px);
   background: rgba(103, 240, 216, 0.12);
   border-color: var(--lp-emerald);
 }
@@ -533,6 +524,11 @@
   color: var(--lp-muted-2);
   font-size: 13.5px;
   margin-top: 8px;
+}
+
+.isaac-lp :is(a, button, input, textarea):focus-visible {
+  outline: 2px solid var(--lp-emerald);
+  outline-offset: 4px;
 }
 
 /* ===== 04 Features ===== */
@@ -724,11 +720,17 @@
   margin-top: 18px;
 }
 
-/* waitlist (currently disabled — visual only) */
 .isaac-lp-waitlist {
   max-width: 480px;
   margin: 34px auto 0;
-  text-align: left;
+  text-align: center;
+}
+
+.isaac-lp-waitlist__contact {
+  margin: 12px 0 0;
+  color: var(--lp-muted);
+  font-size: 14px;
+  overflow-wrap: anywhere;
 }
 .isaac-lp-waitlist__label {
   display: block;

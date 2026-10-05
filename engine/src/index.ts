@@ -8,6 +8,7 @@
 import { Hono } from "hono"
 import { cors } from "hono/cors"
 import { streamSSE } from "hono/streaming"
+import { bodyLimit } from "hono/body-limit"
 import { config } from "./config.ts"
 import { requireSession, type Session as Auth } from "./auth.ts"
 import { initSchema } from "./db.ts"
@@ -25,10 +26,12 @@ import {
 import { subscribe } from "./bus.ts"
 import { runPrompt, abortRun } from "./chat.ts"
 import { meta } from "./meta.ts"
+import { documents } from "./documents.ts"
 
 type Env = { Variables: { session: Auth; token: string } }
 
 const app = new Hono<Env>()
+app.use("*", bodyLimit({ maxSize: 30 * 1024 * 1024 }))
 // CORS allowlist — было `cors()` (wildcard, любой origin). Движок хранит СЫРУЮ
 // историю чатов (ПДн, 152-ФЗ) за JWT-авторизацией; wildcard ослаблял защиту
 // (при утечке JWT — напр. XSS — любой сторонний origin мог читать ответы).
@@ -88,6 +91,7 @@ app.route("/", meta)
 app.use("/session", requireSession)
 app.use("/session/*", requireSession)
 app.use("/global/*", requireSession)
+app.route("/session", documents)
 
 // === session.* ===
 app.get("/session", async (c) => c.json(await listSessions(c.var.session.userId)))
@@ -140,7 +144,7 @@ const promptArgs = (userId: string, token: string, sessionID: string, body: Prom
   token,
   sessionID,
   messageID: body.messageID,
-  model: body.model ?? { providerID: "openrouter", modelID: "deepseek/deepseek-v4-flash" },
+  model: body.model ?? { providerID: "ourapp-ru", modelID: "gigachat-pro" },
   agent: body.agent,
   variant: body.variant,
   retrieval: body.retrieval,
