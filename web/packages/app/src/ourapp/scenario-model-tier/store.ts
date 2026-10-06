@@ -14,28 +14,27 @@ export interface TierModelKey {
 }
 
 // Сценарии выполняются на YandexGPT в российском контуре. Уровень можно выбрать
-// в самом диалоге, но набор намеренно ограничен двумя реально разными моделями.
+// в самом диалоге, но набор ограничен тремя уровнями качества в российском контуре.
 export const TIER_MODEL: Record<ModelTier, TierModelKey> = {
   medium: { providerID: "ourapp-ru", modelID: "yandexgpt-lite" },
   hi: { providerID: "ourapp-ru", modelID: "yandexgpt-pro" },
-  // Сохраняем ключ для обратной совместимости старых сценариев и сохранённых настроек.
-  ultra: { providerID: "ourapp-ru", modelID: "yandexgpt-pro" },
+  ultra: { providerID: "ourapp-ru", modelID: "yandexgpt-5.1-pro" },
 }
 
 export const TIER_LABEL: Record<ModelTier, string> = {
   medium: "Базовый",
   hi: "Профессиональный",
-  ultra: "Максимальный",
+  ultra: "Экспертный",
 }
 
 /** Короткое описание уровня — показывается рядом с названием в выпадашке. */
 export const TIER_DESC: Record<ModelTier, string> = {
   medium: "Быстрые ответы и повседневные задачи",
   hi: "Анализ документов и сложные юридические задачи",
-  ultra: "Совместимость с ранее сохранёнными сценариями",
+  ultra: "Максимальное качество для сложных документов и правового анализа",
 }
 
-export const TIER_ORDER: ModelTier[] = ["hi", "medium"]
+export const TIER_ORDER: ModelTier[] = ["ultra", "hi", "medium"]
 
 /** Какой тир соответствует уже выбранной модели (для подсветки текущего выбора). */
 export function tierForModel(current: { id: string; provider: { id: string } } | undefined): ModelTier | undefined {
@@ -57,7 +56,7 @@ const FALLBACK_TIER: ModelTier = "hi"
 export function getDefaultTier(): ModelTier {
   if (typeof localStorage === "undefined") return FALLBACK_TIER
   const stored = localStorage.getItem(DEFAULT_TIER_KEY)
-  if (stored === "medium" || stored === "hi") return stored
+  if (stored === "medium" || stored === "hi" || stored === "ultra") return stored
   return FALLBACK_TIER
 }
 

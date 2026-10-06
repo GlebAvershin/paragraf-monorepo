@@ -43,7 +43,12 @@ if [ -d "./billing/drizzle/manual" ]; then
   done
 fi
 
-# 3. Verify health — через внутреннюю docker-сеть (не зависит от готовности
+# 3. Refresh tariff catalog and virtual-key model access for existing users.
+echo "[migrate] refreshing model catalog and virtual-key access..."
+docker compose -f docker-compose.prod.yml exec -T billing bun run db:seed
+docker compose -f docker-compose.prod.yml exec -T billing bun run sync-model-access
+
+# 4. Verify health — через внутреннюю docker-сеть (не зависит от готовности
 #    DNS/TLS на публичном домене на момент миграции).
 echo "[migrate] verifying readiness..."
 sleep 3

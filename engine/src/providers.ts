@@ -115,6 +115,7 @@ const russianModels: Model[] = [
   model({ id: "gigachat-max", providerID: "ourapp-ru", name: "GigaChat Max", attachment: false, toolcall: false, context: 32_000, output: 4_096, costIn: 1.95, costOut: 1.95, release: "" }),
   model({ id: "yandexgpt-lite", providerID: "ourapp-ru", name: "YandexGPT Lite", attachment: false, toolcall: false, context: 32_000, output: 8_192, release: "" }),
   model({ id: "yandexgpt-pro", providerID: "ourapp-ru", name: "YandexGPT Pro", attachment: false, toolcall: false, context: 32_000, output: 8_192, release: "" }),
+  model({ id: "yandexgpt-5.1-pro", providerID: "ourapp-ru", name: "YandexGPT 5.1 Pro", attachment: false, toolcall: false, context: 32_768, output: 8_192, release: "" }),
 ]
 
 // Международные модели остаются доступными как отдельный явно обозначенный контур.
@@ -133,7 +134,7 @@ export const retainedModelCatalog = {
 
 /** Модели, которые Isaac показывает и принимает в текущем пользовательском контуре. */
 const selectableYandexModels = retainedModelCatalog.russian.filter(
-  (entry) => entry.id === "yandexgpt-lite" || entry.id === "yandexgpt-pro",
+  (entry) => entry.id === "yandexgpt-lite" || entry.id === "yandexgpt-pro" || entry.id === "yandexgpt-5.1-pro",
 )
 
 export const DEFAULT_USER_MODEL = { providerID: "ourapp-ru", modelID: "yandexgpt-pro" } as const

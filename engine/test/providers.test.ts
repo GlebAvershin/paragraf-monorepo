@@ -11,6 +11,7 @@ describe("providerList", () => {
     expect(Object.keys(yandex?.models ?? {})).toEqual([
       "yandexgpt-lite",
       "yandexgpt-pro",
+      "yandexgpt-5.1-pro",
     ])
     expect(list.default).toEqual({ "ourapp-ru": "yandexgpt-pro" })
     expect(list.connected).toEqual(["ourapp-ru"])
@@ -22,6 +23,10 @@ describe("providerList", () => {
     expect(userSelectableModel({ providerID: "ourapp-ru", modelID: "yandexgpt-lite" })).toEqual({
       providerID: "ourapp-ru",
       modelID: "yandexgpt-lite",
+    })
+    expect(userSelectableModel({ providerID: "ourapp-ru", modelID: "yandexgpt-5.1-pro" })).toEqual({
+      providerID: "ourapp-ru",
+      modelID: "yandexgpt-5.1-pro",
     })
   })
 })

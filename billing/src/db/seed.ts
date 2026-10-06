@@ -24,7 +24,7 @@ const seedPlans: (typeof schema.plans.$inferInsert)[] = [
     monthlyBudgetUsdCenti: 200, // $2 — verifies LiteLLM hardcap
     monthlyCredits: 30, // ≈ 2-3 задачи среднего уровня
     monthlyTasksTarget: 3, // deprecated, оставлено для совместимости
-    allowedModels: ["gigachat-lite", "gigachat-pro", "gigachat-max", "yandexgpt-pro", "yandexgpt-lite", "deepseek/deepseek-v4-flash", "minimax/minimax-m3", "qwen/qwen3-8b", "z-ai/glm-5.2", "deepseek/deepseek-chat", "qwen/qwen3-embedding-8b"],
+    allowedModels: ["gigachat-lite", "gigachat-pro", "gigachat-max", "yandexgpt-pro", "yandexgpt-lite", "yandexgpt-5.1-pro", "deepseek/deepseek-v4-flash", "minimax/minimax-m3", "qwen/qwen3-8b", "z-ai/glm-5.2", "deepseek/deepseek-chat", "qwen/qwen3-embedding-8b"],
     features: { trial: true, trialDays: 14 },
   },
   {
@@ -44,6 +44,7 @@ const seedPlans: (typeof schema.plans.$inferInsert)[] = [
       "qwen/qwen3-8b",
       "yandexgpt-pro",
       "yandexgpt-lite",
+      "yandexgpt-5.1-pro",
       "z-ai/glm-5.2",
       "deepseek/deepseek-chat",
       "qwen/qwen3-embedding-8b",
@@ -68,6 +69,7 @@ const seedPlans: (typeof schema.plans.$inferInsert)[] = [
       "qwen/qwen3-8b",
       "yandexgpt-pro",
       "yandexgpt-lite",
+      "yandexgpt-5.1-pro",
       "z-ai/glm-5.2",
       "deepseek/deepseek-chat",
       "qwen/qwen3-embedding-8b",
@@ -92,6 +94,7 @@ const seedPlans: (typeof schema.plans.$inferInsert)[] = [
       "qwen/qwen3-8b",
       "yandexgpt-pro",
       "yandexgpt-lite",
+      "yandexgpt-5.1-pro",
       "z-ai/glm-5.2",
       "deepseek/deepseek-chat",
       "qwen/qwen3-embedding-8b",
@@ -152,8 +155,8 @@ const seedRates: (typeof schema.modelRates.$inferInsert)[] = [
     providerPricePer1kOutputUsdMicroCenti: 3000,
   },
   // ===== Yandex (РФ) =====
-  // ВАЖНО: modelCode = имя model_name из gateway/litellm-config.yaml (yandexgpt-pro /
-  // yandexgpt-lite). ETL ищет ставку по model_group=этому имени; рассинхрон →
+  // ВАЖНО: modelCode = имя model_name из gateway/litellm-config.yaml. ETL ищет ставку
+  // по model_group=этому имени; рассинхрон →
   // дефолтное списание 1 кредит вместо корректного по множителю.
   {
     modelCode: "yandexgpt-pro",
@@ -172,6 +175,15 @@ const seedRates: (typeof schema.modelRates.$inferInsert)[] = [
     displayNameRu: "YandexGPT Lite",
     providerPricePer1kInputUsdMicroCenti: 20,
     providerPricePer1kOutputUsdMicroCenti: 60,
+  },
+  {
+    modelCode: "yandexgpt-5.1-pro",
+    provider: "yandex",
+    tier: "top",
+    multiplier: "2.20",
+    displayNameRu: "YandexGPT 5.1 Pro",
+    providerPricePer1kInputUsdMicroCenti: 655738,
+    providerPricePer1kOutputUsdMicroCenti: 655738,
   },
   // ===== OpenRouter (дешёвые, через шлюз) — цены проверь на openrouter.ai/models =====
   {
