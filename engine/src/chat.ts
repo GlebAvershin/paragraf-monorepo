@@ -191,9 +191,9 @@ const GOST_ABSTAIN =
 // Заголовок сессии. После первого обмена генерируем краткий заголовок дешёвой моделью.
 // Запрос идёт через gateway-app (как и основной чат) — там же маскирование.
 //
-// Используем GigaChat Lite, чтобы текст первого сообщения не покидал российский
+// Используем YandexGPT Lite, чтобы текст первого сообщения не покидал российский
 // контур даже при генерации технического заголовка диалога.
-const TITLE_MODEL = "gigachat-lite"
+const TITLE_MODEL = "yandexgpt-lite"
 const DEFAULT_TITLE = "Новая сессия"
 
 async function generateTitle(key: string, userText: string, assistantText: string): Promise<string | undefined> {
@@ -521,7 +521,7 @@ async function consumeAnswerStream(
       }
       if (json?.type === "text" && json.delta) await handlers.onText(json.delta)
       else if (json?.type === "reasoning" && json.delta) await handlers.onReasoning(json.delta)
-      else if (json?.type === "model" && json.model) await handlers.onModel?.(json.model, json.provider ?? "openrouter")
+      else if (json?.type === "model" && json.model) await handlers.onModel?.(json.model, json.provider ?? "ourapp-ru")
       else if (json?.type === "doc" && json.text) await handlers.onDoc?.(json.text)
       else if (json?.type === "error") throw new Error(json.message || "gateway error")
       else if (json?.type === "done") return

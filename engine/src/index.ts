@@ -27,6 +27,7 @@ import { subscribe } from "./bus.ts"
 import { runPrompt, abortRun } from "./chat.ts"
 import { meta } from "./meta.ts"
 import { documents } from "./documents.ts"
+import { DEFAULT_USER_MODEL, userSelectableModel } from "./providers.ts"
 
 type Env = { Variables: { session: Auth; token: string } }
 
@@ -144,7 +145,7 @@ const promptArgs = (userId: string, token: string, sessionID: string, body: Prom
   token,
   sessionID,
   messageID: body.messageID,
-  model: body.model ?? { providerID: "ourapp-ru", modelID: "gigachat-pro" },
+  model: userSelectableModel(body.model ?? DEFAULT_USER_MODEL),
   agent: body.agent,
   variant: body.variant,
   retrieval: body.retrieval,

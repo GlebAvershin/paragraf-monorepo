@@ -5,11 +5,7 @@ import { Iterable, pipe } from "effect"
 import { createMemo } from "solid-js"
 
 export const popularProviders = [
-  "github-copilot",
-  "openai",
-  "google",
-  "openrouter",
-  "vercel",
+  "ourapp-ru",
 ]
 const popularProviderSet = new Set(popularProviders)
 

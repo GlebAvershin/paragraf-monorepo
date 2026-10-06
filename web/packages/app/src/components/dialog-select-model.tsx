@@ -18,6 +18,10 @@ import { setAutoModelEnabled } from "@/ourapp/auto-model/store"
 // кредитами. Пометка «Бесплатно» приходит от opencode Zen и для нас вводит в
 // заблуждение, поэтому всегда скрываем (см. также dialog-select-model-unpaid.tsx).
 const isFree = (_provider: string, _cost: { input: number } | undefined) => false
+// В текущем юридическом контуре доступен только преднастроенный YandexGPT.
+// Экран подключения провайдеров сохраняем в коде для будущих продуктов, но не
+// показываем пользователю, чтобы он не мог подключить внешний контур сам.
+const providerConnectionEnabled = false
 
 type ModelState = ReturnType<typeof useLocal>["model"]
 
@@ -34,6 +38,7 @@ const ModelList: Component<{
   const models = createMemo(() =>
     model
       .list()
+      .filter((m) => m.provider.id === "ourapp-ru")
       .filter((m) => model.visible({ modelID: m.id, providerID: m.provider.id }))
       .filter((m) => (props.provider ? m.provider.id === props.provider : true)),
   )
@@ -173,7 +178,8 @@ export function ModelSelectorPopover(props: {
             onSelect={() => close("select")}
             class="p-1"
             action={
-              <div class="flex items-center gap-1">
+              <Show when={providerConnectionEnabled}>
+                <div class="flex items-center gap-1">
                 <Tooltip placement="top" value={language.t("command.provider.connect")}>
                   <IconButton
                     icon="plus-small"
@@ -194,7 +200,8 @@ export function ModelSelectorPopover(props: {
                     onClick={handleManage}
                   />
                 </Tooltip>
-              </div>
+                </div>
+              </Show>
             }
           />
         </Kobalte.Content>
@@ -223,15 +230,19 @@ export const DialogSelectModel: Component<{ provider?: string; model?: ModelStat
     <Dialog
       title={language.t("dialog.model.select.title")}
       action={
+        <Show when={providerConnectionEnabled}>
         <Button class="h-7 -my-1 text-14-medium" icon="plus-small" tabIndex={-1} onClick={provider}>
           {language.t("command.provider.connect")}
         </Button>
+        </Show>
       }
     >
       <ModelList provider={props.provider} model={props.model} onSelect={() => dialog.close()} />
-      <Button variant="ghost" class="ml-3 mt-5 mb-6 text-text-base self-start" onClick={manage}>
-        {language.t("dialog.model.manage")}
-      </Button>
+      <Show when={providerConnectionEnabled}>
+        <Button variant="ghost" class="ml-3 mt-5 mb-6 text-text-base self-start" onClick={manage}>
+          {language.t("dialog.model.manage")}
+        </Button>
+      </Show>
     </Dialog>
   )
 }

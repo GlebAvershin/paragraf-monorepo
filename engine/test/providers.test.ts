@@ -1,20 +1,27 @@
 import { describe, expect, test } from "bun:test"
-import { providerList } from "../src/providers.ts"
+import { DEFAULT_USER_MODEL, providerList, userSelectableModel } from "../src/providers.ts"
 
 describe("providerList", () => {
-  test("shows domestic GigaChat and YandexGPT models alongside other models", () => {
+  test("shows only YandexGPT models in the user-facing catalog", () => {
     const list = providerList()
-    const russian = list.all.find((provider) => provider.id === "ourapp-ru")
+    const yandex = list.all.find((provider) => provider.id === "ourapp-ru")
 
-    expect(russian?.name).toBe("Российские модели")
-    expect(Object.keys(russian?.models ?? {})).toEqual([
-      "gigachat-lite",
-      "gigachat-pro",
-      "gigachat-max",
+    expect(list.all).toHaveLength(1)
+    expect(yandex?.name).toBe("YandexGPT")
+    expect(Object.keys(yandex?.models ?? {})).toEqual([
       "yandexgpt-lite",
       "yandexgpt-pro",
     ])
-    expect(list.default["ourapp-ru"]).toBe("gigachat-pro")
-    expect(list.connected).toContain("ourapp-ru")
+    expect(list.default).toEqual({ "ourapp-ru": "yandexgpt-pro" })
+    expect(list.connected).toEqual(["ourapp-ru"])
+  })
+
+  test("maps legacy or external selections to the YandexGPT default", () => {
+    expect(userSelectableModel({ providerID: "ourapp-ru", modelID: "gigachat-pro" })).toEqual(DEFAULT_USER_MODEL)
+    expect(userSelectableModel({ providerID: "openrouter", modelID: "deepseek/deepseek-chat" })).toEqual(DEFAULT_USER_MODEL)
+    expect(userSelectableModel({ providerID: "ourapp-ru", modelID: "yandexgpt-lite" })).toEqual({
+      providerID: "ourapp-ru",
+      modelID: "yandexgpt-lite",
+    })
   })
 })

@@ -375,7 +375,7 @@ describe("prompt submit worktree selection", () => {
     expect(sentPrompts[0]!.retrieval).toBeUndefined()
   })
 
-  test("sends retrieval \"deep\" for the Ultra tier in the technologist vertical", async () => {
+  test("does not send technical retrieval for a legacy Ultra selection", async () => {
     params = { id: "session-1" }
     activeVertical = "technologist"
     const { TIER_MODEL } = await import("@/ourapp/scenario-model-tier/store")
@@ -402,7 +402,8 @@ describe("prompt submit worktree selection", () => {
 
     await flushPrompts()
     expect(sentPrompts).toHaveLength(1)
-    expect(sentPrompts[0]).toMatchObject({ agent: "gost", retrieval: "deep" })
+    expect(sentPrompts[0]).toMatchObject({ agent: "gost" })
+    expect(sentPrompts[0]!.retrieval).toBeUndefined()
   })
 
   test("seeds new sessions before optimistic prompts are added", async () => {

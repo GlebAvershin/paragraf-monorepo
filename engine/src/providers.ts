@@ -9,7 +9,9 @@
  * в chat.ts шлёт его как `model` в /v1/chat/completions. Имена/тиры синхронны с
  * billing/seed.ts (ставки) и auto-model TIER_MODEL.
  *
- * Провайдер `ourapp-ru` объединяет российские модели GigaChat и YandexGPT.
+ * В каталоге для пользователей Isaac доступны только модели YandexGPT. Остальные
+ * интеграции сохраняются в кодовой базе для будущих продуктовых решений, но не
+ * выдаются через этот API и поэтому не попадают в интерфейс.
  */
 
 type Capabilities = {
@@ -105,8 +107,8 @@ function model(input: {
 // release: "" → невалидная дата → модель ВСЕГДА видна в пикере (context/models.tsx visible():
 // модели с валидной датой старше 6 мес. скрываются по умолчанию; наши продуктовые модели
 // должны показываться независимо от «свежести»).
-// Российский контур: GigaChat и YandexGPT вызываются напрямую из шлюза. Для этих
-// моделей gateway не отправляет запросы за пределы российских провайдеров.
+// Полный внутренний каталог сохраняется для будущих интеграций. Публичный список
+// ниже отбирает из него только разрешённые для текущего юридического контура модели.
 const russianModels: Model[] = [
   model({ id: "gigachat-lite", providerID: "ourapp-ru", name: "GigaChat Lite", attachment: false, toolcall: false, context: 32_000, output: 4_096, costIn: 0.2, costOut: 0.4, release: "" }),
   model({ id: "gigachat-pro", providerID: "ourapp-ru", name: "GigaChat Pro", attachment: false, toolcall: false, context: 32_000, output: 4_096, costIn: 1.5, costOut: 1.5, release: "" }),
@@ -123,30 +125,55 @@ const openrouterModels: Model[] = [
   model({ id: "deepseek/deepseek-v4-flash", providerID: "openrouter", name: "DeepSeek V4 Flash", reasoning: false, attachment: false, context: 128_000, output: 16_384, costIn: 0.13, costOut: 0.28, release: "" }),
 ]
 
+/** Сохранённый внутренний каталог для будущего включения провайдеров. */
+export const retainedModelCatalog = {
+  russian: russianModels,
+  openrouter: openrouterModels,
+}
+
+/** Модели, которые Isaac показывает и принимает в текущем пользовательском контуре. */
+const selectableYandexModels = retainedModelCatalog.russian.filter(
+  (entry) => entry.id === "yandexgpt-lite" || entry.id === "yandexgpt-pro",
+)
+
+export const DEFAULT_USER_MODEL = { providerID: "ourapp-ru", modelID: "yandexgpt-pro" } as const
+
+/**
+ * Приводит сохранённый или присланный клиентом выбор к разрешённому набору.
+ * Это защищает старые вкладки, где до перехода мог сохраниться GigaChat или
+ * зарубежная модель: запрос будет выполнен на YandexGPT Pro.
+ */
+export function userSelectableModel(model: unknown): { providerID: string; modelID: string } {
+  if (
+    typeof model === "object" &&
+    model !== null &&
+    "providerID" in model &&
+    "modelID" in model &&
+    (model as { providerID?: unknown }).providerID === "ourapp-ru" &&
+    typeof (model as { modelID?: unknown }).modelID === "string" &&
+    selectableYandexModels.some((entry) => entry.id === (model as { modelID: string }).modelID)
+  ) {
+    return model as { providerID: string; modelID: string }
+  }
+  return DEFAULT_USER_MODEL
+}
+
 function byId(models: Model[]): Record<string, Model> {
   return Object.fromEntries(models.map((m) => [m.id, m]))
 }
 
 export function providerList(): ProviderListResponse {
-  const russian: Provider = {
+  const yandex: Provider = {
     id: "ourapp-ru",
-    name: "Российские модели",
+    name: "YandexGPT",
     source: "config",
     env: [],
     options: {},
-    models: byId(russianModels),
-  }
-  const openrouter: Provider = {
-    id: "openrouter",
-    name: "Другие модели",
-    source: "config",
-    env: [],
-    options: {},
-    models: byId(openrouterModels),
+    models: byId(selectableYandexModels),
   }
   return {
-    all: [russian, openrouter],
-    default: { "ourapp-ru": "gigachat-pro", openrouter: "deepseek/deepseek-v4-flash" },
-    connected: ["ourapp-ru", "openrouter"],
+    all: [yandex],
+    default: { "ourapp-ru": DEFAULT_USER_MODEL.modelID },
+    connected: ["ourapp-ru"],
   }
 }

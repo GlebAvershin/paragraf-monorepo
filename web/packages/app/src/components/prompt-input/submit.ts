@@ -20,7 +20,6 @@ import { setCursorPosition } from "./editor-dom"
 import { guardSendCredits } from "@/ourapp/low-balance-guard"
 import { formatServerError } from "@/utils/server-errors"
 import { getAutoModelEnabled } from "@/ourapp/auto-model/store"
-import { TIER_MODEL } from "@/ourapp/scenario-model-tier/store"
 import { loadVertical } from "@/ourapp/verticals"
 
 type PendingPrompt = {
@@ -210,16 +209,6 @@ export async function sendFollowupDraft(input: FollowupSendInput) {
       return false
     }
 
-    // OurApp: тир Ultra в Технологе включает deep-retrieve (декомпозиция запроса на под-вопросы
-    // на стороне gost-rag). Тир — понятие web (карта TIER_MODEL), engine про тиры не знает —
-    // шлём явный флаг. Считаем здесь, а не в каждом создателе драфта: сюда сходятся все пути
-    // отправки (композер, мастер сценариев, очередь).
-    const ultra = TIER_MODEL.ultra
-    const deepRetrieval =
-      input.draft.agent === "gost" &&
-      input.draft.model.providerID === ultra.providerID &&
-      input.draft.model.modelID === ultra.modelID
-
     await input.client.session.promptAsync({
       sessionID: input.draft.sessionID,
       agent: input.draft.agent,
@@ -227,7 +216,9 @@ export async function sendFollowupDraft(input: FollowupSendInput) {
       messageID,
       parts: requestParts,
       variant: input.draft.variant,
-      retrieval: deepRetrieval ? "deep" : undefined,
+      // Технический deep-retrieve остаётся в кодовой базе, но в юридическом
+      // пользовательском контуре не запускается: запросы идут только в YandexGPT.
+      retrieval: undefined,
     })
     return true
   } catch (err) {
