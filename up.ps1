@@ -122,6 +122,19 @@ if (Test-Path $manualDir) {
 } else { Warn "no drizzle/manual -- skipping" }
 
 # -- 5. Gateway app (port 4100, separate window) --
+Step "Refreshing model catalog and virtual-key access..."
+Push-Location "$ROOT\billing"
+bun run db:seed
+if ($LASTEXITCODE -eq 0) {
+  bun run sync-model-access
+  if ($LASTEXITCODE -eq 0) { Ok "model catalog and existing key access refreshed" }
+  else { Warn "virtual-key access refresh failed -- check billing and LiteLLM configuration" }
+} else {
+  Warn "model catalog refresh failed -- check billing database configuration"
+}
+Pop-Location
+
+# -- 6. Gateway app (port 4100, separate window) --
 Step "Gateway app (port 4100, separate window with logs)..."
 $gatewayAppAlreadyUp = $false
 try {
@@ -140,7 +153,7 @@ if ($gatewayAppAlreadyUp) {
   Warn "gateway app not found at $GATEWAY\app -- model requests cannot be processed"
 }
 
-# -- 6. Billing service (separate window -- OTP codes here) --
+# -- 7. Billing service (separate window -- OTP codes here) --
 # If billing already answers on :3000, skip re-launch (avoid duplicate windows).
 Step "Billing service (port 3000, separate window with logs)..."
 $alreadyUp = $false
@@ -158,7 +171,7 @@ if ($alreadyUp) {
   Ok "billing started (see new window)"
 }
 
-# -- 7. Engine service (separate window) --
+# -- 8. Engine service (separate window) --
 Step "Engine service (port 4096, separate window with logs)..."
 $engineAlreadyUp = $false
 try {
@@ -175,7 +188,7 @@ if ($engineAlreadyUp) {
   Ok "engine started (see new window)"
 }
 
-# -- 8. ETL worker loop (skip if already running) --
+# -- 9. ETL worker loop (skip if already running) --
 Step "ETL worker (credit charging, loop 30s)..."
 $etlRunning = Get-CimInstance Win32_Process -Filter "Name='bun.exe'" -ErrorAction SilentlyContinue |
   Where-Object { $_.CommandLine -match "etl\.ts" }
@@ -187,7 +200,7 @@ if ($etlRunning) {
   Ok "ETL loop started (minimized window)"
 }
 
-# -- 9. Health-check --
+# -- 10. Health-check --
 Step "Health-check..."
 Start-Sleep -Seconds 4
 function Check($name, $url, $expect) {
